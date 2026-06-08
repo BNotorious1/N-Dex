@@ -1,11 +1,11 @@
-# NeonSportz
+# N-Dex — The Notorious Franchise Index
 
-A full-stack Madden NFL franchise league management platform — dark-themed, styled after neonsportz.com.
+A full-stack Madden NFL franchise league management platform. Dark-themed (#0a0a0a bg, #00C8FF cyan, #F44336 red accent).
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000 / proxied to /api)
-- `pnpm --filter @workspace/neonsportz run dev` — run the frontend (Vite dev server)
+- `pnpm --filter @workspace/ndex run dev` — run the frontend (Vite dev server)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -29,16 +29,16 @@ A full-stack Madden NFL franchise league management platform — dark-themed, st
 - `lib/api-zod/src/generated/` — Orval-generated Zod schemas for server validation
 - `lib/db/src/schema/` — Drizzle ORM schema (leagues, teams, players, games)
 - `artifacts/api-server/src/routes/` — Express route handlers
-- `artifacts/neonsportz/src/pages/` — React pages (Home, Leagues, LeagueDetail, NewLeague, TeamDetail)
-- `artifacts/neonsportz/src/components/` — Shared components (Navbar, LeagueCard)
-- `artifacts/neonsportz/public/logo.png` — NeonSportz logo
+- `artifacts/ndex/src/pages/` — React pages (Home, Leagues, LeagueDetail, NewLeague, TeamDetail)
+- `artifacts/ndex/src/components/` — Shared components (Navbar, LeagueCard)
+- `artifacts/ndex/public/ndex-logo.png` — N-Dex logo
 
 ## Architecture decisions
 
 - Contract-first API: OpenAPI spec drives both client hooks (React Query via Orval) and server validation (Zod schemas via Orval)
 - All DB columns use camelCase in Drizzle; route handlers manually map to snake_case for the API JSON layer
 - Dark theme is applied via CSS variables in index.css (`--background: 0 0% 7%` etc.) — no `.dark` class needed since the app is always dark
-- Logo served from `artifacts/neonsportz/public/logo.png` (Vite fs.strict=true blocks serving from outside artifact root)
+- Logo served from `artifacts/ndex/public/ndex-logo.png` (Vite fs.strict=true blocks serving from outside artifact root)
 - Seeded with 3 leagues, 8 NFL teams (in league 1), 11 players (Eagles + Chiefs), 6 games
 
 ## Product

@@ -1,8 +1,8 @@
 kind = "web"
 previewPath = "/"
-title = "NeonSportz"
+title = "N-Dex"
 version = "1.0.0"
-id = "artifacts/neonsportz"
+id = "artifacts/ndex"
 router = "path"
 
 [[integratedSkills]]
@@ -15,11 +15,11 @@ paths = [ "/" ]
 localPort = 23693
 
 [services.development]
-run = "pnpm --filter @workspace/neonsportz run dev"
+run = "pnpm --filter @workspace/ndex run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/neonsportz", "run", "build" ]
-publicDir = "artifacts/neonsportz/dist/public"
+build = [ "pnpm", "--filter", "@workspace/ndex", "run", "build" ]
+publicDir = "artifacts/ndex/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]
