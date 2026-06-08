@@ -1,0 +1,1 @@
+- [Vite HMR on Replit](vite-hmr-replit.md) — Vite WebSocket fails through Replit proxy without explicit HMR host/protocol config; use REPLIT_DEV_DOMAIN.
