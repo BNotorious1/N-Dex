@@ -18,7 +18,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-20 sm:py-28 text-center">
           <div className="flex justify-center mb-6">
             <img
-              src="/logo.png"
+              src="/ndex-logo.png"
               alt="N-Dex"
               className="h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(0,200,255,0.5)]"
               data-testid="img-hero-logo"
@@ -133,12 +133,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/8 py-8 text-center">
-        <p className="text-xs text-white/20">
-          &copy; {new Date().getFullYear()} NeonSportz. All rights reserved.
-        </p>
-      </footer>
     </div>
   );
 }

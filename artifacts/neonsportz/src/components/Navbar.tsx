@@ -13,7 +13,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <img
-            src="/logo.png"
+            src="/ndex-logo.png"
             alt="N-Dex"
             className="h-8 w-8 object-contain"
             data-testid="img-logo"
