@@ -1,10 +1,11 @@
-# [Project name]
+# NeonSportz
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack Madden NFL franchise league management platform — dark-themed, styled after neonsportz.com.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000 / proxied to /api)
+- `pnpm --filter @workspace/neonsportz run dev` — run the frontend (Vite dev server)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,23 +15,38 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite + Tailwind v4 + shadcn/ui
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
+- API codegen: Orval (from OpenAPI spec → `lib/api-spec/openapi.yaml`)
 - Build: esbuild (CJS bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — OpenAPI 3.1 contract (source of truth)
+- `lib/api-client-react/src/generated/` — Orval-generated React Query hooks + types
+- `lib/api-zod/src/generated/` — Orval-generated Zod schemas for server validation
+- `lib/db/src/schema/` — Drizzle ORM schema (leagues, teams, players, games)
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/neonsportz/src/pages/` — React pages (Home, Leagues, LeagueDetail, NewLeague, TeamDetail)
+- `artifacts/neonsportz/src/components/` — Shared components (Navbar, LeagueCard)
+- `artifacts/neonsportz/public/logo.png` — NeonSportz logo
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Contract-first API: OpenAPI spec drives both client hooks (React Query via Orval) and server validation (Zod schemas via Orval)
+- All DB columns use camelCase in Drizzle; route handlers manually map to snake_case for the API JSON layer
+- Dark theme is applied via CSS variables in index.css (`--background: 0 0% 7%` etc.) — no `.dark` class needed since the app is always dark
+- Logo served from `artifacts/neonsportz/public/logo.png` (Vite fs.strict=true blocks serving from outside artifact root)
+- Seeded with 3 leagues, 8 NFL teams (in league 1), 11 players (Eagles + Chiefs), 6 games
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Browse Madden franchise leagues with filters (platform, difficulty, category, skill level, crossplay, money league)
+- View league dashboard: summary stats, top teams, recent game scores, standings table, full schedule, stat leaders by position, team roster cards
+- Team detail: roster table with color-coded attribute bars (OVR, SPD, STR, AWR + position-specific)
+- Create new leagues via a form that posts to the API
 
 ## User preferences
 
@@ -38,7 +54,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Do NOT use `dark` as a Tailwind utility class in `@apply` — Tailwind v4 doesn't support applying variant names
+- Orval generates `Params` types for both path params + query params in the same file, causing TS2308 collisions; workaround: remove query params from endpoints that already have path params in the OpenAPI spec
+- `fs.strict: true` in Vite config means static assets must live inside the artifact directory; copy to `public/` instead of referencing `attached_assets/` via `src=`
 
 ## Pointers
 

@@ -1,15 +1,23 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: NeonSportz API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: leagues
+    description: League operations
+  - name: teams
+    description: Team operations
+  - name: players
+    description: Player operations
+  - name: games
+    description: Game operations
+
 paths:
   /healthz:
     get:
@@ -24,6 +32,440 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /leagues:
+    get:
+      operationId: listLeagues
+      tags: [leagues]
+      summary: List leagues
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: skill_level
+          in: query
+          schema:
+            type: string
+        - name: is_cross_play
+          in: query
+          schema:
+            type: boolean
+        - name: is_money_league
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of leagues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/League"
+    post:
+      operationId: createLeague
+      tags: [leagues]
+      summary: Create league
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeagueInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/League"
+
+  /leagues/featured:
+    get:
+      operationId: getFeaturedLeagues
+      tags: [leagues]
+      summary: Get featured leagues
+      responses:
+        "200":
+          description: Featured leagues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/League"
+
+  /leagues/{id}:
+    get:
+      operationId: getLeague
+      tags: [leagues]
+      summary: Get league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: League
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/League"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateLeague
+      tags: [leagues]
+      summary: Update league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeagueUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/League"
+    delete:
+      operationId: deleteLeague
+      tags: [leagues]
+      summary: Delete league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /leagues/{id}/summary:
+    get:
+      operationId: getLeagueSummary
+      tags: [leagues]
+      summary: Get league dashboard summary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: League summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeagueSummary"
+
+  /leagues/{id}/standings:
+    get:
+      operationId: getLeagueStandings
+      tags: [leagues]
+      summary: Get league standings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Standings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StandingEntry"
+
+  /leagues/{id}/stats/leaders:
+    get:
+      operationId: getLeagueStatLeaders
+      tags: [leagues]
+      summary: Get statistical leaders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Stat leaders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatLeaders"
+
+  /leagues/{id}/teams:
+    get:
+      operationId: getLeagueTeams
+      tags: [leagues]
+      summary: List teams in league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+    post:
+      operationId: addLeagueTeam
+      tags: [leagues]
+      summary: Add team to league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+
+  /leagues/{id}/games:
+    get:
+      operationId: getLeagueGames
+      tags: [leagues]
+      summary: List games in league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Game"
+    post:
+      operationId: createGame
+      tags: [games]
+      summary: Create game
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /teams/{id}:
+    get:
+      operationId: getTeam
+      tags: [teams]
+      summary: Get team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Team
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+    patch:
+      operationId: updateTeam
+      tags: [teams]
+      summary: Update team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+
+  /teams/{id}/players:
+    get:
+      operationId: getTeamPlayers
+      tags: [teams]
+      summary: Get players on team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Player"
+    post:
+      operationId: addPlayer
+      tags: [teams]
+      summary: Add player to team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+
+  /players/{id}:
+    get:
+      operationId: getPlayer
+      tags: [players]
+      summary: Get player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Player
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+    patch:
+      operationId: updatePlayer
+      tags: [players]
+      summary: Update player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+
+  /games/{id}:
+    patch:
+      operationId: updateGame
+      tags: [games]
+      summary: Update game score/status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +476,466 @@ components:
       required:
         - status
 
+    League:
+      type: object
+      required:
+        - id
+        - name
+        - commissioner_name
+        - platform
+        - difficulty
+        - category
+        - skill_level
+        - advance_time_hours
+        - week
+        - season
+        - phase
+        - member_count
+        - max_members
+        - is_cross_play
+        - is_money_league
+        - created_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        commissioner_name:
+          type: string
+        platform:
+          type: string
+          description: "PS5, Xbox, PC"
+        difficulty:
+          type: string
+          description: "ALL_MADDEN, PRO, ROOKIE, VETERAN"
+        category:
+          type: string
+          description: "REGULAR, FANTASY"
+        skill_level:
+          type: string
+          description: "BEGINNER, INTERMEDIATE, ADVANCED"
+        advance_time_hours:
+          type: integer
+        week:
+          type: integer
+        season:
+          type: integer
+        phase:
+          type: string
+          description: "PRE_SEASON, REGULAR_SEASON, POST_SEASON, SUPER_BOWL"
+        member_count:
+          type: integer
+        max_members:
+          type: integer
+        is_cross_play:
+          type: boolean
+        is_money_league:
+          type: boolean
+        description:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    LeagueInput:
+      type: object
+      required:
+        - name
+        - commissioner_name
+        - platform
+        - difficulty
+        - category
+        - skill_level
+        - advance_time_hours
+        - max_members
+      properties:
+        name:
+          type: string
+        commissioner_name:
+          type: string
+        platform:
+          type: string
+        difficulty:
+          type: string
+        category:
+          type: string
+        skill_level:
+          type: string
+        advance_time_hours:
+          type: integer
+        max_members:
+          type: integer
+        is_cross_play:
+          type: boolean
+        is_money_league:
+          type: boolean
+        description:
+          type: string
+
+    LeagueUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        difficulty:
+          type: string
+        category:
+          type: string
+        skill_level:
+          type: string
+        advance_time_hours:
+          type: integer
+        week:
+          type: integer
+        season:
+          type: integer
+        phase:
+          type: string
+        member_count:
+          type: integer
+        is_cross_play:
+          type: boolean
+        is_money_league:
+          type: boolean
+        description:
+          type: string
+
+    LeagueSummary:
+      type: object
+      required:
+        - league
+        - top_teams
+        - recent_games
+        - total_teams
+        - total_games_played
+        - current_week
+      properties:
+        league:
+          $ref: "#/components/schemas/League"
+        top_teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/Team"
+        recent_games:
+          type: array
+          items:
+            $ref: "#/components/schemas/Game"
+        total_teams:
+          type: integer
+        total_games_played:
+          type: integer
+        current_week:
+          type: integer
+
+    StandingEntry:
+      type: object
+      required:
+        - team
+        - wins
+        - losses
+        - ties
+        - points_for
+        - points_against
+        - conference
+        - division
+      properties:
+        team:
+          $ref: "#/components/schemas/Team"
+        wins:
+          type: integer
+        losses:
+          type: integer
+        ties:
+          type: integer
+        points_for:
+          type: integer
+        points_against:
+          type: integer
+        conference:
+          type: string
+        division:
+          type: string
+
+    StatLeaders:
+      type: object
+      required:
+        - passing
+        - rushing
+        - receiving
+        - defense
+      properties:
+        passing:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+        rushing:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+        receiving:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+        defense:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+
+    PlayerStatLine:
+      type: object
+      required:
+        - player
+        - team_name
+        - stat_label
+        - stat_value
+      properties:
+        player:
+          $ref: "#/components/schemas/Player"
+        team_name:
+          type: string
+        stat_label:
+          type: string
+        stat_value:
+          type: number
+
+    Team:
+      type: object
+      required:
+        - id
+        - league_id
+        - name
+        - city
+        - abbreviation
+        - conference
+        - division
+        - wins
+        - losses
+        - ties
+        - overall_rating
+        - is_user_team
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        name:
+          type: string
+        city:
+          type: string
+        abbreviation:
+          type: string
+        conference:
+          type: string
+          description: "AFC, NFC"
+        division:
+          type: string
+          description: "North, South, East, West"
+        wins:
+          type: integer
+        losses:
+          type: integer
+        ties:
+          type: integer
+        overall_rating:
+          type: integer
+        is_user_team:
+          type: boolean
+        primary_color:
+          type: ["string", "null"]
+        secondary_color:
+          type: ["string", "null"]
+
+    TeamInput:
+      type: object
+      required:
+        - name
+        - city
+        - abbreviation
+        - conference
+        - division
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        abbreviation:
+          type: string
+        conference:
+          type: string
+        division:
+          type: string
+        overall_rating:
+          type: integer
+        is_user_team:
+          type: boolean
+        primary_color:
+          type: string
+        secondary_color:
+          type: string
+
+    TeamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        wins:
+          type: integer
+        losses:
+          type: integer
+        ties:
+          type: integer
+        overall_rating:
+          type: integer
+        is_user_team:
+          type: boolean
+        primary_color:
+          type: string
+        secondary_color:
+          type: string
+
+    Player:
+      type: object
+      required:
+        - id
+        - team_id
+        - name
+        - position
+        - overall
+        - age
+        - speed
+        - strength
+        - awareness
+      properties:
+        id:
+          type: integer
+        team_id:
+          type: integer
+        name:
+          type: string
+        position:
+          type: string
+          description: "QB, RB, WR, TE, OL, DL, LB, CB, S, K, P"
+        overall:
+          type: integer
+        age:
+          type: integer
+        speed:
+          type: integer
+        strength:
+          type: integer
+        awareness:
+          type: integer
+        throwing_power:
+          type: ["integer", "null"]
+        catching:
+          type: ["integer", "null"]
+        tackling:
+          type: ["integer", "null"]
+
+    PlayerInput:
+      type: object
+      required:
+        - name
+        - position
+        - overall
+        - age
+      properties:
+        name:
+          type: string
+        position:
+          type: string
+        overall:
+          type: integer
+        age:
+          type: integer
+        speed:
+          type: integer
+        strength:
+          type: integer
+        awareness:
+          type: integer
+        throwing_power:
+          type: integer
+        catching:
+          type: integer
+        tackling:
+          type: integer
+
+    PlayerUpdate:
+      type: object
+      properties:
+        overall:
+          type: integer
+        speed:
+          type: integer
+        strength:
+          type: integer
+        awareness:
+          type: integer
+        throwing_power:
+          type: integer
+        catching:
+          type: integer
+        tackling:
+          type: integer
+
+    Game:
+      type: object
+      required:
+        - id
+        - league_id
+        - home_team_id
+        - away_team_id
+        - week
+        - season
+        - status
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        home_team_id:
+          type: integer
+        away_team_id:
+          type: integer
+        home_team_name:
+          type: ["string", "null"]
+        away_team_name:
+          type: ["string", "null"]
+        home_score:
+          type: ["integer", "null"]
+        away_score:
+          type: ["integer", "null"]
+        week:
+          type: integer
+        season:
+          type: integer
+        status:
+          type: string
+          description: "SCHEDULED, IN_PROGRESS, COMPLETED"
+
+    GameInput:
+      type: object
+      required:
+        - home_team_id
+        - away_team_id
+        - week
+        - season
+      properties:
+        home_team_id:
+          type: integer
+        away_team_id:
+          type: integer
+        week:
+          type: integer
+        season:
+          type: integer
+
+    GameUpdate:
+      type: object
+      properties:
+        home_score:
+          type: integer
+        away_score:
+          type: integer
+        status:
+          type: string
