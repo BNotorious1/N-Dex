@@ -50,7 +50,7 @@ export default defineConfig({
     fs: {
       strict: true,
     },
-    hmr: false,
+    hmr: true,
     headers: {
       "Cache-Control": "no-store",
     },
