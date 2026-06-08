@@ -19,19 +19,19 @@ export default function Home() {
           <div className="flex justify-center mb-6">
             <img
               src="/logo.png"
-              alt="NeonSportz"
+              alt="N-Dex"
               className="h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(0,200,255,0.5)]"
               data-testid="img-hero-logo"
             />
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight mb-4">
-            <span className="text-white">Neon</span>
-            <span className="text-[#00C8FF]">Sportz</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight mb-3">
+            <span className="text-white">N-</span>
+            <span className="text-[#00C8FF]">Dex</span>
           </h1>
 
-          <p className="text-white/50 text-lg max-w-2xl mx-auto mb-3">
-            Fast &amp; easy access to Madden franchise data
+          <p className="text-white/60 text-lg max-w-2xl mx-auto mb-3 italic tracking-wide">
+            The Notorious Franchise Index
           </p>
           <p className="text-white/30 text-sm max-w-xl mx-auto mb-10">
             View your Madden Franchise League teams, players, statistics, games, scores, and more from anywhere.

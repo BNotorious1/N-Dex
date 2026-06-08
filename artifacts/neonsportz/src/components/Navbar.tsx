@@ -14,12 +14,12 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <img
             src="/logo.png"
-            alt="NeonSportz"
+            alt="N-Dex"
             className="h-8 w-8 object-contain"
             data-testid="img-logo"
           />
           <span className="text-sm font-bold tracking-widest text-white uppercase hidden sm:block">
-            NeonSportz
+            N-Dex
           </span>
         </Link>
 
