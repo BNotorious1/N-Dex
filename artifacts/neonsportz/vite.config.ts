@@ -67,6 +67,10 @@ export default defineConfig({
       clientPort: 443,
       protocol: "wss",
     },
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Pragma": "no-cache",
+    },
     fs: {
       strict: true,
     },
