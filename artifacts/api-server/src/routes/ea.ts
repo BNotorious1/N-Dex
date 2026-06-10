@@ -3,6 +3,7 @@ import { db, leaguesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "node:crypto";
 import https from "node:https";
+import { logger } from "../lib/logger";
 
 const router = Router({ mergeParams: true });
 
@@ -255,9 +256,9 @@ function buildRequestInfo(
   commandId: number,
   payload: unknown,
   blazeId: string,
-): { apiVersion: number; clientDevice: number; requestInfo: Record<string, unknown> } {
+): { apiVersion: number; clientDevice: number; requestInfo: string } {
   const requestId = Math.floor(Math.random() * 1_000_000);
-  const expiry = Math.floor(Date.now() / 1000) + 300;
+  const expiry = Math.floor(Date.now() / 1000);
 
   const rand4 = crypto.randomBytes(4);
   const staticBytes = Buffer.from("634203362017bf72f70ba900c0aa4e6b", "hex");
@@ -280,21 +281,24 @@ function buildRequestInfo(
     .createHash("md5")
     .update(Buffer.concat([staticAuthCode, authDataBytes]))
     .digest("base64");
+  const authType = 17039361;
 
-  // requestInfo and requestPayload are plain objects, not pre-stringified
-  const requestInfo: Record<string, unknown> = {
+  // messageAuthData is the full auth object embedded as a JSON value (not a packed blob)
+  // This matches the Snallabot/EA reference implementation exactly.
+  const messageAuthData = { authData, authCode, authType };
+
+  // requestInfo must be a pre-stringified JSON string; requestPayload too
+  const requestInfo = JSON.stringify({
     commandName,
     componentId: 2060,
     commandId,
     componentName: "careermode",
-    messageAuthData: authData,
-    messageAuthCode: authCode,
-    messageAuthType: 17039361,
+    messageAuthData,
     messageExpirationTime: expiry,
     deviceId: MACHINE_KEY,
     ipAddress: "127.0.0.1",
-    requestPayload: payload,
-  };
+    requestPayload: JSON.stringify(payload),
+  });
 
   return { apiVersion: 2, clientDevice: 3, requestInfo };
 }
@@ -308,9 +312,21 @@ async function blazeRpc<T>(
   commandId: number,
   payload: unknown,
   blazeId: string,
+  log?: { debug: (obj: unknown, msg: string) => void; info: (obj: unknown, msg: string) => void },
 ): Promise<{ data: T; rawText: string }> {
   const serviceId = BLAZE_SERVICE_ID[platform] ?? BLAZE_SERVICE_ID["ps5"];
-  const body = JSON.stringify(buildRequestInfo(commandName, commandId, payload, blazeId));
+  const reqBody = buildRequestInfo(commandName, commandId, payload, blazeId);
+  const body = JSON.stringify(reqBody);
+
+  // Log the full outgoing request for debugging
+  const debugLog = log ?? logger;
+  debugLog.info({
+    blazeRpc: commandName,
+    commandId,
+    platform,
+    serviceId,
+    requestInfoParsed: JSON.parse(reqBody.requestInfo),
+  }, "blazeRpc outgoing request");
 
   const res = await doRequest(
     "POST",
@@ -325,6 +341,13 @@ async function blazeRpc<T>(
     },
   );
   const rawText = res.text();
+
+  debugLog.info({
+    blazeRpc: commandName,
+    httpStatus: res.status,
+    rawText: rawText.slice(0, 500),
+  }, "blazeRpc response");
+
   if (!res.ok) throw new Error(`Blaze RPC ${commandName} failed (${res.status}): ${rawText.slice(0, 300)}`);
   return { data: res.json<T>(), rawText };
 }
@@ -573,6 +596,7 @@ router.post("/select-league", async (req, res) => {
       801,
       {},
       blazeId,
+      req.log,
     );
 
     req.log.info({ leaguesRaw, leaguesText: leaguesText.slice(0, 1000) }, "GetMyLeagues raw response");
