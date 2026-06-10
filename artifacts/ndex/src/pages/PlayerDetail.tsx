@@ -383,7 +383,6 @@ export default function PlayerDetail() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <Navbar />
-
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="h-8 w-8 rounded-full border-2 border-[#00C8FF]/30 border-t-[#00C8FF] animate-spin" />
@@ -440,7 +439,7 @@ export default function PlayerDetail() {
                 >
                   {showPortrait ? (
                     <img
-                      src={portraitUrl(player.presentation_id!)}
+                      src="https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/3347.png"
                       alt={player.name}
                       onError={() => setPortraitError(true)}
                       className="w-full h-full object-cover object-top"
