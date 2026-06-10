@@ -157,7 +157,7 @@ function RatingRow({ label, value, max = 99 }: { label: string; value: number | 
   const color = ratingBarColor(value);
   return (
     <div className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-      <span className="text-[11px] text-white/45 uppercase tracking-wider w-36 shrink-0">{label}</span>
+      <span className="text-[11px] uppercase tracking-wider w-36 shrink-0 text-[#ffffff]">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-white/8 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
