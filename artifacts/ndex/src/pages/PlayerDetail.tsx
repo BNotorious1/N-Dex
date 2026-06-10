@@ -16,6 +16,7 @@ interface PlayerDetail {
   dev_trait: number | null;
   ea_player_id: string | null;
   presentation_id: number | null;
+  portrait_id: number | null;
   birth_year: number | null;
   birth_month: number | null;
   birth_day: number | null;
@@ -145,8 +146,8 @@ function espnLogoUrl(abbr: string): string {
   return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
 }
 
-function portraitUrl(presentationId: number): string {
-  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${presentationId}.png`;
+function portraitUrl(portraitId: number): string {
+  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
 }
 
 // ─── Small components ─────────────────────────────────────────────────────────
@@ -365,7 +366,7 @@ export default function PlayerDetail() {
 
   const teamColor = player?.team_primary_color ?? "#00C8FF";
   const [firstName, lastName] = player ? splitName(player.name) : ["", ""];
-  const showPortrait = !!player?.presentation_id && !portraitError;
+  const showPortrait = !!player?.portrait_id && !portraitError;
 
   const devInfo = player?.dev_trait != null
     ? DEV_TRAIT[player.dev_trait] ?? DEV_TRAIT[0]!
@@ -439,7 +440,7 @@ export default function PlayerDetail() {
                 >
                   {showPortrait ? (
                     <img
-                      src="https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/3347.png"
+                      src={portraitUrl(player.portrait_id!)}
                       alt={player.name}
                       onError={() => setPortraitError(true)}
                       className="w-full h-full object-cover object-top"

@@ -996,7 +996,10 @@ components:
           type: ["string", "null"]
         presentation_id:
           type: ["integer", "null"]
-          description: "EA portrait CDN ID"
+          description: "EA presentation ID (player identity key)"
+        portrait_id:
+          type: ["integer", "null"]
+          description: "EA portrait CDN ID (used in portrait image URLs)"
         birth_year:
           type: ["integer", "null"]
         birth_month:

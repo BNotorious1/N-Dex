@@ -29,10 +29,15 @@ export interface PlayerDetail {
   /** @nullable */
   ea_player_id?: string | null;
   /**
-     * EA portrait CDN ID
+     * EA presentation ID (player identity key)
      * @nullable
      */
   presentation_id?: number | null;
+  /**
+     * EA portrait CDN ID (used in portrait image URLs)
+     * @nullable
+     */
+  portrait_id?: number | null;
   /** @nullable */
   birth_year?: number | null;
   /** @nullable */

@@ -69,6 +69,7 @@ router.get("/:id", async (req, res) => {
     dev_trait: player.devTrait,
     ea_player_id: player.eaPlayerId,
     presentation_id: player.presentationId,
+    portrait_id: player.portraitId,
     birth_year: player.birthYear,
     birth_month: player.birthMonth,
     birth_day: player.birthDay,

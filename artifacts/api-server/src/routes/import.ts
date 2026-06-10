@@ -136,6 +136,7 @@ export async function upsertTeamRoster(
       devTrait: ni(p, "devTrait"),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
       presentationId: ni(p, "presentationId"),
+      portraitId: ni(p, "portraitId"),
       birthYear: ni(p, "birthYear"),
       birthMonth: ni(p, "birthMonth"),
       birthDay: ni(p, "birthDay"),
