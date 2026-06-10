@@ -28,7 +28,7 @@ import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
 import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
 
 export type LeagueSection =
-  | "home" | "rules" | "news" | "teams" | "players" | "suspensions"
+  | "home" | "rules" | "news" | "teams" | "players" | "players-search" | "suspensions"
   | "games" | "statistics" | "standings" | "transactions" | "draft"
   | "rankings" | "trades" | "awards"
   | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
@@ -106,7 +106,7 @@ export default function LeagueDetail() {
               <HomeSection summary={summary} statLeaders={statLeaders} standings={standings} />
             )}
             {section === "teams" && <TeamsSection teams={teams ?? []} leagueId={leagueId} />}
-            {section === "players" && <PlayersSection leagueId={leagueId} />}
+            {(section === "players" || section === "players-search") && <PlayersSection leagueId={leagueId} />}
             {section === "standings" && <StandingsSection standings={standings ?? []} />}
             {section === "games" && <GamesSection games={games ?? []} />}
             {section === "statistics" && <StatisticsSection statLeaders={statLeaders} />}

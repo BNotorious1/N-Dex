@@ -1,5 +1,5 @@
 import {
-  Home, FileText, Newspaper, Users, User, Ban, Calendar,
+  Home, FileText, Newspaper, Users, User, Ban, Calendar, Search,
   BarChart3, ListOrdered, ArrowLeftRight, ClipboardList,
   TrendingUp, Repeat2, Download, Trophy, ChevronDown, ChevronRight,
   ShieldCheck, Settings2, Plug, UserCog, SkipForward, UserPlus, Activity,
@@ -30,7 +30,10 @@ const NAV: NavItem[] = [
   { key: "teams", label: "Teams", icon: Users },
   {
     key: "players", label: "Players", icon: User,
-    sub: [{ key: "suspensions", label: "Suspensions", icon: Ban }],
+    sub: [
+      { key: "players-search", label: "Search", icon: Search },
+      { key: "suspensions", label: "Suspensions", icon: Ban },
+    ],
   },
   { key: "games", label: "Games", icon: Calendar },
   { key: "statistics", label: "Statistics", icon: BarChart3 },
