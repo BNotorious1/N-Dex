@@ -202,7 +202,11 @@ interface BlazeSession {
   blazeId: string;
 }
 
-async function blazeLogin(accessToken: string, platform: string): Promise<BlazeSession> {
+async function blazeLogin(
+  accessToken: string,
+  platform: string,
+  logger?: { info: (obj: unknown, msg: string) => void },
+): Promise<BlazeSession> {
   const productName = BLAZE_PRODUCT[platform] ?? BLAZE_PRODUCT["ps5"];
   const serviceId = BLAZE_SERVICE_ID[platform] ?? BLAZE_SERVICE_ID["ps5"];
   const body = JSON.stringify({ accessToken, productName });
@@ -220,19 +224,27 @@ async function blazeLogin(accessToken: string, platform: string): Promise<BlazeS
     },
   );
 
-  if (!res.ok) throw new Error(`Blaze login failed (${res.status}): ${res.text().slice(0, 200)}`);
+  const rawText = res.text();
+  if (!res.ok) throw new Error(`Blaze login failed (${res.status}): ${rawText.slice(0, 200)}`);
 
-  type BlazeLoginResp = {
-    userLoginInfo?: {
-      sessionKey?: string;
-      personaDetails?: { personaId?: string | number };
-    };
-  };
+  type BlazeLoginResp = Record<string, unknown>;
   const data = res.json<BlazeLoginResp>();
-  const sessionKey = data.userLoginInfo?.sessionKey;
-  const blazeId = String(data.userLoginInfo?.personaDetails?.personaId ?? "");
+  logger?.info({ blazeLoginRaw: data, rawText: rawText.slice(0, 600) }, "Blaze login raw response");
 
-  if (!sessionKey) throw new Error("Blaze login did not return a sessionKey");
+  // Try multiple known paths for sessionKey and blazeId
+  const info = (data["userLoginInfo"] ?? data["loginInfo"] ?? data) as Record<string, unknown>;
+  const sessionKey =
+    (info["sessionKey"] as string | undefined) ??
+    (data["sessionKey"] as string | undefined);
+  const personaDetails =
+    (info["personaDetails"] as Record<string, unknown> | undefined) ??
+    (info["personaDetail"] as Record<string, unknown> | undefined) ??
+    (info as Record<string, unknown>);
+  const blazeId = String(
+    personaDetails?.["personaId"] ?? personaDetails?.["blazeId"] ?? info["blazeId"] ?? "",
+  );
+
+  if (!sessionKey) throw new Error(`Blaze login did not return a sessionKey. Raw: ${rawText.slice(0, 200)}`);
   return { sessionKey, blazeId };
 }
 
@@ -243,7 +255,7 @@ function buildRequestInfo(
   commandId: number,
   payload: unknown,
   blazeId: string,
-): { apiVersion: number; clientDevice: number; requestInfo: string } {
+): { apiVersion: number; clientDevice: number; requestInfo: Record<string, unknown> } {
   const requestId = Math.floor(Math.random() * 1_000_000);
   const expiry = Math.floor(Date.now() / 1000) + 300;
 
@@ -269,7 +281,8 @@ function buildRequestInfo(
     .update(Buffer.concat([staticAuthCode, authDataBytes]))
     .digest("base64");
 
-  const requestInfo = JSON.stringify({
+  // requestInfo and requestPayload are plain objects, not pre-stringified
+  const requestInfo: Record<string, unknown> = {
     commandName,
     componentId: 2060,
     commandId,
@@ -280,8 +293,8 @@ function buildRequestInfo(
     messageExpirationTime: expiry,
     deviceId: MACHINE_KEY,
     ipAddress: "127.0.0.1",
-    requestPayload: JSON.stringify(payload),
-  });
+    requestPayload: payload,
+  };
 
   return { apiVersion: 2, clientDevice: 3, requestInfo };
 }
@@ -548,7 +561,7 @@ router.post("/select-league", async (req, res) => {
     const expiry = Math.floor(Date.now() / 1000) + expires_in;
 
     // Step 8: Blaze login
-    const { sessionKey, blazeId } = await blazeLogin(personaAccessToken, platform);
+    const { sessionKey, blazeId } = await blazeLogin(personaAccessToken, platform, req.log);
 
     // Step 9: Get My Leagues
     type RawLeague = Record<string, unknown>;
@@ -563,6 +576,16 @@ router.post("/select-league", async (req, res) => {
     );
 
     req.log.info({ leaguesRaw, leaguesText: leaguesText.slice(0, 1000) }, "GetMyLeagues raw response");
+
+    // Surface Blaze-level errors from the response body
+    if (leaguesRaw["error"]) {
+      const blazeErr = leaguesRaw["error"] as Record<string, unknown>;
+      const errTdf = blazeErr["errortdf"] as Record<string, unknown> | undefined;
+      const msg = (errTdf?.["errorString"] as string | undefined)
+        ?? String(blazeErr["errorname"] ?? "Blaze error");
+      res.status(502).json({ message: `EA Blaze: ${msg} (code ${blazeErr["errorcode"] ?? "?"})` });
+      return;
+    }
 
     // Flexibly extract league array from any known response shape
     function extractLeagueArray(obj: Record<string, unknown>): RawLeague[] {
