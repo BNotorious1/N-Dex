@@ -49,6 +49,10 @@ function formatPlayer(player: typeof playersTable.$inferSelect) {
   };
 }
 
+function isCompleted(status: string | null) {
+  return status === "COMPLETED" || status === "FINAL";
+}
+
 // GET /teams/:id
 router.get("/:id", async (req, res) => {
   const parseResult = GetTeamParams.safeParse({ id: Number(req.params.id) });
@@ -56,12 +60,30 @@ router.get("/:id", async (req, res) => {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const [team] = await db.select().from(teamsTable).where(eq(teamsTable.id, parseResult.data.id));
+  const teamId = parseResult.data.id;
+  const [[team], games] = await Promise.all([
+    db.select().from(teamsTable).where(eq(teamsTable.id, teamId)),
+    db.select().from(gamesTable).where(
+      or(eq(gamesTable.homeTeamId, teamId), eq(gamesTable.awayTeamId, teamId))
+    ),
+  ]);
   if (!team) {
     res.status(404).json({ error: "Team not found" });
     return;
   }
-  res.json(formatTeam(team));
+  let wins = 0, losses = 0, ties = 0;
+  for (const g of games) {
+    if (!isCompleted(g.status)) continue;
+    const h = g.homeScore ?? 0;
+    const a = g.awayScore ?? 0;
+    const isHome = g.homeTeamId === teamId;
+    const teamScore = isHome ? h : a;
+    const oppScore  = isHome ? a : h;
+    if (teamScore > oppScore) wins++;
+    else if (oppScore > teamScore) losses++;
+    else ties++;
+  }
+  res.json({ ...formatTeam(team), wins, losses, ties });
 });
 
 // PATCH /teams/:id

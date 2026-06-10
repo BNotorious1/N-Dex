@@ -62,6 +62,27 @@ function formatLeague(league: typeof leaguesTable.$inferSelect) {
   };
 }
 
+function isCompleted(status: string | null) {
+  return status === "COMPLETED" || status === "FINAL";
+}
+
+function computeTeamRecords(games: (typeof gamesTable.$inferSelect)[]) {
+  const records = new Map<number, { wins: number; losses: number; ties: number }>();
+  const ensure = (id: number) => {
+    if (!records.has(id)) records.set(id, { wins: 0, losses: 0, ties: 0 });
+    return records.get(id)!;
+  };
+  for (const g of games) {
+    if (!isCompleted(g.status)) continue;
+    const h = g.homeScore ?? 0;
+    const a = g.awayScore ?? 0;
+    if (h > a) { ensure(g.homeTeamId).wins++;  ensure(g.awayTeamId).losses++; }
+    else if (a > h) { ensure(g.awayTeamId).wins++;  ensure(g.homeTeamId).losses++; }
+    else           { ensure(g.homeTeamId).ties++;   ensure(g.awayTeamId).ties++;  }
+  }
+  return records;
+}
+
 function formatTeam(team: typeof teamsTable.$inferSelect) {
   return {
     id: team.id,
@@ -253,21 +274,32 @@ router.get("/:id/summary", async (req, res) => {
     return;
   }
   const allTeams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
-  const topTeams = [...allTeams].sort((a, b) => b.wins - a.wins || a.losses - b.losses).slice(0, 5);
-
   const allGames = await db.select().from(gamesTable).where(eq(gamesTable.leagueId, leagueId));
+  const records = computeTeamRecords(allGames);
+
+  const topTeams = [...allTeams]
+    .sort((a, b) => {
+      const rA = records.get(a.id) ?? { wins: 0, losses: 0, ties: 0 };
+      const rB = records.get(b.id) ?? { wins: 0, losses: 0, ties: 0 };
+      return rB.wins - rA.wins || rA.losses - rB.losses;
+    })
+    .slice(0, 5);
+
   const teamMap = new Map(allTeams.map(t => [t.id, t]));
   const recentGames = allGames
-    .filter(g => g.status === "COMPLETED")
+    .filter(g => isCompleted(g.status))
     .sort((a, b) => b.week - a.week)
     .slice(0, 5)
     .map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name));
 
-  const totalGamesPlayed = allGames.filter(g => g.status === "COMPLETED").length;
+  const totalGamesPlayed = allGames.filter(g => isCompleted(g.status)).length;
 
   res.json({
     league: formatLeague(league),
-    top_teams: topTeams.map(formatTeam),
+    top_teams: topTeams.map(t => {
+      const r = records.get(t.id) ?? { wins: 0, losses: 0, ties: 0 };
+      return { ...formatTeam(t), wins: r.wins, losses: r.losses, ties: r.ties };
+    }),
     recent_games: recentGames,
     total_teams: allTeams.length,
     total_games_played: totalGamesPlayed,
@@ -286,9 +318,11 @@ router.get("/:id/standings", async (req, res) => {
   const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
   const allGames = await db.select().from(gamesTable).where(eq(gamesTable.leagueId, leagueId));
 
+  const records = computeTeamRecords(allGames);
+
   const pointsMap = new Map<number, { for: number; against: number }>();
   for (const game of allGames) {
-    if (game.status !== "COMPLETED") continue;
+    if (!isCompleted(game.status)) continue;
     const hScore = game.homeScore ?? 0;
     const aScore = game.awayScore ?? 0;
     if (!pointsMap.has(game.homeTeamId)) pointsMap.set(game.homeTeamId, { for: 0, against: 0 });
@@ -300,17 +334,24 @@ router.get("/:id/standings", async (req, res) => {
   }
 
   const standings = teams
-    .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
-    .map(team => ({
-      team: formatTeam(team),
-      wins: team.wins,
-      losses: team.losses,
-      ties: team.ties,
-      points_for: pointsMap.get(team.id)?.for ?? 0,
-      points_against: pointsMap.get(team.id)?.against ?? 0,
-      conference: team.conference,
-      division: team.division,
-    }));
+    .sort((a, b) => {
+      const rA = records.get(a.id) ?? { wins: 0, losses: 0, ties: 0 };
+      const rB = records.get(b.id) ?? { wins: 0, losses: 0, ties: 0 };
+      return rB.wins - rA.wins || rA.losses - rB.losses;
+    })
+    .map(team => {
+      const r = records.get(team.id) ?? { wins: 0, losses: 0, ties: 0 };
+      return {
+        team: { ...formatTeam(team), wins: r.wins, losses: r.losses, ties: r.ties },
+        wins: r.wins,
+        losses: r.losses,
+        ties: r.ties,
+        points_for: pointsMap.get(team.id)?.for ?? 0,
+        points_against: pointsMap.get(team.id)?.against ?? 0,
+        conference: team.conference,
+        division: team.division,
+      };
+    });
 
   res.json(standings);
 });
@@ -360,20 +401,31 @@ router.get("/:id/teams", async (req, res) => {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const rows = await db
-    .select({
-      team: teamsTable,
-      memberDiscord: membersTable.discordName,
-      memberGamertag: membersTable.gamerTag,
-    })
-    .from(teamsTable)
-    .leftJoin(membersTable, eq(membersTable.teamId, teamsTable.id))
-    .where(eq(teamsTable.leagueId, parseResult.data.id));
-  res.json(rows.map(r => ({
-    ...formatTeam(r.team),
-    member_discord: r.memberDiscord ?? null,
-    member_gamertag: r.memberGamertag ?? null,
-  })));
+  const leagueId = parseResult.data.id;
+  const [rows, allGames] = await Promise.all([
+    db
+      .select({
+        team: teamsTable,
+        memberDiscord: membersTable.discordName,
+        memberGamertag: membersTable.gamerTag,
+      })
+      .from(teamsTable)
+      .leftJoin(membersTable, eq(membersTable.teamId, teamsTable.id))
+      .where(eq(teamsTable.leagueId, leagueId)),
+    db.select().from(gamesTable).where(eq(gamesTable.leagueId, leagueId)),
+  ]);
+  const records = computeTeamRecords(allGames);
+  res.json(rows.map(r => {
+    const rec = records.get(r.team.id) ?? { wins: 0, losses: 0, ties: 0 };
+    return {
+      ...formatTeam(r.team),
+      wins: rec.wins,
+      losses: rec.losses,
+      ties: rec.ties,
+      member_discord: r.memberDiscord ?? null,
+      member_gamertag: r.memberGamertag ?? null,
+    };
+  }));
 });
 
 // GET /leagues/:id/members
