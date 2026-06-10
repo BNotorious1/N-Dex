@@ -24,6 +24,7 @@ import StatisticsSection from "@/components/league/sections/StatisticsSection";
 import RankingsSection from "@/components/league/sections/RankingsSection";
 import PlaceholderSection from "@/components/league/sections/PlaceholderSection";
 import AdminSettingsSection from "@/components/league/sections/AdminSettingsSection";
+import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "suspensions"
@@ -130,11 +131,7 @@ export default function LeagueDetail() {
               <AdminSettingsSection league={league} />
             )}
             {section === "admin-ea-connect" && (
-              <PlaceholderSection
-                icon="Plug"
-                title="EA Connect"
-                description="Link your EA account to sync Madden franchise data automatically. EA Connect integration coming soon."
-              />
+              <AdminEAConnect leagueId={leagueId} />
             )}
             {section === "admin-members" && (
               <PlaceholderSection

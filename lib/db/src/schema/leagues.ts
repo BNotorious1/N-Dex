@@ -19,6 +19,7 @@ export const leaguesTable = pgTable("leagues", {
   isCrossPlay: boolean("is_cross_play").notNull().default(false),
   isMoneyLeague: boolean("is_money_league").notNull().default(false),
   description: text("description"),
+  eaLeagueId: text("ea_league_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
