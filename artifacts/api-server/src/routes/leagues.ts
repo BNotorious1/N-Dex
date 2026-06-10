@@ -411,4 +411,28 @@ router.post("/:id/games", async (req, res) => {
   res.status(201).json(formatGame(game));
 });
 
+// GET /leagues/:id/players
+router.get("/:id/players", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
+  const teamMap = new Map(teams.map((t) => [t.id, t]));
+  const players = await db
+    .select()
+    .from(playersTable)
+    .where(sql`${playersTable.teamId} IN (SELECT id FROM teams WHERE league_id = ${leagueId})`);
+  res.json(
+    players.map((p) => ({
+      ...formatPlayer(p),
+      team_name: teamMap.get(p.teamId)?.name ?? "Unknown",
+      team_abbreviation: teamMap.get(p.teamId)?.abbreviation ?? "UNK",
+      team_city: teamMap.get(p.teamId)?.city ?? "",
+      team_primary_color: teamMap.get(p.teamId)?.primaryColor ?? null,
+    }))
+  );
+});
+
 export default router;
