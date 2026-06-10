@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
+import TeamLogo from "@/components/TeamLogo";
 
 interface LeaguePlayer {
   id: number; name: string; position: string;
@@ -108,12 +109,12 @@ export default function PlayersSection({ leagueId }: { leagueId: number }) {
                 <td className="px-4 py-2.5 font-semibold text-white">{p.name}</td>
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-1.5">
-                    <div
-                      className="h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-black text-white shrink-0"
-                      style={{ backgroundColor: p.team_primary_color ?? "#333" }}
-                    >
-                      {p.team_abbreviation.slice(0, 2)}
-                    </div>
+                    <TeamLogo
+                      abbreviation={p.team_abbreviation}
+                      primaryColor={p.team_primary_color}
+                      size="xs"
+                      shape="circle"
+                    />
                     <span className="text-white/60">{p.team_name}</span>
                   </div>
                 </td>

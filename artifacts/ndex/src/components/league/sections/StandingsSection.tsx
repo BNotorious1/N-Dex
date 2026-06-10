@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import TeamLogo from "@/components/TeamLogo";
 
 interface Team {
   id: number; name: string; city: string; abbreviation: string;
@@ -74,12 +75,12 @@ function StandingsTable({ entries, title }: { entries: StandingEntry[]; title?: 
                   <td className="px-4 py-2.5 text-white/25 text-[10px]">{i + 1}</td>
                   <td className="px-3 py-2.5">
                     <Link href={`/teams/${e.team.id}`} className="flex items-center gap-2 hover:text-[#00C8FF] transition-colors">
-                      <div
-                        className="h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black text-white shrink-0"
-                        style={{ backgroundColor: e.team.primary_color ?? "#333" }}
-                      >
-                        {e.team.abbreviation.slice(0, 2)}
-                      </div>
+                      <TeamLogo
+                        abbreviation={e.team.abbreviation}
+                        primaryColor={e.team.primary_color}
+                        size="sm"
+                        shape="circle"
+                      />
                       <span className="font-semibold text-white">{e.team.city} {e.team.name}</span>
                     </Link>
                   </td>

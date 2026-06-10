@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import TeamLogo from "@/components/TeamLogo";
 
 interface Team {
   id: number; name: string; city: string; abbreviation: string;
@@ -199,14 +200,13 @@ function GameCard({ game }: { game: Game }) {
 }
 
 function TeamBadge({ team, size }: { team: { abbreviation: string; primary_color?: string | null }; size: "xs" | "sm" }) {
-  const dim = size === "sm" ? "h-5 w-5 text-[8px]" : "h-4 w-4 text-[7px]";
   return (
-    <div
-      className={`${dim} rounded-full flex items-center justify-center font-black text-white shrink-0`}
-      style={{ backgroundColor: team.primary_color ?? "#333" }}
-    >
-      {team.abbreviation.slice(0, 2)}
-    </div>
+    <TeamLogo
+      abbreviation={team.abbreviation}
+      primaryColor={team.primary_color}
+      size={size}
+      shape="circle"
+    />
   );
 }
 

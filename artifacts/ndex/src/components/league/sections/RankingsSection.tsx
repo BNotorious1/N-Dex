@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import TeamLogo from "@/components/TeamLogo";
 
 interface Team {
   id: number; name: string; city: string; abbreviation: string;
@@ -63,12 +64,12 @@ export default function RankingsSection({ standings }: Props) {
                   </td>
                   <td className="px-3 py-3">
                     <Link href={`/teams/${e.team.id}`} className="flex items-center gap-2 hover:text-[#00C8FF] transition-colors">
-                      <div
-                        className="h-6 w-6 rounded-lg flex items-center justify-center text-[9px] font-black text-white shrink-0"
-                        style={{ backgroundColor: e.team.primary_color ?? "#333" }}
-                      >
-                        {e.team.abbreviation}
-                      </div>
+                      <TeamLogo
+                        abbreviation={e.team.abbreviation}
+                        primaryColor={e.team.primary_color}
+                        size="md"
+                        shape="rounded"
+                      />
                       <span className="font-bold text-white">{e.team.city} {e.team.name}</span>
                     </Link>
                   </td>

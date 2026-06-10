@@ -8,6 +8,7 @@ import {
   getGetTeamGamesQueryKey,
 } from "@workspace/api-client-react";
 import Navbar from "@/components/Navbar";
+import TeamLogo from "@/components/TeamLogo";
 import type { TeamGame } from "@workspace/api-client-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -166,15 +167,16 @@ export default function TeamDetail() {
           <div className="flex items-center gap-6">
             {/* Team logo */}
             <div
-              className="h-20 w-20 shrink-0 rounded-full flex items-center justify-center text-base font-black text-white shadow-2xl border-2"
-              style={{
-                backgroundColor: primaryColor,
-                borderColor: `${primaryColor}80`,
-                boxShadow: `0 0 32px ${primaryColor}40`,
-              }}
+              className="shrink-0 shadow-2xl"
+              style={{ filter: `drop-shadow(0 0 16px ${primaryColor}50)` }}
               data-testid="img-team-logo"
             >
-              {team.abbreviation}
+              <TeamLogo
+                abbreviation={team.abbreviation}
+                primaryColor={primaryColor}
+                size="2xl"
+                shape="circle"
+              />
             </div>
 
             {/* Name + meta */}
@@ -315,12 +317,12 @@ export default function TeamDetail() {
                         <td className="px-3 py-2.5 text-[10px] text-white/30">{isHome ? "vs" : "@"}</td>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center gap-2">
-                            <div
-                              className="h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black text-white shrink-0"
-                              style={{ backgroundColor: oppColor }}
-                            >
-                              {(oppAbbr ?? "").slice(0, 2)}
-                            </div>
+                            <TeamLogo
+                              abbreviation={oppAbbr ?? "—"}
+                              primaryColor={oppColor}
+                              size="sm"
+                              shape="circle"
+                            />
                             <span className="font-semibold text-white/80">{oppAbbr}</span>
                           </div>
                         </td>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Search, SlidersHorizontal } from "lucide-react";
+import TeamLogo from "@/components/TeamLogo";
 
 interface Team {
   id: number; name: string; city: string; abbreviation: string;
@@ -82,12 +83,12 @@ export default function TeamsSection({ teams }: Props) {
                 <tr key={team.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
                   <td className="px-4 py-3">
                     <Link href={`/teams/${team.id}`} className="flex items-center gap-3 hover:text-[#00C8FF] transition-colors group">
-                      <div
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black text-white shrink-0"
-                        style={{ backgroundColor: team.primary_color ?? "#333" }}
-                      >
-                        {team.abbreviation}
-                      </div>
+                      <TeamLogo
+                        abbreviation={team.abbreviation}
+                        primaryColor={team.primary_color}
+                        size="lg"
+                        shape="rounded"
+                      />
                       <div>
                         <p className="font-bold text-white group-hover:text-[#00C8FF] transition-colors">
                           {team.city} {team.name}
