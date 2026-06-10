@@ -126,10 +126,11 @@ function ovrColor(v: number) {
 }
 
 function ratingBarColor(v: number) {
-  if (v >= 90) return "#00C8FF";
-  if (v >= 80) return "#4ade80";
-  if (v >= 70) return "#facc15";
-  return "#F44336";
+  if (v >= 91) return "#15803d";
+  if (v >= 81) return "#22c55e";
+  if (v >= 71) return "#facc15";
+  if (v >= 61) return "#f97316";
+  return "#ef4444";
 }
 
 function splitName(fullName: string): [string, string] {
@@ -314,7 +315,7 @@ function getAttrGroups(p: PlayerDetail): AttrGroup[] {
     ],
   };
 
-  return [physical, mental, passing, receiving, carrying, blocking, defense, coverage, kicking];
+  return [physical, mental, passing, receiving, carrying, passRush, blocking, defense, coverage, kicking];
 }
 
 // ─── Attributes tab ───────────────────────────────────────────────────────────
