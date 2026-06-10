@@ -190,23 +190,11 @@ function PlaceholderTab({ icon, title, description }: { icon: React.ReactNode; t
   );
 }
 
-// ─── Position groups ──────────────────────────────────────────────────────────
-
-const POS_QB    = new Set(["QB"]);
-const POS_WR    = new Set(["WR"]);
-const POS_TE    = new Set(["TE"]);
-const POS_HB    = new Set(["HB", "RB", "FB"]);
-const POS_OL    = new Set(["LT", "LG", "C", "RG", "RT", "OL", "OT", "OG"]);
-const POS_DL    = new Set(["DE", "DT", "NT", "LEDGE", "REDGE", "RE", "LE"]);
-const POS_LB    = new Set(["MLB", "LOLB", "ROLB", "LB", "MIKE", "WILL", "SAM"]);
-const POS_DB    = new Set(["CB", "FS", "SS", "S", "DB"]);
-const POS_K     = new Set(["K", "P"]);
+// ─── Attribute groups ─────────────────────────────────────────────────────────
 
 type AttrGroup = { title: string; rows: { label: string; value: number | null | undefined }[] };
 
 function getAttrGroups(p: PlayerDetail): AttrGroup[] {
-  const pos = p.position.toUpperCase();
-
   const physical: AttrGroup = {
     title: "Physical",
     rows: [
@@ -326,35 +314,7 @@ function getAttrGroups(p: PlayerDetail): AttrGroup[] {
     ],
   };
 
-  if (POS_QB.has(pos))
-    return [physical, passing, mental];
-
-  if (POS_WR.has(pos))
-    return [physical, receiving, carrying, mental];
-
-  if (POS_TE.has(pos))
-    return [physical, receiving, blocking, mental];
-
-  if (POS_HB.has(pos))
-    return [physical, carrying, receiving, blocking, mental];
-
-  if (POS_OL.has(pos))
-    return [physical, blocking, mental];
-
-  if (POS_DL.has(pos))
-    return [physical, passRush, defense, mental];
-
-  if (POS_LB.has(pos))
-    return [physical, defense, coverage, blocking, mental];
-
-  if (POS_DB.has(pos))
-    return [physical, coverage, defense, mental];
-
-  if (POS_K.has(pos))
-    return [physical, kicking, mental];
-
-  // Fallback: show everything that has data
-  return [physical, passing, receiving, carrying, blocking, defense, coverage, kicking, mental];
+  return [physical, mental, passing, receiving, carrying, blocking, defense, coverage, kicking];
 }
 
 // ─── Attributes tab ───────────────────────────────────────────────────────────
