@@ -130,7 +130,7 @@ function ratingBarColor(v: number) {
   if (v >= 81) return "#22c55e";
   if (v >= 71) return "#facc15";
   if (v >= 61) return "#f97316";
-  return "#ef4444";
+  return "#b91c1c";
 }
 
 function splitName(fullName: string): [string, string] {
