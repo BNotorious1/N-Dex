@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, playersTable } from "@workspace/db";
+import { db, playersTable, teamsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody } from "@workspace/api-zod";
 
@@ -22,19 +22,64 @@ function formatPlayer(player: typeof playersTable.$inferSelect) {
   };
 }
 
-// GET /players/:id
+// GET /players/:id — returns full PlayerDetail with team context
 router.get("/:id", async (req, res) => {
   const parseResult = GetPlayerParams.safeParse({ id: Number(req.params.id) });
   if (!parseResult.success) {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const [player] = await db.select().from(playersTable).where(eq(playersTable.id, parseResult.data.id));
-  if (!player) {
+  const rows = await db
+    .select({
+      player: playersTable,
+      team: {
+        id: teamsTable.id,
+        name: teamsTable.name,
+        city: teamsTable.city,
+        abbreviation: teamsTable.abbreviation,
+        primaryColor: teamsTable.primaryColor,
+        secondaryColor: teamsTable.secondaryColor,
+        leagueId: teamsTable.leagueId,
+      },
+    })
+    .from(playersTable)
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(eq(playersTable.id, parseResult.data.id))
+    .limit(1);
+
+  if (rows.length === 0) {
     res.status(404).json({ error: "Player not found" });
     return;
   }
-  res.json(formatPlayer(player));
+
+  const { player, team } = rows[0]!;
+  res.json({
+    id: player.id,
+    team_id: player.teamId,
+    team_name: team.name,
+    team_city: team.city,
+    team_abbreviation: team.abbreviation,
+    team_primary_color: team.primaryColor,
+    team_secondary_color: team.secondaryColor,
+    league_id: team.leagueId,
+    name: player.name,
+    position: player.position,
+    overall: player.overall,
+    age: player.age,
+    speed: player.speed,
+    strength: player.strength,
+    awareness: player.awareness,
+    throwing_power: player.throwingPower,
+    catching: player.catching,
+    tackling: player.tackling,
+    dev_trait: player.devTrait,
+    ea_player_id: player.eaPlayerId,
+    birth_year: player.birthYear,
+    birth_month: player.birthMonth,
+    birth_day: player.birthDay,
+    acceleration: player.acceleration,
+    agility: player.agility,
+  });
 });
 
 // PATCH /players/:id

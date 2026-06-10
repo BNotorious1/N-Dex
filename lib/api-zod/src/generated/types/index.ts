@@ -19,6 +19,7 @@ export * from './member';
 export * from './memberInput';
 export * from './memberUpdate';
 export * from './player';
+export * from './playerDetail';
 export * from './playerInput';
 export * from './playerStatLine';
 export * from './playerUpdate';

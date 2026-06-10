@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Ban, SlidersHorizontal } from "lucide-react";
 import TeamLogo from "@/components/TeamLogo";
@@ -230,9 +231,12 @@ function PlayerSearchTab({ leagueId }: { leagueId: number }) {
                 <tr key={p.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors group">
                   {/* Player name */}
                   <td className="px-4 py-2.5">
-                    <span className="font-semibold text-white group-hover:text-[#00C8FF] transition-colors">
+                    <Link
+                      href={`/players/${p.id}`}
+                      className="font-semibold text-white hover:text-[#00C8FF] transition-colors hover:underline underline-offset-2"
+                    >
                       {p.name}
-                    </span>
+                    </Link>
                   </td>
                   {/* Team */}
                   <td className="px-3 py-2.5">

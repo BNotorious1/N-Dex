@@ -33,6 +33,7 @@ import type {
   MemberInput,
   MemberUpdate,
   Player,
+  PlayerDetail,
   PlayerInput,
   PlayerUpdate,
   StandingEntry,
@@ -1794,9 +1795,9 @@ export const getGetPlayerUrl = (id: number,) => {
 /**
  * @summary Get player
  */
-export const getPlayer = async (id: number, options?: RequestInit): Promise<Player> => {
+export const getPlayer = async (id: number, options?: RequestInit): Promise<PlayerDetail> => {
 
-  return customFetch<Player>(getGetPlayerUrl(id),
+  return customFetch<PlayerDetail>(getGetPlayerUrl(id),
   {
     ...options,
     method: 'GET'

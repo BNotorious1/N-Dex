@@ -661,8 +661,14 @@ export const GetPlayerParams = zod.object({
 export const GetPlayerResponse = zod.object({
   "id": zod.number(),
   "team_id": zod.number(),
+  "team_name": zod.string(),
+  "team_city": zod.string(),
+  "team_abbreviation": zod.string(),
+  "team_primary_color": zod.string().nullish(),
+  "team_secondary_color": zod.string().nullish(),
+  "league_id": zod.number(),
   "name": zod.string(),
-  "position": zod.string().describe('QB, RB, WR, TE, OL, DL, LB, CB, S, K, P'),
+  "position": zod.string(),
   "overall": zod.number(),
   "age": zod.number(),
   "speed": zod.number(),
@@ -670,7 +676,14 @@ export const GetPlayerResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "dev_trait": zod.number().nullish().describe('0=Normal, 1=Star, 2=Superstar, 3=X-Factor'),
+  "ea_player_id": zod.string().nullish(),
+  "birth_year": zod.number().nullish(),
+  "birth_month": zod.number().nullish(),
+  "birth_day": zod.number().nullish(),
+  "acceleration": zod.number().nullish(),
+  "agility": zod.number().nullish()
 })
 
 

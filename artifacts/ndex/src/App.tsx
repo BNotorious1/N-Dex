@@ -8,6 +8,7 @@ import Leagues from "@/pages/Leagues";
 import LeagueDetail from "@/pages/LeagueDetail";
 import NewLeague from "@/pages/NewLeague";
 import TeamDetail from "@/pages/TeamDetail";
+import PlayerDetail from "@/pages/PlayerDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/leagues/new" component={NewLeague} />
       <Route path="/leagues/:id" component={LeagueDetail} />
       <Route path="/teams/:id" component={TeamDetail} />
+      <Route path="/players/:id" component={PlayerDetail} />
       <Route component={NotFound} />
     </Switch>
   );

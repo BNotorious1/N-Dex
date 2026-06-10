@@ -529,7 +529,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Player"
+                $ref: "#/components/schemas/PlayerDetail"
     patch:
       operationId: updatePlayer
       tags: [players]
@@ -946,6 +946,75 @@ components:
         catching:
           type: ["integer", "null"]
         tackling:
+          type: ["integer", "null"]
+
+    PlayerDetail:
+      type: object
+      required:
+        - id
+        - team_id
+        - team_name
+        - team_city
+        - team_abbreviation
+        - league_id
+        - name
+        - position
+        - overall
+        - age
+        - speed
+        - strength
+        - awareness
+      properties:
+        id:
+          type: integer
+        team_id:
+          type: integer
+        team_name:
+          type: string
+        team_city:
+          type: string
+        team_abbreviation:
+          type: string
+        team_primary_color:
+          type: ["string", "null"]
+        team_secondary_color:
+          type: ["string", "null"]
+        league_id:
+          type: integer
+        name:
+          type: string
+        position:
+          type: string
+        overall:
+          type: integer
+        age:
+          type: integer
+        speed:
+          type: integer
+        strength:
+          type: integer
+        awareness:
+          type: integer
+        throwing_power:
+          type: ["integer", "null"]
+        catching:
+          type: ["integer", "null"]
+        tackling:
+          type: ["integer", "null"]
+        dev_trait:
+          type: ["integer", "null"]
+          description: "0=Normal, 1=Star, 2=Superstar, 3=X-Factor"
+        ea_player_id:
+          type: ["string", "null"]
+        birth_year:
+          type: ["integer", "null"]
+        birth_month:
+          type: ["integer", "null"]
+        birth_day:
+          type: ["integer", "null"]
+        acceleration:
+          type: ["integer", "null"]
+        agility:
           type: ["integer", "null"]
 
     PlayerInput:

@@ -184,6 +184,49 @@ export interface TeamUpdate {
   secondary_color?: string;
 }
 
+export interface PlayerDetail {
+  id: number;
+  team_id: number;
+  team_name: string;
+  team_city: string;
+  team_abbreviation: string;
+  /** @nullable */
+  team_primary_color?: string | null;
+  /** @nullable */
+  team_secondary_color?: string | null;
+  league_id: number;
+  name: string;
+  position: string;
+  overall: number;
+  age: number;
+  speed: number;
+  strength: number;
+  awareness: number;
+  /** @nullable */
+  throwing_power?: number | null;
+  /** @nullable */
+  catching?: number | null;
+  /** @nullable */
+  tackling?: number | null;
+  /**
+     * 0=Normal, 1=Star, 2=Superstar, 3=X-Factor
+     * @nullable
+     */
+  dev_trait?: number | null;
+  /** @nullable */
+  ea_player_id?: string | null;
+  /** @nullable */
+  birth_year?: number | null;
+  /** @nullable */
+  birth_month?: number | null;
+  /** @nullable */
+  birth_day?: number | null;
+  /** @nullable */
+  acceleration?: number | null;
+  /** @nullable */
+  agility?: number | null;
+}
+
 export interface PlayerInput {
   name: string;
   position: string;
