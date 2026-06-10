@@ -44,22 +44,41 @@ type RawGame = Record<string, unknown>;
 
 // ─── Core upsert functions (exported for use from ea.ts) ─────────────────────
 
+function parseDivName(t: RawTeam): { conference: string; division: string } {
+  // Blaze export provides "divName": "AFC North" — parse it directly.
+  // Fall back to numeric conference/division fields (Companion App format).
+  const divName = str(t["divName"], "");
+  if (divName) {
+    const conf = divName.startsWith("NFC") ? "NFC" : "AFC";
+    const div = divName.includes("North") ? "North"
+      : divName.includes("South") ? "South"
+      : divName.includes("West") ? "West"
+      : "East";
+    return { conference: conf, division: div };
+  }
+  const conferenceNum = num(t["conference"], -1);
+  const divisionNum = num(t["division"], -1);
+  return {
+    conference: CONFERENCE_MAP[conferenceNum] ?? "AFC",
+    division: DIVISION_MAP[divisionNum] ?? "East",
+  };
+}
+
 export async function upsertLeagueTeams(leagueId: number, teams: RawTeam[]): Promise<number> {
   let count = 0;
   for (const t of teams) {
     const eaTeamId = typeof t["teamId"] === "number" ? t["teamId"] : null;
     if (eaTeamId === null) continue;
 
-    const conferenceNum = num(t["conference"], -1);
-    const divisionNum = num(t["division"], -1);
+    const { conference, division } = parseDivName(t);
 
     const values = {
       leagueId,
-      name: str(t["nickName"] || t["teamName"], "Unknown"),
+      name: str(t["nickName"] || t["displayName"] || t["teamName"], "Unknown"),
       city: str(t["cityName"], "Unknown"),
       abbreviation: str(t["abbrName"], "???").toUpperCase().slice(0, 4),
-      conference: CONFERENCE_MAP[conferenceNum] ?? "AFC",
-      division: DIVISION_MAP[divisionNum] ?? "East",
+      conference,
+      division,
       wins: num(t["wins"]),
       losses: num(t["losses"]),
       ties: num(t["ties"]),
@@ -192,8 +211,11 @@ export async function upsertWeekSchedule(
     const awayTeamId = teamByEaId.get(awayEaId);
     if (!homeTeamId || !awayTeamId) continue;
 
-    const resultType = num(g["resultType"], 1);
-    const isFinal = resultType === 2 || resultType === 3 || resultType === 4;
+    // Blaze uses "status" field; Companion App uses "resultType". Both share same enum.
+    // GameResult: NOT_PLAYED=1, AWAY_WIN=2, HOME_WIN=3, TIE=4
+    const gameStatus = typeof g["status"] === "number" ? g["status"]
+      : typeof g["resultType"] === "number" ? g["resultType"] : 1;
+    const isFinal = gameStatus >= 2; // 2=AWAY_WIN, 3=HOME_WIN, 4=TIE
     const wi = typeof g["weekIndex"] === "number" ? g["weekIndex"] : (targetWeekIndex ?? 0);
     const si = typeof g["stageIndex"] === "number" ? g["stageIndex"] : (targetStageIndex ?? 1);
 

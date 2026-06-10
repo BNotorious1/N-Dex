@@ -387,15 +387,72 @@ async function blazeExport<T>(
   return res.json<T>();
 }
 
-// ─── Import Helper ───────────────────────────────────────────────────────────
+// ─── Blaze Session ────────────────────────────────────────────────────────────
+// Session TTL: 8 min cache (Blaze sessions last ~10 min in practice)
+// Sessions are persisted to DB so they survive server restarts
+
+const BLAZE_SESSION_TTL_S = 8 * 60;
+
+async function blazeLoginWithRetry(
+  accessToken: string,
+  platform: string,
+  maxAttempts = 3,
+): Promise<BlazeSession> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      const delay = 4000 * attempt; // 4s, 8s
+      logger.info({ attempt, delay }, "blazeLogin: retrying after delay");
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    try {
+      return await blazeLogin(accessToken, platform);
+    } catch (err) {
+      lastErr = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      // ERR_SYSTEM is a transient Blaze error; retry. Other errors abort immediately.
+      if (!msg.includes("ERR_SYSTEM")) throw err;
+      logger.warn({ attempt, msg }, "blazeLogin: got ERR_SYSTEM, will retry");
+    }
+  }
+  throw lastErr;
+}
 
 async function getBlazeSession(
   leagueId: number,
 ): Promise<{ sessionKey: string; blazeId: string; eaLeagueId: string; platform: string; league: typeof leaguesTable.$inferSelect }> {
   const league = await getConnectedLeague(leagueId);
   const { accessToken, platform } = await getValidAccessToken(league);
-  const { sessionKey, blazeId } = await blazeLogin(accessToken, platform);
-  return { sessionKey, blazeId, eaLeagueId: league.eaSelectedLeague ?? "", platform, league };
+
+  const nowSecs = Math.floor(Date.now() / 1000);
+
+  // 1. Try DB-persisted session (survives server restarts)
+  if (
+    league.eaBlazeSessionKey &&
+    league.eaBlazeSessionExpiry &&
+    nowSecs < league.eaBlazeSessionExpiry - 30
+  ) {
+    return {
+      sessionKey: league.eaBlazeSessionKey,
+      blazeId: league.eaBlazeId ?? "",
+      eaLeagueId: league.eaSelectedLeague ?? "",
+      platform,
+      league,
+    };
+  }
+
+  // 2. Create a new Blaze session (retry up to 3x on ERR_SYSTEM)
+  const { sessionKey, blazeId } = await blazeLoginWithRetry(accessToken, platform);
+
+  // 3. Persist in DB so the next import reuses it without a new login
+  const newExpiry = nowSecs + BLAZE_SESSION_TTL_S;
+  await db.update(leaguesTable).set({
+    eaBlazeSessionKey: sessionKey,
+    eaBlazeSessionExpiry: newExpiry,
+    eaBlazeId: blazeId ? blazeId : league.eaBlazeId,
+  }).where(eq(leaguesTable.id, leagueId));
+
+  return { sessionKey, blazeId: blazeId ? blazeId : (league.eaBlazeId ?? ""), eaLeagueId: league.eaSelectedLeague ?? "", platform, league };
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -704,7 +761,8 @@ router.post("/import-league-info", async (req, res) => {
   try {
     const { sessionKey, eaLeagueId, platform } = await getBlazeSession(leagueId);
 
-    type TeamsExport = { leagueTeamInfoList?: { leagueTeamInfo?: unknown } };
+    // Blaze returns { leagueTeamInfoList: [...] } — a flat array, NOT nested under .leagueTeamInfo
+    type TeamsExport = { leagueTeamInfoList?: unknown };
     const teamsData = await blazeExport<TeamsExport>(
       "CareerMode_GetLeagueTeamsExport",
       sessionKey,
@@ -712,11 +770,13 @@ router.post("/import-league-info", async (req, res) => {
       { leagueId: Number(eaLeagueId) },
     );
 
-    const rawTeamInfo = teamsData.leagueTeamInfoList?.leagueTeamInfo;
-    const teamArray: Record<string, unknown>[] = Array.isArray(rawTeamInfo)
-      ? rawTeamInfo as Record<string, unknown>[]
-      : rawTeamInfo && typeof rawTeamInfo === "object"
-        ? [rawTeamInfo as Record<string, unknown>]
+    req.log.info({ leagueTeamInfoList: teamsData.leagueTeamInfoList }, "import-league-info: raw response");
+
+    const rawList = teamsData.leagueTeamInfoList;
+    const teamArray: Record<string, unknown>[] = Array.isArray(rawList)
+      ? rawList as Record<string, unknown>[]
+      : rawList && typeof rawList === "object"
+        ? [rawList as Record<string, unknown>]
         : [];
 
     const teamCount = await upsertLeagueTeams(leagueId, teamArray);
@@ -739,8 +799,9 @@ router.post("/import-rosters", async (req, res) => {
   try {
     const { sessionKey, eaLeagueId, platform } = await getBlazeSession(leagueId);
 
+    // Blaze returns { leagueTeamInfoList: [...] } — flat array
     type TeamEntry = { teamId?: number; rosterId?: number };
-    type TeamsExport = { leagueTeamInfoList?: { leagueTeamInfo?: TeamEntry | TeamEntry[] } };
+    type TeamsExport = { leagueTeamInfoList?: unknown };
     const teamsData = await blazeExport<TeamsExport>(
       "CareerMode_GetLeagueTeamsExport",
       sessionKey,
@@ -748,10 +809,12 @@ router.post("/import-rosters", async (req, res) => {
       { leagueId: Number(eaLeagueId) },
     );
 
-    const rawTeamInfo = teamsData.leagueTeamInfoList?.leagueTeamInfo;
-    const teams: TeamEntry[] = Array.isArray(rawTeamInfo)
-      ? rawTeamInfo
-      : rawTeamInfo ? [rawTeamInfo] : [];
+    const rawTeamList = teamsData.leagueTeamInfoList;
+    const teams: TeamEntry[] = Array.isArray(rawTeamList)
+      ? rawTeamList as TeamEntry[]
+      : rawTeamList && typeof rawTeamList === "object"
+        ? [rawTeamList as TeamEntry]
+        : [];
 
     let totalPlayers = 0;
 
@@ -759,7 +822,8 @@ router.post("/import-rosters", async (req, res) => {
       if (team.teamId == null) continue;
 
       try {
-        type RosterExport = { rosterInfoList?: { playerInfoList?: { playerInfo?: unknown } } };
+        // Blaze roster export returns { rosterInfoList: [...] } — flat array of players
+        type RosterExport = { rosterInfoList?: unknown; playerInfoList?: unknown };
         const rosterData = await blazeExport<RosterExport>(
           "CareerMode_GetTeamRostersExport",
           sessionKey,
@@ -772,17 +836,31 @@ router.post("/import-rosters", async (req, res) => {
           },
         );
 
-        const rawPlayers = rosterData.rosterInfoList?.playerInfoList?.playerInfo;
-        const playerArray: Record<string, unknown>[] = Array.isArray(rawPlayers)
-          ? rawPlayers as Record<string, unknown>[]
-          : rawPlayers && typeof rawPlayers === "object"
-            ? [rawPlayers as Record<string, unknown>]
-            : [];
+        // Support flat array ( { rosterInfoList: [...] } ) and legacy nested formats
+        const rosterRaw = rosterData.rosterInfoList;
+        let playerArray: Record<string, unknown>[];
+        if (Array.isArray(rosterRaw)) {
+          playerArray = rosterRaw as Record<string, unknown>[];
+        } else if (rosterRaw && typeof rosterRaw === "object") {
+          const nested = rosterRaw as Record<string, unknown>;
+          const pList = nested["playerInfoList"];
+          if (Array.isArray(pList)) {
+            playerArray = pList as Record<string, unknown>[];
+          } else if (pList && typeof pList === "object") {
+            const pInfo = (pList as Record<string, unknown>)["playerInfo"];
+            playerArray = Array.isArray(pInfo) ? pInfo as Record<string, unknown>[] : pInfo ? [pInfo as Record<string, unknown>] : [];
+          } else {
+            playerArray = [];
+          }
+        } else {
+          const pListFallback = rosterData.playerInfoList;
+          playerArray = Array.isArray(pListFallback) ? pListFallback as Record<string, unknown>[] : [];
+        }
 
         const count = await upsertTeamRoster(leagueId, team.teamId, playerArray);
         totalPlayers += count;
-      } catch {
-        // Skip failed individual teams
+      } catch (err) {
+        req.log.warn({ err, teamId: team.teamId }, "import-rosters: skipping team due to error");
       }
     }
 
@@ -808,33 +886,51 @@ router.post("/import-schedules", async (req, res) => {
     const season = league.season ?? 2025;
     let totalGames = 0;
 
-    // Import all played weeks plus the current unplayed week
-    const weeksToImport = Math.min(currentWeek, 18);
-    for (let weekIdx = 0; weekIdx < weeksToImport; weekIdx++) {
+    // Import all 18 regular season weeks — both played (FINAL) and unplayed (SCHEDULED)
+    // Blaze returns { scheduleInfoList: [...] } — flat array, NOT nested under .scheduleInfo
+    for (let weekIdx = 0; weekIdx < 18; weekIdx++) {
       try {
-        type ScheduleExport = { scheduleInfoList?: { scheduleInfo?: unknown } };
-        const data = await blazeExport<ScheduleExport>(
-          "CareerMode_GetWeeklySchedulesExport",
-          sessionKey,
-          platform,
-          { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx },
+        const serviceId = BLAZE_SERVICE_ID[platform] ?? BLAZE_SERVICE_ID["ps5"];
+        const schedParams = { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx };
+        const schedRes = await doRequest(
+          "POST",
+          `https://${BLAZE_HOST}/wal/mca/CareerMode_GetWeeklySchedulesExport/${sessionKey}`,
+          JSON.stringify(schedParams),
+          {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-BLAZE-ID": serviceId,
+            "X-BLAZE-VOID-RESP": "XML",
+            "X-Application-Key": "MADDEN-MCA",
+          },
         );
 
-        const rawSchedules = data.scheduleInfoList?.scheduleInfo;
-        const gameArray: Record<string, unknown>[] = Array.isArray(rawSchedules)
-          ? rawSchedules as Record<string, unknown>[]
-          : rawSchedules && typeof rawSchedules === "object"
-            ? [rawSchedules as Record<string, unknown>]
+        const rawText = schedRes.text();
+        if (weekIdx === 0) {
+          req.log.info({ weekIdx, httpStatus: schedRes.status, rawText: rawText.slice(0, 400) }, "import-schedules: week0 raw");
+        }
+
+        // Blaze uses "gameScheduleInfoList" (not "scheduleInfoList")
+        type ScheduleExport = { gameScheduleInfoList?: unknown; scheduleInfoList?: unknown };
+        const data = schedRes.ok ? schedRes.json<ScheduleExport>() : {} as ScheduleExport;
+
+        const rawSched = data.gameScheduleInfoList ?? data.scheduleInfoList;
+        const gameArray: Record<string, unknown>[] = Array.isArray(rawSched)
+          ? rawSched as Record<string, unknown>[]
+          : rawSched && typeof rawSched === "object"
+            ? [rawSched as Record<string, unknown>]
             : [];
+
+        req.log.info({ weekIdx, gameCount: gameArray.length }, "import-schedules: week parsed");
 
         const count = await upsertWeekSchedule(leagueId, gameArray, season, weekIdx, 1);
         totalGames += count;
-      } catch {
-        // Skip weeks that fail
+      } catch (err) {
+        req.log.warn({ err, weekIdx }, "import-schedules: skipping week due to error");
       }
     }
 
-    req.log.info({ totalGames, weeksToImport }, "import-schedules: complete");
+    req.log.info({ totalGames }, "import-schedules: complete");
 
     const exportInfo = await updateExportInfo(leagueId, (info) => ({
       ...info,

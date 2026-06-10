@@ -2,3 +2,4 @@
 - [Generated API type nullability](api-type-nullability.md) — Orval-generated types use `string | null | undefined` (optional + nullable) for DB-nullable fields; component interfaces must use `?: string | null` not `string | null` to stay assignable.
 - [Blaze messageAuthData format](blaze-message-auth.md) — messageAuthData must be an object {authData,authCode,authType} not a blob; verified against Snallabot source
 - [EA import architecture](ea-import-architecture.md) — Blaze export API + Companion App push both use same JSON shapes; core upsert fns exported from import.ts
+- [Blaze Export Format](blaze-export-format.md) — flat arrays; schedules key is `gameScheduleInfoList`, status field not resultType, divName string not numeric conf/div

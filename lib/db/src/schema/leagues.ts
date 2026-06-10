@@ -29,6 +29,8 @@ export const leaguesTable = pgTable("leagues", {
   eaConsole: text("ea_console"),
   eaBlazeId: text("ea_blaze_id"),
   eaSelectedLeague: text("ea_selected_league"),
+  eaBlazeSessionKey: text("ea_blaze_session_key"),
+  eaBlazeSessionExpiry: integer("ea_blaze_session_expiry"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
