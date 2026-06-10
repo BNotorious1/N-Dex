@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { db, teamsTable, playersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, teamsTable, playersTable, gamesTable } from "@workspace/db";
+import { eq, or } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
 import {
   GetTeamParams,
   UpdateTeamParams,
@@ -103,6 +104,45 @@ router.get("/:id/players", async (req, res) => {
   }
   const players = await db.select().from(playersTable).where(eq(playersTable.teamId, parseResult.data.id));
   res.json(players.map(formatPlayer));
+});
+
+// GET /teams/:id/games
+router.get("/:id/games", async (req, res) => {
+  const parseResult = GetTeamParams.safeParse({ id: Number(req.params.id) });
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const teamId = parseResult.data.id;
+
+  const homeTeam = aliasedTable(teamsTable, "home_team");
+  const awayTeam = aliasedTable(teamsTable, "away_team");
+
+  const games = await db
+    .select({
+      id: gamesTable.id,
+      league_id: gamesTable.leagueId,
+      home_team_id: gamesTable.homeTeamId,
+      away_team_id: gamesTable.awayTeamId,
+      home_score: gamesTable.homeScore,
+      away_score: gamesTable.awayScore,
+      week: gamesTable.week,
+      season: gamesTable.season,
+      status: gamesTable.status,
+      home_team_name: homeTeam.name,
+      away_team_name: awayTeam.name,
+      home_team_abbreviation: homeTeam.abbreviation,
+      away_team_abbreviation: awayTeam.abbreviation,
+      home_team_color: homeTeam.primaryColor,
+      away_team_color: awayTeam.primaryColor,
+    })
+    .from(gamesTable)
+    .innerJoin(homeTeam, eq(gamesTable.homeTeamId, homeTeam.id))
+    .innerJoin(awayTeam, eq(gamesTable.awayTeamId, awayTeam.id))
+    .where(or(eq(gamesTable.homeTeamId, teamId), eq(gamesTable.awayTeamId, teamId)))
+    .orderBy(gamesTable.week);
+
+  res.json(games);
 });
 
 // POST /teams/:id/players

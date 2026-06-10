@@ -549,6 +549,36 @@ export const AddPlayerBody = zod.object({
 
 
 /**
+ * @summary Get all games for a team
+ */
+export const GetTeamGamesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeamGamesResponseItem = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "home_team_id": zod.number(),
+  "away_team_id": zod.number(),
+  "home_team_name": zod.string().nullish(),
+  "away_team_name": zod.string().nullish(),
+  "home_score": zod.number().nullish(),
+  "away_score": zod.number().nullish(),
+  "week": zod.number(),
+  "season": zod.number(),
+  "status": zod.string().describe('SCHEDULED, IN_PROGRESS, COMPLETED')
+}).and(zod.object({
+  "home_team_name": zod.string().nullish(),
+  "away_team_name": zod.string().nullish(),
+  "home_team_abbreviation": zod.string().nullish(),
+  "away_team_abbreviation": zod.string().nullish(),
+  "home_team_color": zod.string().nullish(),
+  "away_team_color": zod.string().nullish()
+}))
+export const GetTeamGamesResponse = zod.array(GetTeamGamesResponseItem)
+
+
+/**
  * @summary Get player
  */
 export const GetPlayerParams = zod.object({

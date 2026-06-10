@@ -22,5 +22,6 @@ export * from './playerUpdate';
 export * from './standingEntry';
 export * from './statLeaders';
 export * from './team';
+export * from './teamGame';
 export * from './teamInput';
 export * from './teamUpdate';
