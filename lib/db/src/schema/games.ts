@@ -14,6 +14,9 @@ export const gamesTable = pgTable("games", {
   week: integer("week").notNull().default(1),
   season: integer("season").notNull().default(2025),
   status: text("status").notNull().default("SCHEDULED"),
+  weekIndex: integer("week_index"),
+  stageIndex: integer("stage_index"),
+  eaGameId: text("ea_game_id"),
 });
 
 export const insertGameSchema = createInsertSchema(gamesTable).omit({ id: true });

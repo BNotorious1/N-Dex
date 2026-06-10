@@ -1,3 +1,4 @@
 - [API client hook queryKey](api-client-hook-quirks.md) — useGet* hooks from @workspace/api-client-react require `queryKey` in the `query` options object (it is required, not optional).
 - [Generated API type nullability](api-type-nullability.md) — Orval-generated types use `string | null | undefined` (optional + nullable) for DB-nullable fields; component interfaces must use `?: string | null` not `string | null` to stay assignable.
 - [Blaze messageAuthData format](blaze-message-auth.md) — messageAuthData must be an object {authData,authCode,authType} not a blob; verified against Snallabot source
+- [EA import architecture](ea-import-architecture.md) — Blaze export API + Companion App push both use same JSON shapes; core upsert fns exported from import.ts

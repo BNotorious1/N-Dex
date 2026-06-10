@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, leaguesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { upsertLeagueTeams, upsertTeamRoster, upsertWeekSchedule } from "./import";
 import crypto from "node:crypto";
 import https from "node:https";
 import { logger } from "../lib/logger";
@@ -701,10 +702,31 @@ router.post("/unlink", async (req, res) => {
 router.post("/import-league-info", async (req, res) => {
   const leagueId = getLeagueId(req);
   try {
-    const { sessionKey, blazeId, eaLeagueId, platform } = await getBlazeSession(leagueId);
-    await blazeRpc(sessionKey, platform, "Mobile_Career_GetLeagueHub", 811, { leagueId: Number(eaLeagueId) }, blazeId).catch(() => {});
-    const exportInfo = await updateExportInfo(leagueId, (info) => ({ ...info, league: new Date().toISOString() }));
-    res.json({ success: true, export_info: exportInfo });
+    const { sessionKey, eaLeagueId, platform } = await getBlazeSession(leagueId);
+
+    type TeamsExport = { leagueTeamInfoList?: { leagueTeamInfo?: unknown } };
+    const teamsData = await blazeExport<TeamsExport>(
+      "CareerMode_GetLeagueTeamsExport",
+      sessionKey,
+      platform,
+      { leagueId: Number(eaLeagueId) },
+    );
+
+    const rawTeamInfo = teamsData.leagueTeamInfoList?.leagueTeamInfo;
+    const teamArray: Record<string, unknown>[] = Array.isArray(rawTeamInfo)
+      ? rawTeamInfo as Record<string, unknown>[]
+      : rawTeamInfo && typeof rawTeamInfo === "object"
+        ? [rawTeamInfo as Record<string, unknown>]
+        : [];
+
+    const teamCount = await upsertLeagueTeams(leagueId, teamArray);
+    req.log.info({ teamCount, eaLeagueId }, "import-league-info: teams upserted");
+
+    const exportInfo = await updateExportInfo(leagueId, (info) => ({
+      ...info,
+      league: new Date().toISOString(),
+    }));
+    res.json({ success: true, export_info: exportInfo, teams_imported: teamCount });
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });
@@ -715,10 +737,10 @@ router.post("/import-league-info", async (req, res) => {
 router.post("/import-rosters", async (req, res) => {
   const leagueId = getLeagueId(req);
   try {
-    const { sessionKey, eaLeagueId, platform, league } = await getBlazeSession(leagueId);
+    const { sessionKey, eaLeagueId, platform } = await getBlazeSession(leagueId);
 
-    // Fetch team list first to get team IDs
-    type TeamsExport = { leagueTeamInfoList?: { leagueTeamInfo?: Array<{ rosterId?: number; teamId?: number }> } };
+    type TeamEntry = { teamId?: number; rosterId?: number };
+    type TeamsExport = { leagueTeamInfoList?: { leagueTeamInfo?: TeamEntry | TeamEntry[] } };
     const teamsData = await blazeExport<TeamsExport>(
       "CareerMode_GetLeagueTeamsExport",
       sessionKey,
@@ -726,22 +748,51 @@ router.post("/import-rosters", async (req, res) => {
       { leagueId: Number(eaLeagueId) },
     );
 
-    const teams = teamsData.leagueTeamInfoList?.leagueTeamInfo ?? [];
-    // Import up to 5 rosters as a sample (full import would batch all teams)
-    const teamsToImport = teams.slice(0, Math.min(5, teams.length));
-    for (const team of teamsToImport) {
+    const rawTeamInfo = teamsData.leagueTeamInfoList?.leagueTeamInfo;
+    const teams: TeamEntry[] = Array.isArray(rawTeamInfo)
+      ? rawTeamInfo
+      : rawTeamInfo ? [rawTeamInfo] : [];
+
+    let totalPlayers = 0;
+
+    for (const team of teams) {
       if (team.teamId == null) continue;
-      await blazeExport(
-        "CareerMode_GetTeamRostersExport",
-        sessionKey,
-        platform,
-        { leagueId: Number(eaLeagueId), listIndex: team.rosterId ?? 0, returnFreeAgents: false, teamId: team.teamId },
-      ).catch(() => { /* ignore individual team errors */ });
+
+      try {
+        type RosterExport = { rosterInfoList?: { playerInfoList?: { playerInfo?: unknown } } };
+        const rosterData = await blazeExport<RosterExport>(
+          "CareerMode_GetTeamRostersExport",
+          sessionKey,
+          platform,
+          {
+            leagueId: Number(eaLeagueId),
+            listIndex: team.rosterId ?? 0,
+            returnFreeAgents: false,
+            teamId: team.teamId,
+          },
+        );
+
+        const rawPlayers = rosterData.rosterInfoList?.playerInfoList?.playerInfo;
+        const playerArray: Record<string, unknown>[] = Array.isArray(rawPlayers)
+          ? rawPlayers as Record<string, unknown>[]
+          : rawPlayers && typeof rawPlayers === "object"
+            ? [rawPlayers as Record<string, unknown>]
+            : [];
+
+        const count = await upsertTeamRoster(leagueId, team.teamId, playerArray);
+        totalPlayers += count;
+      } catch {
+        // Skip failed individual teams
+      }
     }
 
-    void league; // suppress unused warning
-    const exportInfo = await updateExportInfo(leagueId, (info) => ({ ...info, rosters: new Date().toISOString() }));
-    res.json({ success: true, export_info: exportInfo });
+    req.log.info({ totalPlayers, teamCount: teams.length }, "import-rosters: complete");
+
+    const exportInfo = await updateExportInfo(leagueId, (info) => ({
+      ...info,
+      rosters: new Date().toISOString(),
+    }));
+    res.json({ success: true, export_info: exportInfo, players_imported: totalPlayers });
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });
@@ -754,16 +805,42 @@ router.post("/import-schedules", async (req, res) => {
   try {
     const { sessionKey, eaLeagueId, platform, league } = await getBlazeSession(leagueId);
     const currentWeek = league.week ?? 1;
+    const season = league.season ?? 2025;
+    let totalGames = 0;
 
-    await blazeExport(
-      "CareerMode_GetWeeklySchedulesExport",
-      sessionKey,
-      platform,
-      { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: Math.max(0, currentWeek - 1) },
-    );
+    // Import all played weeks plus the current unplayed week
+    const weeksToImport = Math.min(currentWeek, 18);
+    for (let weekIdx = 0; weekIdx < weeksToImport; weekIdx++) {
+      try {
+        type ScheduleExport = { scheduleInfoList?: { scheduleInfo?: unknown } };
+        const data = await blazeExport<ScheduleExport>(
+          "CareerMode_GetWeeklySchedulesExport",
+          sessionKey,
+          platform,
+          { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx },
+        );
 
-    const exportInfo = await updateExportInfo(leagueId, (info) => ({ ...info, schedules: new Date().toISOString() }));
-    res.json({ success: true, export_info: exportInfo });
+        const rawSchedules = data.scheduleInfoList?.scheduleInfo;
+        const gameArray: Record<string, unknown>[] = Array.isArray(rawSchedules)
+          ? rawSchedules as Record<string, unknown>[]
+          : rawSchedules && typeof rawSchedules === "object"
+            ? [rawSchedules as Record<string, unknown>]
+            : [];
+
+        const count = await upsertWeekSchedule(leagueId, gameArray, season, weekIdx, 1);
+        totalGames += count;
+      } catch {
+        // Skip weeks that fail
+      }
+    }
+
+    req.log.info({ totalGames, weeksToImport }, "import-schedules: complete");
+
+    const exportInfo = await updateExportInfo(leagueId, (info) => ({
+      ...info,
+      schedules: new Date().toISOString(),
+    }));
+    res.json({ success: true, export_info: exportInfo, games_imported: totalGames });
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });

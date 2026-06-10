@@ -16,6 +16,14 @@ export const playersTable = pgTable("players", {
   throwingPower: integer("throwing_power"),
   catching: integer("catching"),
   tackling: integer("tackling"),
+  devTrait: integer("dev_trait"),
+  eaPlayerId: text("ea_player_id"),
+  presentationId: integer("presentation_id"),
+  birthYear: integer("birth_year"),
+  birthMonth: integer("birth_month"),
+  birthDay: integer("birth_day"),
+  acceleration: integer("acceleration"),
+  agility: integer("agility"),
 });
 
 export const insertPlayerSchema = createInsertSchema(playersTable).omit({ id: true });
