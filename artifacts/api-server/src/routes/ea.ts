@@ -295,7 +295,7 @@ async function blazeRpc<T>(
   commandId: number,
   payload: unknown,
   blazeId: string,
-): Promise<T> {
+): Promise<{ data: T; rawText: string }> {
   const serviceId = BLAZE_SERVICE_ID[platform] ?? BLAZE_SERVICE_ID["ps5"];
   const body = JSON.stringify(buildRequestInfo(commandName, commandId, payload, blazeId));
 
@@ -311,8 +311,9 @@ async function blazeRpc<T>(
       "X-Application-Key": "MADDEN-MCA",
     },
   );
-  if (!res.ok) throw new Error(`Blaze RPC ${commandName} failed (${res.status}): ${res.text().slice(0, 300)}`);
-  return res.json<T>();
+  const rawText = res.text();
+  if (!res.ok) throw new Error(`Blaze RPC ${commandName} failed (${res.status}): ${rawText.slice(0, 300)}`);
+  return { data: res.json<T>(), rawText };
 }
 
 // ─── Blaze Export ────────────────────────────────────────────────────────────
@@ -550,10 +551,9 @@ router.post("/select-league", async (req, res) => {
     const { sessionKey, blazeId } = await blazeLogin(personaAccessToken, platform);
 
     // Step 9: Get My Leagues
-    type League = { leagueId?: number | string; leagueName?: string; userTeamName?: string };
-    type LeaguesResp = { leagues?: { league?: League | League[] }; leagueList?: League[] };
+    type RawLeague = Record<string, unknown>;
 
-    const leaguesData = await blazeRpc<LeaguesResp>(
+    const { data: leaguesRaw, rawText: leaguesText } = await blazeRpc<Record<string, unknown>>(
       sessionKey,
       platform,
       "Mobile_GetMyLeagues",
@@ -562,13 +562,42 @@ router.post("/select-league", async (req, res) => {
       blazeId,
     );
 
-    const rawLeagues = leaguesData.leagues?.league ?? leaguesData.leagueList ?? [];
-    const leagueArray = Array.isArray(rawLeagues) ? rawLeagues : [rawLeagues];
+    req.log.info({ leaguesRaw, leaguesText: leaguesText.slice(0, 1000) }, "GetMyLeagues raw response");
+
+    // Flexibly extract league array from any known response shape
+    function extractLeagueArray(obj: Record<string, unknown>): RawLeague[] {
+      // Check every top-level key for an array or nested object containing leagues
+      for (const key of Object.keys(obj)) {
+        const val = obj[key];
+        if (Array.isArray(val) && val.length > 0) {
+          // Direct top-level array (e.g. leagueList: [...])
+          return val as RawLeague[];
+        }
+        if (val && typeof val === "object" && !Array.isArray(val)) {
+          const nested = val as Record<string, unknown>;
+          for (const nk of Object.keys(nested)) {
+            const nv = nested[nk];
+            if (Array.isArray(nv) && nv.length > 0) return nv as RawLeague[];
+            // Single-item Blaze responses wrap in object instead of array
+            if (nv && typeof nv === "object" && !Array.isArray(nv)) {
+              const candidate = nv as Record<string, unknown>;
+              if ("leagueId" in candidate || "leagueName" in candidate) return [candidate];
+            }
+          }
+          // The nested object itself might be a single league
+          if ("leagueId" in nested || "leagueName" in nested) return [nested];
+        }
+      }
+      return [];
+    }
+
+    const leagueArray = extractLeagueArray(leaguesRaw);
+
     const leagues = leagueArray.map((l) => ({
-      leagueId: String(l.leagueId ?? ""),
-      leagueName: l.leagueName ?? `League ${l.leagueId ?? "?"}`,
-      userTeamName: l.userTeamName ?? "Unknown Team",
-    }));
+      leagueId: String(l["leagueId"] ?? l["id"] ?? ""),
+      leagueName: String(l["leagueName"] ?? l["name"] ?? `League ${l["leagueId"] ?? "?"}`),
+      userTeamName: String(l["userTeamName"] ?? l["teamName"] ?? "Unknown Team"),
+    })).filter((l) => l.leagueId);
 
     res.json({
       access_token: personaAccessToken,
@@ -636,7 +665,7 @@ router.post("/import-league-info", async (req, res) => {
   const leagueId = getLeagueId(req);
   try {
     const { sessionKey, blazeId, eaLeagueId, platform } = await getBlazeSession(leagueId);
-    await blazeRpc(sessionKey, platform, "Mobile_Career_GetLeagueHub", 811, { leagueId: Number(eaLeagueId) }, blazeId);
+    await blazeRpc(sessionKey, platform, "Mobile_Career_GetLeagueHub", 811, { leagueId: Number(eaLeagueId) }, blazeId).catch(() => {});
     const exportInfo = await updateExportInfo(leagueId, (info) => ({ ...info, league: new Date().toISOString() }));
     res.json({ success: true, export_info: exportInfo });
   } catch (err) {
