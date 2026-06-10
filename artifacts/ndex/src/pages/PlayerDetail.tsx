@@ -504,7 +504,7 @@ export default function PlayerDetail() {
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap border-[#00C8FF] text-[#ffff] border-t-[#ffff] border-r-[#ffff] border-b-[#ffff] border-l-[#ffff]"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap border-[#00C8FF] text-[#ffff] border-t-[#ffffff65] border-r-[#ffffff65] border-b-[#ffffff65] border-l-[#ffffff65]"
                 >
                   {t.icon}
                   {t.label}
