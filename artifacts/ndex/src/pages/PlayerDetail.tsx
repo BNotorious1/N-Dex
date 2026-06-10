@@ -409,7 +409,7 @@ export default function PlayerDetail() {
             {/* Team color ambient glow */}
             <div className="absolute inset-0 opacity-[0.07]" style={{ background: `radial-gradient(ellipse at 70% 50%, ${teamColor} 0%, transparent 60%)` }} />
 
-            <div className="relative px-8 py-8 pl-10">
+            <div className="relative px-8 py-8 pl-10 mt-[0px] mb-[0px]">
               {/* Back nav row */}
               <div className="flex items-center justify-between mb-6">
                 <Link href={`/leagues/${player.league_id}`} className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors">
@@ -499,16 +499,12 @@ export default function PlayerDetail() {
           <div className="max-w-5xl mx-auto px-6 py-7">
 
             {/* Tab bar */}
-            <div className="flex items-center gap-0.5 mb-6 border-b border-white/8 overflow-x-auto">
+            <div className="flex mb-6 border-b border-white/8 overflow-x-auto justify-center items-center gap-[30px]">
               {TABS.map(t => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
-                    tab === t.key
-                      ? "border-[#00C8FF] text-[#00C8FF]"
-                      : "border-transparent text-white/35 hover:text-white/55"
-                  }`}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap border-[#00C8FF] text-[#ffff] border-t-[#ffff] border-r-[#ffff] border-b-[#ffff] border-l-[#ffff]"
                 >
                   {t.icon}
                   {t.label}
