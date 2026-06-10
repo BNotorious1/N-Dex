@@ -37,6 +37,11 @@ export interface PlayerDetail {
   dev_trait?: number | null;
   /** @nullable */
   ea_player_id?: string | null;
+  /**
+     * EA portrait CDN ID — use with ratings-images-prod.pulse.ea.com
+     * @nullable
+     */
+  presentation_id?: number | null;
   /** @nullable */
   birth_year?: number | null;
   /** @nullable */

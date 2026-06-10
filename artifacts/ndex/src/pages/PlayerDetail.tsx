@@ -3,7 +3,7 @@ import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
-import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen } from "lucide-react";
+import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +23,7 @@ interface PlayerDetail {
   agility: number | null;
   dev_trait: number | null;
   ea_player_id: string | null;
+  presentation_id: number | null;
   birth_year: number | null;
   birth_month: number | null;
   birth_day: number | null;
@@ -85,6 +86,10 @@ function splitName(fullName: string): [string, string] {
 function espnLogoUrl(abbr: string): string {
   const slug = abbr.toLowerCase() === "was" ? "wsh" : abbr.toLowerCase();
   return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
+}
+
+function portraitUrl(presentationId: number): string {
+  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${presentationId}.png`;
 }
 
 // ─── Small components ─────────────────────────────────────────────────────────
@@ -216,8 +221,11 @@ export default function PlayerDetail() {
     enabled: !!playerId,
   });
 
+  const [portraitError, setPortraitError] = useState(false);
+
   const teamColor = player?.team_primary_color ?? "#00C8FF";
   const [firstName, lastName] = player ? splitName(player.name) : ["", ""];
+  const showPortrait = !!player?.presentation_id && !portraitError;
 
   const devInfo = player?.dev_trait != null
     ? DEV_TRAIT[player.dev_trait] ?? DEV_TRAIT[0]!
@@ -251,110 +259,102 @@ export default function PlayerDetail() {
           <div className="relative overflow-hidden border-b border-white/8 bg-[#0d0d0d]">
 
             {/* Team color left accent bar */}
-            <div
-              className="absolute left-0 top-0 bottom-0 w-1"
-              style={{ backgroundColor: teamColor }}
-            />
+            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: teamColor }} />
 
-            {/* Background: team logo watermark */}
-            <div className="absolute right-0 top-0 h-full w-1/2 flex items-center justify-end overflow-hidden opacity-[0.055] select-none pointer-events-none">
-              <img
-                src={espnLogoUrl(player.team_abbreviation)}
-                alt=""
-                className="h-[340px] w-[340px] object-contain"
-                style={{ filter: "brightness(1.4) saturate(0)" }}
-              />
+            {/* Background: team logo watermark (right side) */}
+            <div className="absolute right-0 top-0 h-full w-1/2 flex items-center justify-end overflow-hidden opacity-[0.045] select-none pointer-events-none">
+              <img src={espnLogoUrl(player.team_abbreviation)} alt="" className="h-[380px] w-[380px] object-contain" style={{ filter: "brightness(1.4) saturate(0)" }} />
             </div>
 
-            {/* Subtle gradient from team color */}
-            <div
-              className="absolute inset-0 opacity-[0.06]"
-              style={{ background: `radial-gradient(ellipse at 80% 50%, ${teamColor} 0%, transparent 65%)` }}
-            />
+            {/* Team color ambient glow */}
+            <div className="absolute inset-0 opacity-[0.07]" style={{ background: `radial-gradient(ellipse at 70% 50%, ${teamColor} 0%, transparent 60%)` }} />
 
-            <div className="relative px-8 py-9 pl-10">
+            <div className="relative px-8 py-8 pl-10">
               {/* Back nav row */}
-              <div className="flex items-center justify-between mb-7">
-                <Link
-                  href={`/leagues/${player.league_id}`}
-                  className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
-                >
+              <div className="flex items-center justify-between mb-6">
+                <Link href={`/leagues/${player.league_id}`} className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors">
                   <ArrowLeft className="h-3 w-3" />
                   Back to League
                 </Link>
-
-                {/* OVR badge */}
                 <span
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-black tracking-wider border"
-                  style={{
-                    color: ovrColor(player.overall),
-                    backgroundColor: `${ovrColor(player.overall)}18`,
-                    borderColor: `${ovrColor(player.overall)}30`,
-                  }}
+                  style={{ color: ovrColor(player.overall), backgroundColor: `${ovrColor(player.overall)}18`, borderColor: `${ovrColor(player.overall)}30` }}
                 >
                   <span className="text-[10px] font-semibold text-white/40">OVR</span>
                   {player.overall}
                 </span>
               </div>
 
-              {/* Team identity */}
-              <div className="flex items-center gap-2.5 mb-5">
-                <TeamLogo
-                  abbreviation={player.team_abbreviation}
-                  primaryColor={player.team_primary_color}
-                  size="sm"
-                  shape="circle"
-                />
-                <span className="text-[11px] tracking-[0.25em] uppercase text-white/40">
-                  {player.team_city} · {player.team_name}
-                </span>
-              </div>
+              {/* Main two-column: portrait + info */}
+              <div className="flex items-end gap-7">
 
-              {/* Player name */}
-              <div className="mb-5">
-                {firstName && (
-                  <p className="text-2xl font-semibold text-white/75 tracking-wide leading-none mb-1">
-                    {firstName}
-                  </p>
-                )}
-                <p className="text-6xl sm:text-7xl font-black uppercase leading-none tracking-tight text-white">
-                  {lastName}
-                </p>
-              </div>
-
-              {/* Meta row */}
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Position badge */}
-                <span className="px-2.5 py-1 rounded-md border border-white/15 bg-white/5 text-xs font-bold text-white/70 uppercase">
-                  {player.position}
-                </span>
-
-                {/* Dev trait */}
-                {devInfo && devInfo.label !== "Normal" && (
-                  <span
-                    className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide border"
-                    style={{
-                      color: devInfo.color,
-                      backgroundColor: devInfo.glow,
-                      borderColor: `${devInfo.color}40`,
-                    }}
+                {/* Portrait */}
+                <div
+                  className="shrink-0 relative rounded-2xl overflow-hidden border border-white/10"
+                  style={{
+                    width: 140,
+                    height: 140,
+                    background: `linear-gradient(160deg, ${teamColor}22 0%, #111 100%)`,
+                    boxShadow: `0 0 32px ${teamColor}25`,
+                  }}
+                >
+                  {showPortrait ? (
+                    <img
+                      src={portraitUrl(player.presentation_id!)}
+                      alt={player.name}
+                      onError={() => setPortraitError(true)}
+                      className="w-full h-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-end justify-center pb-2">
+                      <UserCircle2 className="h-24 w-24 text-white/10" />
+                    </div>
+                  )}
+                  {/* OVR overlay on portrait */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 py-1 text-center text-[11px] font-black tracking-wider"
+                    style={{ backgroundColor: `${teamColor}cc`, color: "#fff" }}
                   >
-                    {devInfo.label === "X-Factor" && <Zap className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
-                    {devInfo.label === "Superstar" && <Star className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
-                    {devInfo.label === "Star" && <Star className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
-                    {devInfo.label}
-                  </span>
-                )}
+                    {player.position} · {player.overall}
+                  </div>
+                </div>
 
-                {/* Age */}
-                <span className="text-xs text-white/35">
-                  Age <span className="text-white/60 font-semibold">{player.age}</span>
-                </span>
+                {/* Info */}
+                <div className="flex-1 min-w-0 pb-1">
+                  {/* Team identity */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <TeamLogo abbreviation={player.team_abbreviation} primaryColor={player.team_primary_color} size="sm" shape="circle" />
+                    <span className="text-[11px] tracking-[0.2em] uppercase text-white/40">
+                      {player.team_city} · {player.team_name}
+                    </span>
+                  </div>
 
-                {/* Birth date */}
-                {birthStr && (
-                  <span className="text-xs text-white/30">· Born {birthStr}</span>
-                )}
+                  {/* Player name */}
+                  <div className="mb-4">
+                    {firstName && (
+                      <p className="text-xl font-semibold text-white/70 tracking-wide leading-none mb-0.5">{firstName}</p>
+                    )}
+                    <p className="text-5xl sm:text-6xl font-black uppercase leading-none tracking-tight text-white">{lastName}</p>
+                  </div>
+
+                  {/* Meta row */}
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {devInfo && devInfo.label !== "Normal" && (
+                      <span
+                        className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide border"
+                        style={{ color: devInfo.color, backgroundColor: devInfo.glow, borderColor: `${devInfo.color}40` }}
+                      >
+                        {devInfo.label === "X-Factor" && <Zap className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
+                        {(devInfo.label === "Superstar" || devInfo.label === "Star") && <Star className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
+                        {devInfo.label}
+                      </span>
+                    )}
+                    <span className="text-xs text-white/35">
+                      Age <span className="text-white/60 font-semibold">{player.age}</span>
+                    </span>
+                    {birthStr && <span className="text-xs text-white/25">· Born {birthStr}</span>}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -1006,6 +1006,9 @@ components:
           description: "0=Normal, 1=Star, 2=Superstar, 3=X-Factor"
         ea_player_id:
           type: ["string", "null"]
+        presentation_id:
+          type: ["integer", "null"]
+          description: "EA portrait CDN ID — use with ratings-images-prod.pulse.ea.com"
         birth_year:
           type: ["integer", "null"]
         birth_month:

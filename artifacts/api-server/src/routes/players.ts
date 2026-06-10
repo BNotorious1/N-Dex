@@ -74,6 +74,7 @@ router.get("/:id", async (req, res) => {
     tackling: player.tackling,
     dev_trait: player.devTrait,
     ea_player_id: player.eaPlayerId,
+    presentation_id: player.presentationId,
     birth_year: player.birthYear,
     birth_month: player.birthMonth,
     birth_day: player.birthDay,

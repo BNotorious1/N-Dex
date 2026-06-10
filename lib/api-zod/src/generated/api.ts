@@ -679,6 +679,7 @@ export const GetPlayerResponse = zod.object({
   "tackling": zod.number().nullish(),
   "dev_trait": zod.number().nullish().describe('0=Normal, 1=Star, 2=Superstar, 3=X-Factor'),
   "ea_player_id": zod.string().nullish(),
+  "presentation_id": zod.number().nullish().describe('EA portrait CDN ID — use with ratings-images-prod.pulse.ea.com'),
   "birth_year": zod.number().nullish(),
   "birth_month": zod.number().nullish(),
   "birth_day": zod.number().nullish(),
