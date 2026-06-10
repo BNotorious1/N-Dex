@@ -20,7 +20,7 @@ export default function Home() {
             <img
               src="/ndex-logo.png"
               alt="N-Dex"
-              className="h-52 w-52 object-contain drop-shadow-[0_0_20px_rgba(0,200,255,0.5)]"
+              className="h-[500px] w-[400px] object-contain drop-shadow-[0_0_20px_rgba(0,200,255,0.5)]"
               data-testid="img-hero-logo"
             />
           </div>
