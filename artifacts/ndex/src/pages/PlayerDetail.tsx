@@ -170,7 +170,7 @@ function AttrCard({ title, children }: { title: string; children: React.ReactNod
   return (
     <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
       <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
-        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{title}</span>
+        <span className="font-black uppercase tracking-widest text-[16px] text-[#ffffff] border-t-[#ffffff66] border-r-[#ffffff66] border-b-[#ffffff66] border-l-[#ffffff66] text-left">{title}</span>
       </div>
       <div className="px-4">{children}</div>
     </div>
