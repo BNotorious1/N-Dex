@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -20,6 +20,15 @@ export const leaguesTable = pgTable("leagues", {
   isMoneyLeague: boolean("is_money_league").notNull().default(false),
   description: text("description"),
   eaLeagueId: text("ea_league_id"),
+  // EA Connect
+  isEaConnected: boolean("is_ea_connected").notNull().default(false),
+  exportInfo: jsonb("export_info").$type<Record<string, unknown>>(),
+  eaAccessToken: text("ea_access_token"),
+  eaRefreshToken: text("ea_refresh_token"),
+  eaTokenExpiry: integer("ea_token_expiry"),
+  eaConsole: text("ea_console"),
+  eaBlazeId: text("ea_blaze_id"),
+  eaSelectedLeague: text("ea_selected_league"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

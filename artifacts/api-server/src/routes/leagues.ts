@@ -21,6 +21,17 @@ import {
 
 const router = Router();
 
+function buildDefaultExportInfo(): Record<string, unknown> {
+  const statistics: Record<string, Record<string, null>> = {};
+  for (let i = 0; i < 18; i++) {
+    statistics[String(i)] = {
+      games: null, team: null, passing: null, rushing: null,
+      receiving: null, kicking: null, punting: null, defense: null,
+    };
+  }
+  return { league: null, rosters: null, statistics };
+}
+
 function formatLeague(league: typeof leaguesTable.$inferSelect) {
   return {
     id: league.id,
@@ -40,6 +51,8 @@ function formatLeague(league: typeof leaguesTable.$inferSelect) {
     is_money_league: league.isMoneyLeague,
     description: league.description,
     created_at: league.createdAt.toISOString(),
+    is_ea_connected: league.isEaConnected,
+    export_info: (league.exportInfo as Record<string, unknown> | null) ?? buildDefaultExportInfo(),
   };
 }
 

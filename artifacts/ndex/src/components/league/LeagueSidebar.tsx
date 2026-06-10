@@ -2,7 +2,7 @@ import {
   Home, FileText, Newspaper, Users, User, Ban, Calendar,
   BarChart3, ListOrdered, ArrowLeftRight, ClipboardList,
   TrendingUp, Repeat2, Download, Trophy, ChevronDown, ChevronRight,
-  ShieldCheck, Settings2, Plug, UserCog, SkipForward, UserPlus,
+  ShieldCheck, Settings2, Plug, UserCog, SkipForward, UserPlus, Activity,
 } from "lucide-react";
 import { useState } from "react";
 import type { LeagueSection } from "@/pages/LeagueDetail";
@@ -42,6 +42,7 @@ const NAV: NavItem[] = [
     sub: [
       { key: "admin-settings", label: "Settings", icon: Settings2 },
       { key: "admin-ea-connect", label: "EA Connect", icon: Plug },
+      { key: "admin-import-status", label: "Import Status", icon: Activity },
       { key: "admin-members", label: "Members", icon: UserCog },
       { key: "admin-invite", label: "Invite Players", icon: UserPlus },
       { key: "admin-advance", label: "Advance Week", icon: SkipForward },
@@ -49,11 +50,14 @@ const NAV: NavItem[] = [
   },
 ];
 
-const ADMIN_KEYS: LeagueSection[] = ["admin", "admin-settings", "admin-ea-connect", "admin-members", "admin-invite", "admin-advance"];
+const ADMIN_KEYS: LeagueSection[] = [
+  "admin", "admin-settings", "admin-ea-connect", "admin-import-status",
+  "admin-members", "admin-invite", "admin-advance",
+];
 
 export default function LeagueSidebar({ league, section, onSelect }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(
-    new Set(["players", ...(ADMIN_KEYS.includes(section) ? ["admin"] : ["admin"])])
+    new Set(["players", "admin"])
   );
 
   const toggle = (key: string) => {
@@ -153,7 +157,6 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
           );
         })}
 
-        {/* Divider before Export */}
         <div className="border-t border-white/6 my-2 mx-4" />
 
         {/* Export CSV */}
@@ -165,6 +168,16 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
           <span className="font-medium">Export CSV</span>
         </button>
       </nav>
+
+      {/* Admin indicator */}
+      {ADMIN_KEYS.includes(section) && (
+        <div className="px-4 py-3 border-t border-white/6">
+          <div className="flex items-center gap-1.5 rounded-lg bg-[#F44336]/8 border border-[#F44336]/15 px-2.5 py-1.5">
+            <ShieldCheck className="h-3 w-3 text-[#F44336]" />
+            <span className="text-[10px] font-bold text-[#F44336]">Admin Mode</span>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

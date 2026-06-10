@@ -25,12 +25,14 @@ import RankingsSection from "@/components/league/sections/RankingsSection";
 import PlaceholderSection from "@/components/league/sections/PlaceholderSection";
 import AdminSettingsSection from "@/components/league/sections/AdminSettingsSection";
 import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
+import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "suspensions"
   | "games" | "statistics" | "standings" | "transactions" | "draft"
   | "rankings" | "trades" | "awards"
-  | "admin" | "admin-settings" | "admin-ea-connect" | "admin-members" | "admin-invite" | "admin-advance";
+  | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
+  | "admin-members" | "admin-invite" | "admin-advance";
 
 export default function LeagueDetail() {
   const params = useParams<{ id: string }>();
@@ -85,8 +87,6 @@ export default function LeagueDetail() {
     );
   }
 
-  const isAdminSection = section.startsWith("admin");
-
   return (
     <div className="h-screen flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
       <Navbar />
@@ -132,6 +132,9 @@ export default function LeagueDetail() {
             )}
             {section === "admin-ea-connect" && (
               <AdminEAConnect leagueId={leagueId} />
+            )}
+            {section === "admin-import-status" && (
+              <AdminImportStatus leagueId={leagueId} />
             )}
             {section === "admin-members" && (
               <PlaceholderSection
