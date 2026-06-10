@@ -13,14 +13,6 @@ interface PlayerDetail {
   position: string;
   overall: number;
   age: number;
-  speed: number;
-  strength: number;
-  awareness: number;
-  throwing_power: number | null;
-  catching: number | null;
-  tackling: number | null;
-  acceleration: number | null;
-  agility: number | null;
   dev_trait: number | null;
   ea_player_id: string | null;
   presentation_id: number | null;
@@ -34,6 +26,70 @@ interface PlayerDetail {
   team_primary_color: string | null;
   team_secondary_color: string | null;
   league_id: number;
+  // Physical
+  speed: number;
+  acceleration: number | null;
+  agility: number | null;
+  strength: number;
+  stamina: number | null;
+  injury: number | null;
+  toughness: number | null;
+  jumping: number | null;
+  // Mental
+  awareness: number;
+  confidence: number | null;
+  play_recognition: number | null;
+  // Passing
+  throwing_power: number | null;
+  throw_accuracy: number | null;
+  throw_accuracy_short: number | null;
+  throw_accuracy_mid: number | null;
+  throw_accuracy_deep: number | null;
+  throw_on_run: number | null;
+  throw_under_pressure: number | null;
+  play_action: number | null;
+  break_sack: number | null;
+  // Receiving
+  catching: number | null;
+  catch_in_traffic: number | null;
+  spectacular_catch: number | null;
+  route_run_short: number | null;
+  route_run_mid: number | null;
+  route_run_deep: number | null;
+  release: number | null;
+  // Ball carrying
+  carrying: number | null;
+  ball_carrier_vision: number | null;
+  break_tackle: number | null;
+  stiff_arm: number | null;
+  spin_move: number | null;
+  juke_move: number | null;
+  trucking: number | null;
+  change_of_direction: number | null;
+  // Blocking
+  run_block: number | null;
+  run_block_power: number | null;
+  run_block_finesse: number | null;
+  pass_block: number | null;
+  pass_block_power: number | null;
+  pass_block_finesse: number | null;
+  impact_block: number | null;
+  lead_block: number | null;
+  // Defense
+  tackling: number | null;
+  hit_power: number | null;
+  pursuit: number | null;
+  block_shed: number | null;
+  finesse_moves: number | null;
+  power_moves: number | null;
+  man_coverage: number | null;
+  zone_coverage: number | null;
+  press: number | null;
+  // Special teams
+  kick_accuracy: number | null;
+  kick_power: number | null;
+  kick_return: number | null;
+  long_snap: number | null;
 }
 
 type PageTab = "attributes" | "traits" | "abilities" | "gamelog" | "career" | "awards" | "history";
@@ -99,12 +155,23 @@ function RatingRow({ label, value, max = 99 }: { label: string; value: number | 
   const pct = Math.round((value / max) * 100);
   const color = ratingBarColor(value);
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-      <span className="text-[11px] text-white/45 uppercase tracking-wider w-32 shrink-0">{label}</span>
+    <div className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
+      <span className="text-[11px] text-white/45 uppercase tracking-wider w-36 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-white/8 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
       <span className="text-xs font-bold tabular-nums w-7 text-right" style={{ color }}>{value}</span>
+    </div>
+  );
+}
+
+function AttrCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+      <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
+        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{title}</span>
+      </div>
+      <div className="px-4">{children}</div>
     </div>
   );
 }
@@ -123,87 +190,199 @@ function PlaceholderTab({ icon, title, description }: { icon: React.ReactNode; t
   );
 }
 
-// ─── Attribute groups per position ───────────────────────────────────────────
+// ─── Position groups ──────────────────────────────────────────────────────────
 
-function getAttributeGroups(p: PlayerDetail) {
-  const QB_POS = ["QB"];
-  const SKILL_POS = ["WR", "TE", "HB", "RB", "FB"];
-  const DEF_POS = ["MLB", "LOLB", "ROLB", "LB", "CB", "FS", "SS", "S", "DE", "DT", "NT", "MIKE", "WILL", "SAM"];
+const POS_QB    = new Set(["QB"]);
+const POS_WR    = new Set(["WR"]);
+const POS_TE    = new Set(["TE"]);
+const POS_HB    = new Set(["HB", "RB", "FB"]);
+const POS_OL    = new Set(["LT", "LG", "C", "RG", "RT", "OL", "OT", "OG"]);
+const POS_DL    = new Set(["DE", "DT", "NT", "LEDGE", "REDGE", "RE", "LE"]);
+const POS_LB    = new Set(["MLB", "LOLB", "ROLB", "LB", "MIKE", "WILL", "SAM"]);
+const POS_DB    = new Set(["CB", "FS", "SS", "S", "DB"]);
+const POS_K     = new Set(["K", "P"]);
 
-  const physical = [
-    { label: "Speed",        value: p.speed },
-    { label: "Acceleration", value: p.acceleration },
-    { label: "Agility",      value: p.agility },
-    { label: "Strength",     value: p.strength },
-  ].filter(x => x.value != null);
+type AttrGroup = { title: string; rows: { label: string; value: number | null | undefined }[] };
 
-  const mental = [
-    { label: "Awareness", value: p.awareness },
-  ];
+function getAttrGroups(p: PlayerDetail): AttrGroup[] {
+  const pos = p.position.toUpperCase();
 
-  const posSkills: { label: string; value: number | null }[] = [];
-  if (QB_POS.includes(p.position) && p.throwing_power != null) {
-    posSkills.push({ label: "Throwing Power", value: p.throwing_power });
-  }
-  if (SKILL_POS.includes(p.position) && p.catching != null) {
-    posSkills.push({ label: "Catching", value: p.catching });
-  }
-  if (DEF_POS.includes(p.position) && p.tackling != null) {
-    posSkills.push({ label: "Tackling", value: p.tackling });
-  }
-  // OL/K/P — show catching or throwing if available
-  if (posSkills.length === 0) {
-    if (p.catching != null) posSkills.push({ label: "Catching", value: p.catching });
-    if (p.throwing_power != null) posSkills.push({ label: "Throwing Power", value: p.throwing_power });
-    if (p.tackling != null) posSkills.push({ label: "Tackling", value: p.tackling });
-  }
+  const physical: AttrGroup = {
+    title: "Physical",
+    rows: [
+      { label: "Speed",        value: p.speed },
+      { label: "Acceleration", value: p.acceleration },
+      { label: "Agility",      value: p.agility },
+      { label: "Strength",     value: p.strength },
+      { label: "Jumping",      value: p.jumping },
+      { label: "Stamina",      value: p.stamina },
+      { label: "Injury",       value: p.injury },
+      { label: "Toughness",    value: p.toughness },
+    ],
+  };
 
-  return { physical, mental, posSkills };
+  const mental: AttrGroup = {
+    title: "Mental",
+    rows: [
+      { label: "Awareness",        value: p.awareness },
+      { label: "Confidence",       value: p.confidence },
+      { label: "Play Recognition", value: p.play_recognition },
+    ],
+  };
+
+  const passing: AttrGroup = {
+    title: "Passing",
+    rows: [
+      { label: "Throw Power",      value: p.throwing_power },
+      { label: "Throw Acc (S)",    value: p.throw_accuracy_short },
+      { label: "Throw Acc (M)",    value: p.throw_accuracy_mid },
+      { label: "Throw Acc (D)",    value: p.throw_accuracy_deep },
+      { label: "Throw on Run",     value: p.throw_on_run },
+      { label: "Under Pressure",   value: p.throw_under_pressure },
+      { label: "Play Action",      value: p.play_action },
+      { label: "Break Sack",       value: p.break_sack },
+    ],
+  };
+
+  const receiving: AttrGroup = {
+    title: "Receiving",
+    rows: [
+      { label: "Catching",          value: p.catching },
+      { label: "Catch in Traffic",  value: p.catch_in_traffic },
+      { label: "Spec. Catch",       value: p.spectacular_catch },
+      { label: "Route Run (S)",     value: p.route_run_short },
+      { label: "Route Run (M)",     value: p.route_run_mid },
+      { label: "Route Run (D)",     value: p.route_run_deep },
+      { label: "Release",           value: p.release },
+    ],
+  };
+
+  const carrying: AttrGroup = {
+    title: "Ball Carrying",
+    rows: [
+      { label: "Carrying",          value: p.carrying },
+      { label: "BCV",               value: p.ball_carrier_vision },
+      { label: "Break Tackle",      value: p.break_tackle },
+      { label: "Trucking",          value: p.trucking },
+      { label: "Stiff Arm",         value: p.stiff_arm },
+      { label: "Spin Move",         value: p.spin_move },
+      { label: "Juke Move",         value: p.juke_move },
+      { label: "Elusiveness",       value: p.change_of_direction },
+    ],
+  };
+
+  const passRush: AttrGroup = {
+    title: "Pass Rush",
+    rows: [
+      { label: "Block Shed",    value: p.block_shed },
+      { label: "Finesse Moves", value: p.finesse_moves },
+      { label: "Power Moves",   value: p.power_moves },
+      { label: "Pursuit",       value: p.pursuit },
+      { label: "Hit Power",     value: p.hit_power },
+    ],
+  };
+
+  const defense: AttrGroup = {
+    title: "Defense",
+    rows: [
+      { label: "Tackling",         value: p.tackling },
+      { label: "Hit Power",        value: p.hit_power },
+      { label: "Pursuit",          value: p.pursuit },
+      { label: "Play Recognition", value: p.play_recognition },
+      { label: "Block Shed",       value: p.block_shed },
+    ],
+  };
+
+  const coverage: AttrGroup = {
+    title: "Coverage",
+    rows: [
+      { label: "Man Coverage",     value: p.man_coverage },
+      { label: "Zone Coverage",    value: p.zone_coverage },
+      { label: "Press",            value: p.press },
+      { label: "Play Recognition", value: p.play_recognition },
+    ],
+  };
+
+  const blocking: AttrGroup = {
+    title: "Blocking",
+    rows: [
+      { label: "Run Block",           value: p.run_block },
+      { label: "Run Block Power",     value: p.run_block_power },
+      { label: "Run Block Finesse",   value: p.run_block_finesse },
+      { label: "Pass Block",          value: p.pass_block },
+      { label: "Pass Block Power",    value: p.pass_block_power },
+      { label: "Pass Block Finesse",  value: p.pass_block_finesse },
+      { label: "Impact Block",        value: p.impact_block },
+      { label: "Lead Block",          value: p.lead_block },
+    ],
+  };
+
+  const kicking: AttrGroup = {
+    title: "Kicking",
+    rows: [
+      { label: "Kick Accuracy", value: p.kick_accuracy },
+      { label: "Kick Power",    value: p.kick_power },
+      { label: "Kick Return",   value: p.kick_return },
+    ],
+  };
+
+  if (POS_QB.has(pos))
+    return [physical, passing, mental];
+
+  if (POS_WR.has(pos))
+    return [physical, receiving, carrying, mental];
+
+  if (POS_TE.has(pos))
+    return [physical, receiving, blocking, mental];
+
+  if (POS_HB.has(pos))
+    return [physical, carrying, receiving, blocking, mental];
+
+  if (POS_OL.has(pos))
+    return [physical, blocking, mental];
+
+  if (POS_DL.has(pos))
+    return [physical, passRush, defense, mental];
+
+  if (POS_LB.has(pos))
+    return [physical, defense, coverage, blocking, mental];
+
+  if (POS_DB.has(pos))
+    return [physical, coverage, defense, mental];
+
+  if (POS_K.has(pos))
+    return [physical, kicking, mental];
+
+  // Fallback: show everything that has data
+  return [physical, passing, receiving, carrying, blocking, defense, coverage, kicking, mental];
 }
 
-// ─── Tabs content ─────────────────────────────────────────────────────────────
+// ─── Attributes tab ───────────────────────────────────────────────────────────
 
 function AttributesTab({ player }: { player: PlayerDetail }) {
-  const { physical, mental, posSkills } = getAttributeGroups(player);
+  const groups = getAttrGroups(player).map(g => ({
+    ...g,
+    rows: g.rows.filter(r => r.value != null),
+  })).filter(g => g.rows.length > 0);
+
+  if (groups.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <Activity className="h-10 w-10 text-white/15" />
+        <p className="text-sm text-white/30">No attribute data imported yet</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      {/* Physical */}
-      <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
-        <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
-          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Physical</span>
-        </div>
-        <div className="px-4">
-          {physical.map(a => (
-            <RatingRow key={a.label} label={a.label} value={a.value} />
+      {groups.map(g => (
+        <AttrCard key={g.title} title={g.title}>
+          {g.rows.map(r => (
+            <RatingRow key={r.label} label={r.label} value={r.value} />
           ))}
-        </div>
-      </div>
-
-      {/* Mental + Position Skills */}
-      <div className="flex flex-col gap-5">
-        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
-          <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Mental</span>
-          </div>
-          <div className="px-4">
-            <RatingRow label="Awareness" value={mental[0]!.value} />
-          </div>
-        </div>
-
-        {posSkills.length > 0 && (
-          <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
-            <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Position Skills</span>
-            </div>
-            <div className="px-4">
-              {posSkills.map(a => (
-                <RatingRow key={a.label} label={a.label} value={a.value} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+        </AttrCard>
+      ))}
     </div>
   );
 }
@@ -310,7 +489,6 @@ export default function PlayerDetail() {
                       <UserCircle2 className="h-24 w-24 text-white/10" />
                     </div>
                   )}
-                  {/* OVR overlay on portrait */}
                   <div
                     className="absolute bottom-0 left-0 right-0 py-1 text-center text-[11px] font-black tracking-wider"
                     style={{ backgroundColor: `${teamColor}cc`, color: "#fff" }}
@@ -321,7 +499,6 @@ export default function PlayerDetail() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0 pb-1">
-                  {/* Team identity */}
                   <div className="flex items-center gap-2 mb-3">
                     <TeamLogo abbreviation={player.team_abbreviation} primaryColor={player.team_primary_color} size="sm" shape="circle" />
                     <span className="text-[11px] tracking-[0.2em] uppercase text-white/40">
@@ -329,7 +506,6 @@ export default function PlayerDetail() {
                     </span>
                   </div>
 
-                  {/* Player name */}
                   <div className="mb-4">
                     {firstName && (
                       <p className="text-xl font-semibold text-white/70 tracking-wide leading-none mb-0.5">{firstName}</p>
@@ -337,7 +513,6 @@ export default function PlayerDetail() {
                     <p className="text-5xl sm:text-6xl font-black uppercase leading-none tracking-tight text-white">{lastName}</p>
                   </div>
 
-                  {/* Meta row */}
                   <div className="flex flex-wrap items-center gap-2.5">
                     {devInfo && devInfo.label !== "Normal" && (
                       <span

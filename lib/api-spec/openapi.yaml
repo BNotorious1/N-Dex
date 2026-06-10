@@ -989,18 +989,6 @@ components:
           type: integer
         age:
           type: integer
-        speed:
-          type: integer
-        strength:
-          type: integer
-        awareness:
-          type: integer
-        throwing_power:
-          type: ["integer", "null"]
-        catching:
-          type: ["integer", "null"]
-        tackling:
-          type: ["integer", "null"]
         dev_trait:
           type: ["integer", "null"]
           description: "0=Normal, 1=Star, 2=Superstar, 3=X-Factor"
@@ -1008,16 +996,124 @@ components:
           type: ["string", "null"]
         presentation_id:
           type: ["integer", "null"]
-          description: "EA portrait CDN ID — use with ratings-images-prod.pulse.ea.com"
+          description: "EA portrait CDN ID"
         birth_year:
           type: ["integer", "null"]
         birth_month:
           type: ["integer", "null"]
         birth_day:
           type: ["integer", "null"]
+        speed:
+          type: integer
         acceleration:
           type: ["integer", "null"]
         agility:
+          type: ["integer", "null"]
+        strength:
+          type: integer
+        stamina:
+          type: ["integer", "null"]
+        injury:
+          type: ["integer", "null"]
+        toughness:
+          type: ["integer", "null"]
+        jumping:
+          type: ["integer", "null"]
+        awareness:
+          type: integer
+        confidence:
+          type: ["integer", "null"]
+        play_recognition:
+          type: ["integer", "null"]
+        throwing_power:
+          type: ["integer", "null"]
+        throw_accuracy:
+          type: ["integer", "null"]
+        throw_accuracy_short:
+          type: ["integer", "null"]
+        throw_accuracy_mid:
+          type: ["integer", "null"]
+        throw_accuracy_deep:
+          type: ["integer", "null"]
+        throw_on_run:
+          type: ["integer", "null"]
+        throw_under_pressure:
+          type: ["integer", "null"]
+        play_action:
+          type: ["integer", "null"]
+        break_sack:
+          type: ["integer", "null"]
+        catching:
+          type: ["integer", "null"]
+        catch_in_traffic:
+          type: ["integer", "null"]
+        spectacular_catch:
+          type: ["integer", "null"]
+        route_run_short:
+          type: ["integer", "null"]
+        route_run_mid:
+          type: ["integer", "null"]
+        route_run_deep:
+          type: ["integer", "null"]
+        release:
+          type: ["integer", "null"]
+        carrying:
+          type: ["integer", "null"]
+        ball_carrier_vision:
+          type: ["integer", "null"]
+        break_tackle:
+          type: ["integer", "null"]
+        stiff_arm:
+          type: ["integer", "null"]
+        spin_move:
+          type: ["integer", "null"]
+        juke_move:
+          type: ["integer", "null"]
+        trucking:
+          type: ["integer", "null"]
+        change_of_direction:
+          type: ["integer", "null"]
+        run_block:
+          type: ["integer", "null"]
+        run_block_power:
+          type: ["integer", "null"]
+        run_block_finesse:
+          type: ["integer", "null"]
+        pass_block:
+          type: ["integer", "null"]
+        pass_block_power:
+          type: ["integer", "null"]
+        pass_block_finesse:
+          type: ["integer", "null"]
+        impact_block:
+          type: ["integer", "null"]
+        lead_block:
+          type: ["integer", "null"]
+        tackling:
+          type: ["integer", "null"]
+        hit_power:
+          type: ["integer", "null"]
+        pursuit:
+          type: ["integer", "null"]
+        block_shed:
+          type: ["integer", "null"]
+        finesse_moves:
+          type: ["integer", "null"]
+        power_moves:
+          type: ["integer", "null"]
+        man_coverage:
+          type: ["integer", "null"]
+        zone_coverage:
+          type: ["integer", "null"]
+        press:
+          type: ["integer", "null"]
+        kick_accuracy:
+          type: ["integer", "null"]
+        kick_power:
+          type: ["integer", "null"]
+        kick_return:
+          type: ["integer", "null"]
+        long_snap:
           type: ["integer", "null"]
 
     PlayerInput:

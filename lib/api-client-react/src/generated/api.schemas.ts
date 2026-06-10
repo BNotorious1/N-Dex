@@ -199,15 +199,6 @@ export interface PlayerDetail {
   position: string;
   overall: number;
   age: number;
-  speed: number;
-  strength: number;
-  awareness: number;
-  /** @nullable */
-  throwing_power?: number | null;
-  /** @nullable */
-  catching?: number | null;
-  /** @nullable */
-  tackling?: number | null;
   /**
      * 0=Normal, 1=Star, 2=Superstar, 3=X-Factor
      * @nullable
@@ -216,7 +207,7 @@ export interface PlayerDetail {
   /** @nullable */
   ea_player_id?: string | null;
   /**
-     * EA portrait CDN ID — use with ratings-images-prod.pulse.ea.com
+     * EA portrait CDN ID
      * @nullable
      */
   presentation_id?: number | null;
@@ -226,10 +217,115 @@ export interface PlayerDetail {
   birth_month?: number | null;
   /** @nullable */
   birth_day?: number | null;
+  speed: number;
   /** @nullable */
   acceleration?: number | null;
   /** @nullable */
   agility?: number | null;
+  strength: number;
+  /** @nullable */
+  stamina?: number | null;
+  /** @nullable */
+  injury?: number | null;
+  /** @nullable */
+  toughness?: number | null;
+  /** @nullable */
+  jumping?: number | null;
+  awareness: number;
+  /** @nullable */
+  confidence?: number | null;
+  /** @nullable */
+  play_recognition?: number | null;
+  /** @nullable */
+  throwing_power?: number | null;
+  /** @nullable */
+  throw_accuracy?: number | null;
+  /** @nullable */
+  throw_accuracy_short?: number | null;
+  /** @nullable */
+  throw_accuracy_mid?: number | null;
+  /** @nullable */
+  throw_accuracy_deep?: number | null;
+  /** @nullable */
+  throw_on_run?: number | null;
+  /** @nullable */
+  throw_under_pressure?: number | null;
+  /** @nullable */
+  play_action?: number | null;
+  /** @nullable */
+  break_sack?: number | null;
+  /** @nullable */
+  catching?: number | null;
+  /** @nullable */
+  catch_in_traffic?: number | null;
+  /** @nullable */
+  spectacular_catch?: number | null;
+  /** @nullable */
+  route_run_short?: number | null;
+  /** @nullable */
+  route_run_mid?: number | null;
+  /** @nullable */
+  route_run_deep?: number | null;
+  /** @nullable */
+  release?: number | null;
+  /** @nullable */
+  carrying?: number | null;
+  /** @nullable */
+  ball_carrier_vision?: number | null;
+  /** @nullable */
+  break_tackle?: number | null;
+  /** @nullable */
+  stiff_arm?: number | null;
+  /** @nullable */
+  spin_move?: number | null;
+  /** @nullable */
+  juke_move?: number | null;
+  /** @nullable */
+  trucking?: number | null;
+  /** @nullable */
+  change_of_direction?: number | null;
+  /** @nullable */
+  run_block?: number | null;
+  /** @nullable */
+  run_block_power?: number | null;
+  /** @nullable */
+  run_block_finesse?: number | null;
+  /** @nullable */
+  pass_block?: number | null;
+  /** @nullable */
+  pass_block_power?: number | null;
+  /** @nullable */
+  pass_block_finesse?: number | null;
+  /** @nullable */
+  impact_block?: number | null;
+  /** @nullable */
+  lead_block?: number | null;
+  /** @nullable */
+  tackling?: number | null;
+  /** @nullable */
+  hit_power?: number | null;
+  /** @nullable */
+  pursuit?: number | null;
+  /** @nullable */
+  block_shed?: number | null;
+  /** @nullable */
+  finesse_moves?: number | null;
+  /** @nullable */
+  power_moves?: number | null;
+  /** @nullable */
+  man_coverage?: number | null;
+  /** @nullable */
+  zone_coverage?: number | null;
+  /** @nullable */
+  press?: number | null;
+  /** @nullable */
+  kick_accuracy?: number | null;
+  /** @nullable */
+  kick_power?: number | null;
+  /** @nullable */
+  kick_return?: number | null;
+  /** @nullable */
+  long_snap?: number | null;
 }
 
 export interface PlayerInput {

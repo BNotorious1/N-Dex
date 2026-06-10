@@ -121,6 +121,10 @@ export async function upsertTeamRoster(
 
   await db.delete(playersTable).where(eq(playersTable.teamId, teamId));
 
+  function ni(p: RawPlayer, key: string): number | null {
+    return typeof p[key] === "number" ? (p[key] as number) : null;
+  }
+
   const rows = players
     .filter((p): p is RawPlayer => typeof p === "object" && p !== null)
     .map((p) => ({
@@ -129,20 +133,76 @@ export async function upsertTeamRoster(
       position: str(p["position"], "OL"),
       overall: num(p["playerBestOvr"] ?? p["overall"], 70),
       age: num(p["age"], 25),
-      speed: num(p["speedRating"], 75),
-      strength: num(p["strengthRating"], 70),
-      awareness: num(p["awareRating"] ?? p["awareness"], 70),
-      throwingPower: typeof p["throwPowerRating"] === "number" ? p["throwPowerRating"] : null,
-      catching: typeof p["catchRating"] === "number" ? p["catchRating"] : null,
-      tackling: typeof p["tackleRating"] === "number" ? p["tackleRating"] : null,
-      devTrait: typeof p["devTrait"] === "number" ? p["devTrait"] : null,
+      devTrait: ni(p, "devTrait"),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
-      presentationId: typeof p["presentationId"] === "number" ? p["presentationId"] : null,
-      birthYear: typeof p["birthYear"] === "number" ? p["birthYear"] : null,
-      birthMonth: typeof p["birthMonth"] === "number" ? p["birthMonth"] : null,
-      birthDay: typeof p["birthDay"] === "number" ? p["birthDay"] : null,
-      acceleration: typeof p["accelRating"] === "number" ? p["accelRating"] : null,
-      agility: typeof p["agilityRating"] === "number" ? p["agilityRating"] : null,
+      presentationId: ni(p, "presentationId"),
+      birthYear: ni(p, "birthYear"),
+      birthMonth: ni(p, "birthMonth"),
+      birthDay: ni(p, "birthDay"),
+      // Physical
+      speed: num(p["speedRating"], 75),
+      acceleration: ni(p, "accelRating"),
+      agility: ni(p, "agilityRating"),
+      strength: num(p["strengthRating"], 70),
+      stamina: ni(p, "staminaRating"),
+      injury: ni(p, "injuryRating"),
+      toughness: ni(p, "toughRating"),
+      jumping: ni(p, "jumpRating"),
+      // Mental
+      awareness: num(p["awareRating"] ?? p["awareness"], 70),
+      confidence: ni(p, "confRating"),
+      playRecognition: ni(p, "playRecRating"),
+      // Passing
+      throwingPower: ni(p, "throwPowerRating"),
+      throwAccuracy: ni(p, "throwAccRating"),
+      throwAccuracyShort: ni(p, "throwAccShortRating"),
+      throwAccuracyMid: ni(p, "throwAccMidRating"),
+      throwAccuracyDeep: ni(p, "throwAccDeepRating"),
+      throwOnRun: ni(p, "throwOnRunRating"),
+      throwUnderPressure: ni(p, "throwUnderPressureRating"),
+      playAction: ni(p, "playActionRating"),
+      breakSack: ni(p, "breakSackRating"),
+      // Receiving
+      catching: ni(p, "catchRating"),
+      catchInTraffic: ni(p, "cITRating"),
+      spectacularCatch: ni(p, "specCatchRating"),
+      routeRunShort: ni(p, "routeRunShortRating"),
+      routeRunMid: ni(p, "routeRunMedRating"),
+      routeRunDeep: ni(p, "routeRunDeepRating"),
+      release: ni(p, "releaseRating"),
+      // Ball carrying
+      carrying: ni(p, "carryRating"),
+      ballCarrierVision: ni(p, "bCVRating"),
+      breakTackle: ni(p, "breakTackleRating"),
+      stiffArm: ni(p, "stiffArmRating"),
+      spinMove: ni(p, "spinMoveRating"),
+      jukeMove: ni(p, "jukeMoveRating"),
+      trucking: ni(p, "truckRating"),
+      changeOfDirection: ni(p, "changeOfDirectionRating"),
+      // Blocking
+      runBlock: ni(p, "runBlockRating"),
+      runBlockPower: ni(p, "runBlockPowerRating"),
+      runBlockFinesse: ni(p, "runBlockFinesseRating"),
+      passBlock: ni(p, "passBlockRating"),
+      passBlockPower: ni(p, "passBlockPowerRating"),
+      passBlockFinesse: ni(p, "passBlockFinesseRating"),
+      impactBlock: ni(p, "impactBlockRating"),
+      leadBlock: ni(p, "leadBlockRating"),
+      // Defense
+      tackling: ni(p, "tackleRating"),
+      hitPower: ni(p, "hitPowerRating"),
+      pursuit: ni(p, "pursuitRating"),
+      blockShed: ni(p, "blockShedRating"),
+      finesseMoves: ni(p, "finesseMovesRating"),
+      powerMoves: ni(p, "powerMovesRating"),
+      manCoverage: ni(p, "manCoverRating"),
+      zoneCoverage: ni(p, "zoneCoverRating"),
+      press: ni(p, "pressRating"),
+      // Special teams
+      kickAccuracy: ni(p, "kickAccRating"),
+      kickPower: ni(p, "kickPowerRating"),
+      kickReturn: ni(p, "kickRetRating"),
+      longSnap: ni(p, "longSnapRating"),
     }));
 
   if (rows.length > 0) await db.insert(playersTable).values(rows);
