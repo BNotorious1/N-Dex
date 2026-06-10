@@ -3,6 +3,7 @@ import {
   BarChart3, ListOrdered, ArrowLeftRight, ClipboardList,
   TrendingUp, Repeat2, Download, Trophy, ChevronDown, ChevronRight,
   ShieldCheck, Settings2, Plug, UserCog, SkipForward, UserPlus, Activity,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useState } from "react";
 import type { LeagueSection } from "@/pages/LeagueDetail";
@@ -11,6 +12,8 @@ interface Props {
   league: { id: number; name: string; platform: string; season: number; week: number; phase: string };
   section: LeagueSection;
   onSelect: (s: LeagueSection) => void;
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
 interface NavItem {
@@ -55,7 +58,7 @@ const ADMIN_KEYS: LeagueSection[] = [
   "admin-members", "admin-invite", "admin-advance",
 ];
 
-export default function LeagueSidebar({ league, section, onSelect }: Props) {
+export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(
     new Set(["players", "admin"])
   );
@@ -73,22 +76,45 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
   };
 
   return (
-    <aside className="w-[210px] shrink-0 bg-[#0d0d0d] border-r border-white/8 flex flex-col overflow-y-auto">
+    <aside
+      className={`shrink-0 bg-[#0d0d0d] border-r border-white/8 flex flex-col overflow-y-auto overflow-x-hidden transition-[width] duration-200 ease-in-out ${
+        collapsed ? "w-[48px]" : "w-[210px]"
+      }`}
+    >
       {/* League identity */}
-      <div className="px-4 py-4 border-b border-white/8">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="h-7 w-7 rounded-lg bg-[#00C8FF]/15 border border-[#00C8FF]/25 flex items-center justify-center shrink-0">
-            <span className="text-[9px] font-black text-[#00C8FF]">ND</span>
-          </div>
-          <p className="text-xs font-bold text-white truncate">{league.name}</p>
+      <div className={`border-b border-white/8 flex items-center ${collapsed ? "px-2 py-4 justify-center" : "px-4 py-4"}`}>
+        <div className="h-7 w-7 rounded-lg bg-[#00C8FF]/15 border border-[#00C8FF]/25 flex items-center justify-center shrink-0">
+          <span className="text-[9px] font-black text-[#00C8FF]">ND</span>
         </div>
-        <p className="text-[10px] text-white/35 pl-9">
-          {league.platform} &bull; S{league.season} W{league.week}
-        </p>
+        {!collapsed && (
+          <div className="ml-2 min-w-0">
+            <p className="text-xs font-bold text-white truncate">{league.name}</p>
+            <p className="text-[10px] text-white/35">
+              {league.platform} &bull; S{league.season} W{league.week}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-2">
+        {/* Collapse toggle */}
+        <button
+          onClick={onToggle}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`w-full flex items-center py-2 text-white/30 hover:text-white/60 hover:bg-white/4 transition-colors mb-1 ${
+            collapsed ? "justify-center px-0" : "gap-2.5 px-4"
+          }`}
+        >
+          {collapsed
+            ? <PanelLeftOpen className="h-3.5 w-3.5 shrink-0" />
+            : <>
+                <PanelLeftClose className="h-3.5 w-3.5 shrink-0" />
+                <span className="text-xs font-medium">Collapse</span>
+              </>
+          }
+        </button>
+
         {NAV.map((item) => {
           const Icon = item.icon;
           const isActive = section === item.key;
@@ -100,6 +126,10 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
             <div key={item.key}>
               <button
                 onClick={() => {
+                  if (collapsed) {
+                    onSelect(item.sub ? item.sub[0].key : item.key);
+                    return;
+                  }
                   if (item.sub) {
                     const wasExpanded = expanded.has(item.key);
                     toggle(item.key);
@@ -110,7 +140,10 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
                     onSelect(item.key);
                   }
                 }}
-                className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs transition-colors ${
+                title={collapsed ? item.label : undefined}
+                className={`w-full flex items-center py-2 text-xs transition-colors ${
+                  collapsed ? "justify-center px-0" : "gap-2.5 px-4"
+                } ${
                   isActive || hasSubActive
                     ? isAdmin
                       ? "text-[#F44336] bg-[#F44336]/8"
@@ -121,15 +154,19 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
                 }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="flex-1 text-left font-medium">{item.label}</span>
-                {item.sub && (
-                  isExpanded
-                    ? <ChevronDown className="h-3 w-3 opacity-50" />
-                    : <ChevronRight className="h-3 w-3 opacity-50" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left font-medium">{item.label}</span>
+                    {item.sub && (
+                      isExpanded
+                        ? <ChevronDown className="h-3 w-3 opacity-50" />
+                        : <ChevronRight className="h-3 w-3 opacity-50" />
+                    )}
+                  </>
                 )}
               </button>
 
-              {item.sub && isExpanded && (
+              {!collapsed && item.sub && isExpanded && (
                 <div className={`pl-4 ${isAdmin ? "border-l border-[#F44336]/10 ml-4" : ""}`}>
                   {item.sub.map((sub) => {
                     const SubIcon = sub.icon;
@@ -157,25 +194,35 @@ export default function LeagueSidebar({ league, section, onSelect }: Props) {
           );
         })}
 
-        <div className="border-t border-white/6 my-2 mx-4" />
+        <div className="border-t border-white/6 my-2 mx-3" />
 
         {/* Export CSV */}
         <button
           onClick={handleExportCSV}
-          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-white/55 hover:text-white hover:bg-white/4 transition-colors"
+          title={collapsed ? "Export CSV" : undefined}
+          className={`w-full flex items-center py-2 text-xs text-white/55 hover:text-white hover:bg-white/4 transition-colors ${
+            collapsed ? "justify-center px-0" : "gap-2.5 px-4"
+          }`}
         >
           <Download className="h-3.5 w-3.5 shrink-0" />
-          <span className="font-medium">Export CSV</span>
+          {!collapsed && <span className="font-medium">Export CSV</span>}
         </button>
       </nav>
 
       {/* Admin indicator */}
-      {ADMIN_KEYS.includes(section) && (
+      {!collapsed && ADMIN_KEYS.includes(section) && (
         <div className="px-4 py-3 border-t border-white/6">
           <div className="flex items-center gap-1.5 rounded-lg bg-[#F44336]/8 border border-[#F44336]/15 px-2.5 py-1.5">
             <ShieldCheck className="h-3 w-3 text-[#F44336]" />
             <span className="text-[10px] font-bold text-[#F44336]">Admin Mode</span>
           </div>
+        </div>
+      )}
+
+      {/* Collapsed admin indicator dot */}
+      {collapsed && ADMIN_KEYS.includes(section) && (
+        <div className="flex justify-center py-3 border-t border-white/6">
+          <ShieldCheck className="h-3.5 w-3.5 text-[#F44336]" />
         </div>
       )}
     </aside>

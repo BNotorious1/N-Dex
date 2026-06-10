@@ -38,6 +38,7 @@ export default function LeagueDetail() {
   const params = useParams<{ id: string }>();
   const leagueId = Number(params.id);
   const [section, setSection] = useState<LeagueSection>("home");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { data: summary, isLoading } = useGetLeagueSummary(leagueId, {
     query: { enabled: !!leagueId, queryKey: getGetLeagueSummaryQueryKey(leagueId) },
@@ -91,7 +92,13 @@ export default function LeagueDetail() {
     <div className="h-screen flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
-        <LeagueSidebar league={league} section={section} onSelect={setSection} />
+        <LeagueSidebar
+          league={league}
+          section={section}
+          onSelect={setSection}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed((v) => !v)}
+        />
         <main className="flex-1 overflow-y-auto">
           <LeagueBanner league={league} summary={summary} />
           <div className="px-6 py-6">
