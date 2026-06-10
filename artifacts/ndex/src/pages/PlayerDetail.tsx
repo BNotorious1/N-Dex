@@ -443,7 +443,7 @@ export default function PlayerDetail() {
                       src={portraitUrl(player.portrait_id!)}
                       alt={player.name}
                       onError={() => setPortraitError(true)}
-                      className="w-full h-full object-cover object-top scale-125 origin-top"
+                      className="w-full h-full object-cover object-top scale-125 origin-top mt-[-35px] mb-[-35px]"
                     />
                   ) : (
                     <div className="w-full h-full flex items-end justify-center pb-2">
