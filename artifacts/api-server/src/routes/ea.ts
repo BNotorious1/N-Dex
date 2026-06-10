@@ -611,31 +611,21 @@ router.post("/select-league", async (req, res) => {
       return;
     }
 
-    // Flexibly extract league array from any known response shape
+    // Blaze GetMyLeagues response: responseInfo.value.leagues
+    // Walk up to 3 levels deep looking for the first non-empty array.
     function extractLeagueArray(obj: Record<string, unknown>): RawLeague[] {
-      // Check every top-level key for an array or nested object containing leagues
-      for (const key of Object.keys(obj)) {
-        const val = obj[key];
-        if (Array.isArray(val) && val.length > 0) {
-          // Direct top-level array (e.g. leagueList: [...])
-          return val as RawLeague[];
-        }
-        if (val && typeof val === "object" && !Array.isArray(val)) {
-          const nested = val as Record<string, unknown>;
-          for (const nk of Object.keys(nested)) {
-            const nv = nested[nk];
-            if (Array.isArray(nv) && nv.length > 0) return nv as RawLeague[];
-            // Single-item Blaze responses wrap in object instead of array
-            if (nv && typeof nv === "object" && !Array.isArray(nv)) {
-              const candidate = nv as Record<string, unknown>;
-              if ("leagueId" in candidate || "leagueName" in candidate) return [candidate];
-            }
+      function walkObj(o: Record<string, unknown>, depth: number): RawLeague[] | null {
+        for (const key of Object.keys(o)) {
+          const v = o[key];
+          if (Array.isArray(v) && v.length > 0) return v as RawLeague[];
+          if (depth > 0 && v && typeof v === "object" && !Array.isArray(v)) {
+            const found = walkObj(v as Record<string, unknown>, depth - 1);
+            if (found) return found;
           }
-          // The nested object itself might be a single league
-          if ("leagueId" in nested || "leagueName" in nested) return [nested];
         }
+        return null;
       }
-      return [];
+      return walkObj(obj, 3) ?? [];
     }
 
     const leagueArray = extractLeagueArray(leaguesRaw);
