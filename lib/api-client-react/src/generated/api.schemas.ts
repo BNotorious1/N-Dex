@@ -83,6 +83,10 @@ export interface Team {
   primary_color?: string | null;
   /** @nullable */
   secondary_color?: string | null;
+  /** @nullable */
+  member_discord?: string | null;
+  /** @nullable */
+  member_gamertag?: string | null;
 }
 
 export interface Game {
@@ -214,6 +218,30 @@ export interface GameUpdate {
   home_score?: number;
   away_score?: number;
   status?: string;
+}
+
+export interface Member {
+  id: number;
+  league_id: number;
+  /** @nullable */
+  team_id?: number | null;
+  discord_name: string;
+  /** @nullable */
+  gamer_tag?: string | null;
+}
+
+export interface MemberInput {
+  discord_name: string;
+  gamer_tag?: string;
+  team_id?: number;
+}
+
+export interface MemberUpdate {
+  discord_name?: string;
+  /** @nullable */
+  gamer_tag?: string | null;
+  /** @nullable */
+  team_id?: number | null;
 }
 
 export type TeamGame = Game & ({

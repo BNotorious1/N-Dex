@@ -25,4 +25,8 @@ export interface Team {
   primary_color?: string | null;
   /** @nullable */
   secondary_color?: string | null;
+  /** @nullable */
+  member_discord?: string | null;
+  /** @nullable */
+  member_gamertag?: string | null;
 }

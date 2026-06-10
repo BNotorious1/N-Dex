@@ -29,6 +29,9 @@ import type {
   LeagueSummary,
   LeagueUpdate,
   ListLeaguesParams,
+  Member,
+  MemberInput,
+  MemberUpdate,
   Player,
   PlayerInput,
   PlayerUpdate,
@@ -959,6 +962,301 @@ export const useAddLeagueTeam = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAddLeagueTeamMutationOptions(options));
+    }
+
+export const getGetLeagueMembersUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/members`
+}
+
+/**
+ * @summary List members in league
+ */
+export const getLeagueMembers = async (id: number, options?: RequestInit): Promise<Member[]> => {
+
+  return customFetch<Member[]>(getGetLeagueMembersUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueMembersQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/members`
+    ] as const;
+    }
+
+
+export const getGetLeagueMembersQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueMembers>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueMembers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueMembersQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueMembers>>> = ({ signal }) => getLeagueMembers(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueMembers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueMembers>>>
+export type GetLeagueMembersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List members in league
+ */
+
+export function useGetLeagueMembers<TData = Awaited<ReturnType<typeof getLeagueMembers>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueMembers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueMembersQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAddLeagueMemberUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/members`
+}
+
+/**
+ * @summary Add member to league
+ */
+export const addLeagueMember = async (id: number,
+    memberInput: MemberInput, options?: RequestInit): Promise<Member> => {
+
+  return customFetch<Member>(getAddLeagueMemberUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      memberInput,)
+  }
+);}
+
+
+
+
+export const getAddLeagueMemberMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addLeagueMember>>, TError,{id: number;data: BodyType<MemberInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addLeagueMember>>, TError,{id: number;data: BodyType<MemberInput>}, TContext> => {
+
+const mutationKey = ['addLeagueMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addLeagueMember>>, {id: number;data: BodyType<MemberInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addLeagueMember(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddLeagueMemberMutationResult = NonNullable<Awaited<ReturnType<typeof addLeagueMember>>>
+    export type AddLeagueMemberMutationBody = BodyType<MemberInput>
+    export type AddLeagueMemberMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add member to league
+ */
+export const useAddLeagueMember = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addLeagueMember>>, TError,{id: number;data: BodyType<MemberInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addLeagueMember>>,
+        TError,
+        {id: number;data: BodyType<MemberInput>},
+        TContext
+      > => {
+      return useMutation(getAddLeagueMemberMutationOptions(options));
+    }
+
+export const getUpdateLeagueMemberUrl = (id: number,
+    memberId: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/members/${memberId}`
+}
+
+/**
+ * @summary Update league member
+ */
+export const updateLeagueMember = async (id: number,
+    memberId: number,
+    memberUpdate: MemberUpdate, options?: RequestInit): Promise<Member> => {
+
+  return customFetch<Member>(getUpdateLeagueMemberUrl(id,memberId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      memberUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateLeagueMemberMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLeagueMember>>, TError,{id: number;memberId: number;data: BodyType<MemberUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLeagueMember>>, TError,{id: number;memberId: number;data: BodyType<MemberUpdate>}, TContext> => {
+
+const mutationKey = ['updateLeagueMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLeagueMember>>, {id: number;memberId: number;data: BodyType<MemberUpdate>}> = (props) => {
+          const {id,memberId,data} = props ?? {};
+
+          return  updateLeagueMember(id,memberId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLeagueMemberMutationResult = NonNullable<Awaited<ReturnType<typeof updateLeagueMember>>>
+    export type UpdateLeagueMemberMutationBody = BodyType<MemberUpdate>
+    export type UpdateLeagueMemberMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update league member
+ */
+export const useUpdateLeagueMember = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLeagueMember>>, TError,{id: number;memberId: number;data: BodyType<MemberUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateLeagueMember>>,
+        TError,
+        {id: number;memberId: number;data: BodyType<MemberUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateLeagueMemberMutationOptions(options));
+    }
+
+export const getDeleteLeagueMemberUrl = (id: number,
+    memberId: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/members/${memberId}`
+}
+
+/**
+ * @summary Remove member from league
+ */
+export const deleteLeagueMember = async (id: number,
+    memberId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteLeagueMemberUrl(id,memberId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLeagueMemberMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueMember>>, TError,{id: number;memberId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueMember>>, TError,{id: number;memberId: number}, TContext> => {
+
+const mutationKey = ['deleteLeagueMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLeagueMember>>, {id: number;memberId: number}> = (props) => {
+          const {id,memberId} = props ?? {};
+
+          return  deleteLeagueMember(id,memberId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLeagueMemberMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLeagueMember>>>
+
+    export type DeleteLeagueMemberMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove member from league
+ */
+export const useDeleteLeagueMember = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueMember>>, TError,{id: number;memberId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLeagueMember>>,
+        TError,
+        {id: number;memberId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteLeagueMemberMutationOptions(options));
     }
 
 export const getGetLeagueGamesUrl = (id: number,) => {

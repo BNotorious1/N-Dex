@@ -9,6 +9,8 @@ interface Team {
   wins: number; losses: number; ties: number;
   overall_rating: number; primary_color?: string | null; secondary_color?: string | null;
   is_user_team: boolean;
+  member_discord?: string | null;
+  member_gamertag?: string | null;
 }
 
 interface Props {
@@ -69,6 +71,8 @@ export default function TeamsSection({ teams }: Props) {
           <thead>
             <tr className="border-b border-white/8 bg-[#0f0f0f]">
               <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Team</th>
+              <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Member</th>
+              <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">In Game</th>
               <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">Division</th>
               <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">Record</th>
               <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">Win %</th>
@@ -99,6 +103,23 @@ export default function TeamsSection({ teams }: Props) {
                       </div>
                     </Link>
                   </td>
+                  <td className="px-3 py-3">
+                    {team.member_discord
+                      ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#5865F2] shrink-0" />
+                          <span className="text-white/80 font-medium">{team.member_discord}</span>
+                        </span>
+                      )
+                      : <span className="text-white/20">—</span>
+                    }
+                  </td>
+                  <td className="px-3 py-3">
+                    {team.member_gamertag
+                      ? <span className="text-white/70 font-mono text-[11px]">{team.member_gamertag}</span>
+                      : <span className="text-white/20">—</span>
+                    }
+                  </td>
                   <td className="px-3 py-3 text-center text-white/50">
                     {team.conference} {team.division}
                   </td>
@@ -115,7 +136,7 @@ export default function TeamsSection({ teams }: Props) {
               );
             }) : (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-white/30 text-xs">
+                <td colSpan={7} className="py-10 text-center text-white/30 text-xs">
                   No teams found
                 </td>
               </tr>

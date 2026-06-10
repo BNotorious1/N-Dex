@@ -269,6 +269,98 @@ paths:
               schema:
                 $ref: "#/components/schemas/Team"
 
+  /leagues/{id}/members:
+    get:
+      operationId: getLeagueMembers
+      tags: [leagues]
+      summary: List members in league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+    post:
+      operationId: addLeagueMember
+      tags: [leagues]
+      summary: Add member to league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+
+  /leagues/{id}/members/{memberId}:
+    patch:
+      operationId: updateLeagueMember
+      tags: [leagues]
+      summary: Update league member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+    delete:
+      operationId: deleteLeagueMember
+      tags: [leagues]
+      summary: Remove member from league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /leagues/{id}/games:
     get:
       operationId: getLeagueGames
@@ -764,6 +856,10 @@ components:
           type: ["string", "null"]
         secondary_color:
           type: ["string", "null"]
+        member_discord:
+          type: ["string", "null"]
+        member_gamertag:
+          type: ["string", "null"]
 
     TeamInput:
       type: object
@@ -960,6 +1056,46 @@ components:
           type: integer
         status:
           type: string
+
+    Member:
+      type: object
+      required:
+        - id
+        - league_id
+        - discord_name
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        team_id:
+          type: ["integer", "null"]
+        discord_name:
+          type: string
+        gamer_tag:
+          type: ["string", "null"]
+
+    MemberInput:
+      type: object
+      required:
+        - discord_name
+      properties:
+        discord_name:
+          type: string
+        gamer_tag:
+          type: string
+        team_id:
+          type: integer
+
+    MemberUpdate:
+      type: object
+      properties:
+        discord_name:
+          type: string
+        gamer_tag:
+          type: ["string", "null"]
+        team_id:
+          type: ["integer", "null"]
 
     TeamGame:
       allOf:

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable } from "@workspace/db";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable } from "@workspace/db";
 import { eq, like, and, sql } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
@@ -14,6 +14,12 @@ import {
   GetLeagueTeamsParams,
   AddLeagueTeamBody,
   AddLeagueTeamParams,
+  GetLeagueMembersParams,
+  AddLeagueMemberParams,
+  AddLeagueMemberBody,
+  UpdateLeagueMemberParams,
+  UpdateLeagueMemberBody,
+  DeleteLeagueMemberParams,
   GetLeagueGamesParams,
   CreateGameBody,
   CreateGameParams,
@@ -354,8 +360,118 @@ router.get("/:id/teams", async (req, res) => {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
-  const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, parseResult.data.id));
-  res.json(teams.map(formatTeam));
+  const rows = await db
+    .select({
+      team: teamsTable,
+      memberDiscord: membersTable.discordName,
+      memberGamertag: membersTable.gamerTag,
+    })
+    .from(teamsTable)
+    .leftJoin(membersTable, eq(membersTable.teamId, teamsTable.id))
+    .where(eq(teamsTable.leagueId, parseResult.data.id));
+  res.json(rows.map(r => ({
+    ...formatTeam(r.team),
+    member_discord: r.memberDiscord ?? null,
+    member_gamertag: r.memberGamertag ?? null,
+  })));
+});
+
+// GET /leagues/:id/members
+router.get("/:id/members", async (req, res) => {
+  const parseResult = GetLeagueMembersParams.safeParse({ id: Number(req.params.id) });
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const members = await db.select().from(membersTable).where(eq(membersTable.leagueId, parseResult.data.id));
+  res.json(members.map(m => ({
+    id: m.id,
+    league_id: m.leagueId,
+    team_id: m.teamId ?? null,
+    discord_name: m.discordName,
+    gamer_tag: m.gamerTag ?? null,
+  })));
+});
+
+// POST /leagues/:id/members
+router.post("/:id/members", async (req, res) => {
+  const paramResult = AddLeagueMemberParams.safeParse({ id: Number(req.params.id) });
+  if (!paramResult.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const bodyResult = AddLeagueMemberBody.safeParse(req.body);
+  if (!bodyResult.success) {
+    res.status(400).json({ error: "Invalid body", details: bodyResult.error.issues });
+    return;
+  }
+  const data = bodyResult.data;
+  const [member] = await db.insert(membersTable).values({
+    leagueId: paramResult.data.id,
+    discordName: data.discord_name,
+    gamerTag: data.gamer_tag ?? null,
+    teamId: data.team_id ?? null,
+  }).returning();
+  res.status(201).json({
+    id: member.id,
+    league_id: member.leagueId,
+    team_id: member.teamId ?? null,
+    discord_name: member.discordName,
+    gamer_tag: member.gamerTag ?? null,
+  });
+});
+
+// PATCH /leagues/:id/members/:memberId
+router.patch("/:id/members/:memberId", async (req, res) => {
+  const paramResult = UpdateLeagueMemberParams.safeParse({
+    id: Number(req.params.id),
+    memberId: Number(req.params.memberId),
+  });
+  if (!paramResult.success) {
+    res.status(400).json({ error: "Invalid params" });
+    return;
+  }
+  const bodyResult = UpdateLeagueMemberBody.safeParse(req.body);
+  if (!bodyResult.success) {
+    res.status(400).json({ error: "Invalid body", details: bodyResult.error.issues });
+    return;
+  }
+  const data = bodyResult.data;
+  const updates: Record<string, unknown> = {};
+  if (data.discord_name !== undefined) updates.discordName = data.discord_name;
+  if (data.gamer_tag !== undefined) updates.gamerTag = data.gamer_tag;
+  if (data.team_id !== undefined) updates.teamId = data.team_id;
+
+  const [member] = await db
+    .update(membersTable)
+    .set(updates)
+    .where(eq(membersTable.id, paramResult.data.memberId))
+    .returning();
+  if (!member) {
+    res.status(404).json({ error: "Member not found" });
+    return;
+  }
+  res.json({
+    id: member.id,
+    league_id: member.leagueId,
+    team_id: member.teamId ?? null,
+    discord_name: member.discordName,
+    gamer_tag: member.gamerTag ?? null,
+  });
+});
+
+// DELETE /leagues/:id/members/:memberId
+router.delete("/:id/members/:memberId", async (req, res) => {
+  const paramResult = DeleteLeagueMemberParams.safeParse({
+    id: Number(req.params.id),
+    memberId: Number(req.params.memberId),
+  });
+  if (!paramResult.success) {
+    res.status(400).json({ error: "Invalid params" });
+    return;
+  }
+  await db.delete(membersTable).where(eq(membersTable.id, paramResult.data.memberId));
+  res.status(204).send();
 });
 
 // POST /leagues/:id/teams

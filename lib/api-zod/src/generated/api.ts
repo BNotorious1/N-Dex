@@ -215,7 +215,9 @@ export const GetLeagueSummaryResponse = zod.object({
   "overall_rating": zod.number(),
   "is_user_team": zod.boolean(),
   "primary_color": zod.string().nullish(),
-  "secondary_color": zod.string().nullish()
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 })),
   "recent_games": zod.array(zod.object({
   "id": zod.number(),
@@ -258,7 +260,9 @@ export const GetLeagueStandingsResponseItem = zod.object({
   "overall_rating": zod.number(),
   "is_user_team": zod.boolean(),
   "primary_color": zod.string().nullish(),
-  "secondary_color": zod.string().nullish()
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 }),
   "wins": zod.number(),
   "losses": zod.number(),
@@ -379,7 +383,9 @@ export const GetLeagueTeamsResponseItem = zod.object({
   "overall_rating": zod.number(),
   "is_user_team": zod.boolean(),
   "primary_color": zod.string().nullish(),
-  "secondary_color": zod.string().nullish()
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 })
 export const GetLeagueTeamsResponse = zod.array(GetLeagueTeamsResponseItem)
 
@@ -401,6 +407,69 @@ export const AddLeagueTeamBody = zod.object({
   "is_user_team": zod.boolean().optional(),
   "primary_color": zod.string().optional(),
   "secondary_color": zod.string().optional()
+})
+
+
+/**
+ * @summary List members in league
+ */
+export const GetLeagueMembersParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueMembersResponseItem = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "team_id": zod.number().nullish(),
+  "discord_name": zod.string(),
+  "gamer_tag": zod.string().nullish()
+})
+export const GetLeagueMembersResponse = zod.array(GetLeagueMembersResponseItem)
+
+
+/**
+ * @summary Add member to league
+ */
+export const AddLeagueMemberParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddLeagueMemberBody = zod.object({
+  "discord_name": zod.string(),
+  "gamer_tag": zod.string().optional(),
+  "team_id": zod.number().optional()
+})
+
+
+/**
+ * @summary Update league member
+ */
+export const UpdateLeagueMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "memberId": zod.coerce.number()
+})
+
+export const UpdateLeagueMemberBody = zod.object({
+  "discord_name": zod.string().optional(),
+  "gamer_tag": zod.string().nullish(),
+  "team_id": zod.number().nullish()
+})
+
+export const UpdateLeagueMemberResponse = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "team_id": zod.number().nullish(),
+  "discord_name": zod.string(),
+  "gamer_tag": zod.string().nullish()
+})
+
+
+/**
+ * @summary Remove member from league
+ */
+export const DeleteLeagueMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "memberId": zod.coerce.number()
 })
 
 
@@ -463,7 +532,9 @@ export const GetTeamResponse = zod.object({
   "overall_rating": zod.number(),
   "is_user_team": zod.boolean(),
   "primary_color": zod.string().nullish(),
-  "secondary_color": zod.string().nullish()
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 })
 
 
@@ -499,7 +570,9 @@ export const UpdateTeamResponse = zod.object({
   "overall_rating": zod.number(),
   "is_user_team": zod.boolean(),
   "primary_color": zod.string().nullish(),
-  "secondary_color": zod.string().nullish()
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 })
 
 
