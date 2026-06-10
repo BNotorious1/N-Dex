@@ -9,6 +9,7 @@ interface Props {
   size?: LogoSize;
   shape?: LogoShape;
   className?: string;
+  noBg?: boolean;
 }
 
 const SIZE_MAP: Record<LogoSize, { container: string; text: string; padding: string }> = {
@@ -36,6 +37,7 @@ export default function TeamLogo({
   size = "md",
   shape = "circle",
   className,
+  noBg = false,
 }: Props) {
   const [failed, setFailed] = useState(false);
   const { container, text, padding } = SIZE_MAP[size];
@@ -54,7 +56,7 @@ export default function TeamLogo({
   }
 
   return (
-    <div className={`${outer} bg-[#1a1a1a]`}>
+    <div className={`${outer}${noBg ? "" : " bg-[#1a1a1a]"}`}>
       <img
         src={getEspnUrl(abbreviation)}
         alt={abbreviation}

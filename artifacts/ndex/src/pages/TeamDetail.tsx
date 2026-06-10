@@ -58,9 +58,9 @@ function RatingBar({ value, max = 99 }: { value: number | null | undefined; max?
   );
 }
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title, color }: { title: string; color: string }) {
   return (
-    <div className="px-4 py-2.5 bg-[#F44336] flex items-center">
+    <div className="px-4 py-2.5 flex items-center" style={{ backgroundColor: color }}>
       <span className="text-xs font-black uppercase tracking-widest text-white">{title}</span>
     </div>
   );
@@ -176,6 +176,7 @@ export default function TeamDetail() {
                 primaryColor={primaryColor}
                 size="2xl"
                 shape="circle"
+                noBg
               />
             </div>
 
@@ -242,7 +243,7 @@ export default function TeamDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Details card */}
           <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
-            <SectionHeader title="Details" />
+            <SectionHeader title="Details" color={primaryColor} />
             <div className="px-4 py-1">
               <InfoRow label="Conference" value={team.conference} />
               <InfoRow label="Division" value={`${team.conference} ${team.division}`} />
@@ -261,7 +262,7 @@ export default function TeamDetail() {
 
           {/* Season Stats card */}
           <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
-            <SectionHeader title="Season Record" />
+            <SectionHeader title="Season Record" color={primaryColor} />
             <div className="px-4 py-1">
               <InfoRow label="Record" value={`${team.wins}–${team.losses}${team.ties > 0 ? `–${team.ties}` : ""}`} />
               <InfoRow label="Win Percentage" value={winPct} />
@@ -288,7 +289,7 @@ export default function TeamDetail() {
         {/* ─── Schedule ─── */}
         {sortedGames.length > 0 && (
           <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
-            <SectionHeader title={`Schedule (${sortedGames.length} games)`} />
+            <SectionHeader title={`Schedule (${sortedGames.length} games)`} color={primaryColor} />
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
@@ -358,7 +359,7 @@ export default function TeamDetail() {
 
         {/* ─── Roster ─── */}
         <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
-          <SectionHeader title={`Roster (${sortedPlayers.length} players)`} />
+          <SectionHeader title={`Roster (${sortedPlayers.length} players)`} color={primaryColor} />
 
           {playersLoading ? (
             <div className="p-4 space-y-2">
