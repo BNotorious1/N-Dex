@@ -23,11 +23,13 @@ import GamesSection from "@/components/league/sections/GamesSection";
 import StatisticsSection from "@/components/league/sections/StatisticsSection";
 import RankingsSection from "@/components/league/sections/RankingsSection";
 import PlaceholderSection from "@/components/league/sections/PlaceholderSection";
+import AdminSettingsSection from "@/components/league/sections/AdminSettingsSection";
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "suspensions"
   | "games" | "statistics" | "standings" | "transactions" | "draft"
-  | "rankings" | "trades" | "awards";
+  | "rankings" | "trades" | "awards"
+  | "admin" | "admin-settings" | "admin-ea-connect" | "admin-members" | "admin-invite" | "admin-advance";
 
 export default function LeagueDetail() {
   const params = useParams<{ id: string }>();
@@ -82,6 +84,8 @@ export default function LeagueDetail() {
     );
   }
 
+  const isAdminSection = section.startsWith("admin");
+
   return (
     <div className="h-screen flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
       <Navbar />
@@ -119,6 +123,39 @@ export default function LeagueDetail() {
             )}
             {section === "awards" && (
               <PlaceholderSection icon="Trophy" title="Awards" description="Season awards and accolades will be displayed here at the end of each season." />
+            )}
+
+            {/* Administration */}
+            {(section === "admin" || section === "admin-settings") && (
+              <AdminSettingsSection league={league} />
+            )}
+            {section === "admin-ea-connect" && (
+              <PlaceholderSection
+                icon="Plug"
+                title="EA Connect"
+                description="Link your EA account to sync Madden franchise data automatically. EA Connect integration coming soon."
+              />
+            )}
+            {section === "admin-members" && (
+              <PlaceholderSection
+                icon="UserCog"
+                title="Members"
+                description="Manage league members, assign teams, and set permissions. Member management panel coming soon."
+              />
+            )}
+            {section === "admin-invite" && (
+              <PlaceholderSection
+                icon="UserPlus"
+                title="Invite Players"
+                description="Send invites to prospective league members via link or username. Invite system coming soon."
+              />
+            )}
+            {section === "admin-advance" && (
+              <PlaceholderSection
+                icon="SkipForward"
+                title="Advance Week"
+                description="Force-advance the league to the next week or phase. Advance controls coming soon."
+              />
             )}
           </div>
         </main>

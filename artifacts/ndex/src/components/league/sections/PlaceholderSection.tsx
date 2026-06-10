@@ -1,11 +1,13 @@
 import {
   FileText, Newspaper, Ban, ArrowLeftRight,
   ClipboardList, Repeat2, Trophy, Clock,
+  Plug, UserCog, UserPlus, SkipForward,
 } from "lucide-react";
 
 const ICON_MAP = {
   FileText, Newspaper, Ban, ArrowLeftRight,
   ClipboardList, Repeat2, Trophy, Clock,
+  Plug, UserCog, UserPlus, SkipForward,
 };
 
 interface Props {
