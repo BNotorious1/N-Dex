@@ -554,6 +554,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/Player"
 
+  /players/{id}/gamelog:
+    get:
+      operationId: getPlayerGameLog
+      tags: [players]
+      summary: Get game-by-game stat log for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameLogEntry"
+
   /games/{id}:
     patch:
       operationId: updateGame
@@ -1356,3 +1377,117 @@ components:
               type: ["string", "null"]
             away_team_color:
               type: ["string", "null"]
+
+    GameLogEntry:
+      type: object
+      required:
+        - id
+        - season
+        - week
+        - week_index
+        - stage_index
+      properties:
+        id:
+          type: integer
+        season:
+          type: integer
+        week:
+          type: integer
+        week_index:
+          type: integer
+        stage_index:
+          type: integer
+        game_status:
+          type: ["string", "null"]
+        opponent_abbreviation:
+          type: ["string", "null"]
+        opponent_primary_color:
+          type: ["string", "null"]
+        is_home:
+          type: ["boolean", "null"]
+        result:
+          type: ["string", "null"]
+        player_score:
+          type: ["integer", "null"]
+        opponent_score:
+          type: ["integer", "null"]
+        pss_att:
+          type: ["integer", "null"]
+        pss_cmp:
+          type: ["integer", "null"]
+        pss_yds:
+          type: ["integer", "null"]
+        pss_tds:
+          type: ["integer", "null"]
+        pss_ints:
+          type: ["integer", "null"]
+        pss_sacks:
+          type: ["integer", "null"]
+        pss_lng:
+          type: ["integer", "null"]
+        pss_rating:
+          type: ["integer", "null"]
+        rsh_att:
+          type: ["integer", "null"]
+        rsh_yds:
+          type: ["integer", "null"]
+        rsh_tds:
+          type: ["integer", "null"]
+        rsh_lng:
+          type: ["integer", "null"]
+        fmb:
+          type: ["integer", "null"]
+        fmb_lost:
+          type: ["integer", "null"]
+        rec_catches:
+          type: ["integer", "null"]
+        rec_tgts:
+          type: ["integer", "null"]
+        rec_yds:
+          type: ["integer", "null"]
+        rec_tds:
+          type: ["integer", "null"]
+        rec_drops:
+          type: ["integer", "null"]
+        rec_lng:
+          type: ["integer", "null"]
+        rec_yac:
+          type: ["integer", "null"]
+        def_total_tackles:
+          type: ["integer", "null"]
+        def_tfl:
+          type: ["integer", "null"]
+        def_sacks:
+          type: ["integer", "null"]
+        def_ints:
+          type: ["integer", "null"]
+        def_ff:
+          type: ["integer", "null"]
+        def_pd:
+          type: ["integer", "null"]
+        def_tds:
+          type: ["integer", "null"]
+        def_fum_rec:
+          type: ["integer", "null"]
+        fg_att:
+          type: ["integer", "null"]
+        fg_made:
+          type: ["integer", "null"]
+        fg_lng:
+          type: ["integer", "null"]
+        xp_att:
+          type: ["integer", "null"]
+        xp_made:
+          type: ["integer", "null"]
+        punt_att:
+          type: ["integer", "null"]
+        punt_yds:
+          type: ["integer", "null"]
+        punt_avg:
+          type: ["integer", "null"]
+        punt_lng:
+          type: ["integer", "null"]
+        punt_in20:
+          type: ["integer", "null"]
+        punt_tbs:
+          type: ["integer", "null"]

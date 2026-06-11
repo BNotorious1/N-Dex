@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, playersTable, playerAbilitiesTable, gamesTable, leagueImportsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { db, leaguesTable, teamsTable, playersTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, leagueImportsTable } from "@workspace/db";
+import { eq, and, or, sql } from "drizzle-orm";
 
 const router = Router();
 
@@ -536,6 +536,76 @@ router.post("/:leagueId/:platform/:eaLeagueId/:week/:stage/schedules", async (re
   }
 });
 
+// ─── Player stat upsert helpers ──────────────────────────────────────────────
+
+type RawStat = Record<string, unknown>;
+
+async function upsertPlayerStats(
+  leagueId: number,
+  weekIndex: number,
+  stageIndex: number,
+  season: number,
+  stats: RawStat[],
+  buildSet: (s: RawStat) => Partial<typeof playerGameStatsTable.$inferInsert>,
+): Promise<number> {
+  if (stats.length === 0) return 0;
+
+  const playerRows = await db
+    .select({ id: playersTable.id, teamId: playersTable.teamId, eaPlayerId: playersTable.eaPlayerId })
+    .from(playersTable)
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(eq(teamsTable.leagueId, leagueId));
+
+  const playerByRosterId = new Map(
+    playerRows.filter(p => p.eaPlayerId != null).map(p => [p.eaPlayerId!, p] as const),
+  );
+
+  const games = await db
+    .select({ id: gamesTable.id, homeTeamId: gamesTable.homeTeamId, awayTeamId: gamesTable.awayTeamId })
+    .from(gamesTable)
+    .where(and(eq(gamesTable.leagueId, leagueId), eq(gamesTable.weekIndex, weekIndex), eq(gamesTable.stageIndex, stageIndex)));
+
+  const gameByTeamId = new Map<number, number>();
+  for (const g of games) {
+    gameByTeamId.set(g.homeTeamId, g.id);
+    gameByTeamId.set(g.awayTeamId, g.id);
+  }
+
+  const week = weekIndex + 1;
+  const rows: (typeof playerGameStatsTable.$inferInsert)[] = [];
+
+  for (const s of stats) {
+    const rosterId = typeof s["rosterId"] === "number" ? s["rosterId"] : null;
+    if (rosterId === null) continue;
+    const player = playerByRosterId.get(String(rosterId));
+    if (!player) continue;
+    const gameId = gameByTeamId.get(player.teamId) ?? null;
+    rows.push({
+      leagueId, playerId: player.id, gameId,
+      season, week, weekIndex, stageIndex,
+      ...buildSet(s),
+    });
+  }
+
+  if (rows.length === 0) return 0;
+
+  const updateSet = buildSet(rows[0]! as RawStat);
+  const conflictSet: Record<string, unknown> = { gameId: sql`excluded.game_id` };
+  for (const key of Object.keys(updateSet)) {
+    const col = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+    conflictSet[key] = sql.raw(`excluded.${col}`);
+  }
+
+  await db.insert(playerGameStatsTable)
+    .values(rows)
+    .onConflictDoUpdate({
+      target: [playerGameStatsTable.playerId, playerGameStatsTable.weekIndex, playerGameStatsTable.stageIndex],
+      set: conflictSet as typeof playerGameStatsTable.$inferInsert,
+    });
+
+  return rows.length;
+}
+
 const STAT_TYPES = ["passing", "rushing", "receiving", "defense", "kicking", "punting"] as const;
 
 for (const stat of STAT_TYPES) {
@@ -543,10 +613,102 @@ for (const stat of STAT_TYPES) {
     const leagueId = Number(req.params["leagueId"]);
     const weekIndex = Number(req.params["week"]) - 1;
     const stageStr = req.params["stage"];
+    const stageIndex = isNaN(Number(stageStr)) ? 1 : Number(stageStr);
     if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid league ID" }); return; }
 
-    await logImport(leagueId, `${stat}:w${weekIndex}:${stageStr}`, "success", 0);
-    res.json({ success: true, recordsProcessed: 0 });
+    const league = await resolveLeague(leagueId);
+    if (!league) { res.status(404).json({ error: "League not found" }); return; }
+
+    const body = req.body as Record<string, unknown>;
+
+    const KEY_MAP: Record<string, string> = {
+      passing: "playerPassingStatInfoList",
+      rushing: "playerRushingStatInfoList",
+      receiving: "playerReceivingStatInfoList",
+      defense: "playerDefensiveStatInfoList",
+      kicking: "playerKickingStatInfoList",
+      punting: "playerPuntingStatInfoList",
+    };
+
+    const listKey = KEY_MAP[stat]!;
+    const stats = getNestedArray<RawStat>(body, listKey);
+
+    function buildSet(s: RawStat): Partial<typeof playerGameStatsTable.$inferInsert> {
+      if (stat === "passing") {
+        return {
+          pssAtt:    num(s["pssAtt"]),
+          pssCmp:    num(s["pssCmp"]),
+          pssYds:    num(s["pssYds"]),
+          pssTds:    num(s["passTDs"] ?? s["pssTDs"]),
+          pssInts:   num(s["pssInts"]),
+          pssSacks:  num(s["pssSacks"]),
+          pssLng:    num(s["pssLng"]),
+          pssRating: num(s["pssRate"] ?? s["pssRating"]),
+        };
+      }
+      if (stat === "rushing") {
+        return {
+          rshAtt:  num(s["rshAtt"]),
+          rshYds:  num(s["rshYds"]),
+          rshTds:  num(s["rshTDs"] ?? s["rushTDs"]),
+          rshLng:  num(s["rshLng"]),
+          fmb:     num(s["fmb"]),
+          fmbLost: num(s["fmbLost"]),
+        };
+      }
+      if (stat === "receiving") {
+        return {
+          recCatches: num(s["recCatches"]),
+          recTgts:    num(s["recTgts"]),
+          recYds:     num(s["recYds"]),
+          recTds:     num(s["recTDs"] ?? s["recTds"]),
+          recDrops:   num(s["recDrops"]),
+          recLng:     num(s["recLng"]),
+          recYac:     num(s["recYac"]),
+        };
+      }
+      if (stat === "defense") {
+        return {
+          defTotalTackles: num(s["defTotalTackles"]),
+          defTfl:          num(s["defTackleForLoss"] ?? s["defTFL"]),
+          defSacks:        num(s["defSacks"]),
+          defInts:         num(s["defInts"]),
+          defFf:           num(s["defForcedFum"] ?? s["defFF"]),
+          defPd:           num(s["defPassDef"] ?? s["defPD"]),
+          defTds:          num(s["defTDs"] ?? s["defTds"]),
+          defFumRec:       num(s["defFumRec"]),
+        };
+      }
+      if (stat === "kicking") {
+        return {
+          fgAtt:  num(s["fGAtt"] ?? s["fgAtt"]),
+          fgMade: num(s["fGMade"] ?? s["fgMade"]),
+          fgLng:  num(s["fGLng"] ?? s["fgLng"]),
+          xpAtt:  num(s["xPAtt"] ?? s["xpAtt"]),
+          xpMade: num(s["xPMade"] ?? s["xpMade"]),
+        };
+      }
+      // punting
+      return {
+        puntAtt:  num(s["puntAtt"]),
+        puntYds:  num(s["puntYds"]),
+        puntAvg:  num(s["puntAvg"] ?? s["puntYdsPerAtt"]),
+        puntLng:  num(s["puntLng"]),
+        puntIn20: num(s["puntIn20"]),
+        puntTbs:  num(s["puntTBs"] ?? s["puntTbs"]),
+      };
+    }
+
+    let recordsProcessed = 0;
+    let status: "success" | "error" = "success";
+    try {
+      recordsProcessed = await upsertPlayerStats(leagueId, weekIndex, stageIndex, league.season, stats, buildSet);
+    } catch (e) {
+      status = "error";
+    }
+
+    await logImport(leagueId, `${stat}:w${weekIndex}:${stageStr}`, status, recordsProcessed);
+    res.json({ success: status === "success", recordsProcessed });
   });
 }
 

@@ -806,6 +806,70 @@ export const UpdatePlayerResponse = zod.object({
 
 
 /**
+ * @summary Get game-by-game stat log for a player
+ */
+export const GetPlayerGameLogParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPlayerGameLogResponseItem = zod.object({
+  "id": zod.number(),
+  "season": zod.number(),
+  "week": zod.number(),
+  "week_index": zod.number(),
+  "stage_index": zod.number(),
+  "game_status": zod.string().nullish(),
+  "opponent_abbreviation": zod.string().nullish(),
+  "opponent_primary_color": zod.string().nullish(),
+  "is_home": zod.boolean().nullish(),
+  "result": zod.string().nullish(),
+  "player_score": zod.number().nullish(),
+  "opponent_score": zod.number().nullish(),
+  "pss_att": zod.number().nullish(),
+  "pss_cmp": zod.number().nullish(),
+  "pss_yds": zod.number().nullish(),
+  "pss_tds": zod.number().nullish(),
+  "pss_ints": zod.number().nullish(),
+  "pss_sacks": zod.number().nullish(),
+  "pss_lng": zod.number().nullish(),
+  "pss_rating": zod.number().nullish(),
+  "rsh_att": zod.number().nullish(),
+  "rsh_yds": zod.number().nullish(),
+  "rsh_tds": zod.number().nullish(),
+  "rsh_lng": zod.number().nullish(),
+  "fmb": zod.number().nullish(),
+  "fmb_lost": zod.number().nullish(),
+  "rec_catches": zod.number().nullish(),
+  "rec_tgts": zod.number().nullish(),
+  "rec_yds": zod.number().nullish(),
+  "rec_tds": zod.number().nullish(),
+  "rec_drops": zod.number().nullish(),
+  "rec_lng": zod.number().nullish(),
+  "rec_yac": zod.number().nullish(),
+  "def_total_tackles": zod.number().nullish(),
+  "def_tfl": zod.number().nullish(),
+  "def_sacks": zod.number().nullish(),
+  "def_ints": zod.number().nullish(),
+  "def_ff": zod.number().nullish(),
+  "def_pd": zod.number().nullish(),
+  "def_tds": zod.number().nullish(),
+  "def_fum_rec": zod.number().nullish(),
+  "fg_att": zod.number().nullish(),
+  "fg_made": zod.number().nullish(),
+  "fg_lng": zod.number().nullish(),
+  "xp_att": zod.number().nullish(),
+  "xp_made": zod.number().nullish(),
+  "punt_att": zod.number().nullish(),
+  "punt_yds": zod.number().nullish(),
+  "punt_avg": zod.number().nullish(),
+  "punt_lng": zod.number().nullish(),
+  "punt_in20": zod.number().nullish(),
+  "punt_tbs": zod.number().nullish()
+})
+export const GetPlayerGameLogResponse = zod.array(GetPlayerGameLogResponseItem)
+
+
+/**
  * @summary Update game score/status
  */
 export const UpdateGameParams = zod.object({

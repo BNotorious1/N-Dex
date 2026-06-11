@@ -22,6 +22,7 @@ import type {
 import type {
   Game,
   GameInput,
+  GameLogEntry,
   GameUpdate,
   HealthStatus,
   League,
@@ -1932,6 +1933,83 @@ export const useUpdatePlayer = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUpdatePlayerMutationOptions(options));
     }
+
+export const getGetPlayerGameLogUrl = (id: number,) => {
+
+
+
+
+  return `/api/players/${id}/gamelog`
+}
+
+/**
+ * @summary Get game-by-game stat log for a player
+ */
+export const getPlayerGameLog = async (id: number, options?: RequestInit): Promise<GameLogEntry[]> => {
+
+  return customFetch<GameLogEntry[]>(getGetPlayerGameLogUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPlayerGameLogQueryKey = (id: number,) => {
+    return [
+    `/api/players/${id}/gamelog`
+    ] as const;
+    }
+
+
+export const getGetPlayerGameLogQueryOptions = <TData = Awaited<ReturnType<typeof getPlayerGameLog>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlayerGameLog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlayerGameLogQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlayerGameLog>>> = ({ signal }) => getPlayerGameLog(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlayerGameLog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPlayerGameLogQueryResult = NonNullable<Awaited<ReturnType<typeof getPlayerGameLog>>>
+export type GetPlayerGameLogQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get game-by-game stat log for a player
+ */
+
+export function useGetPlayerGameLog<TData = Awaited<ReturnType<typeof getPlayerGameLog>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlayerGameLog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPlayerGameLogQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getUpdateGameUrl = (id: number,) => {
 

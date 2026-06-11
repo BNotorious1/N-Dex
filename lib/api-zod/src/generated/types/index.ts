@@ -8,6 +8,7 @@
 
 export * from './game';
 export * from './gameInput';
+export * from './gameLogEntry';
 export * from './gameUpdate';
 export * from './healthStatus';
 export * from './league';

@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { db, playersTable, teamsTable, playerAbilitiesTable } from "@workspace/db";
+import { db, playersTable, teamsTable, playerAbilitiesTable, playerGameStatsTable, gamesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -181,6 +182,152 @@ router.get("/:id", async (req, res) => {
       ovr_threshold: a.ovrThreshold,
     })),
   });
+});
+
+// GET /players/:id/gamelog
+router.get("/:id/gamelog", async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const playerRows = await db
+    .select({ teamId: playersTable.teamId })
+    .from(playersTable)
+    .where(eq(playersTable.id, id))
+    .limit(1);
+
+  if (playerRows.length === 0) { res.status(404).json({ error: "Player not found" }); return; }
+  const teamId = playerRows[0]!.teamId;
+
+  const homeTeamAlias = alias(teamsTable, "home_team");
+  const awayTeamAlias = alias(teamsTable, "away_team");
+
+  const rows = await db
+    .select({
+      id: playerGameStatsTable.id,
+      season: playerGameStatsTable.season,
+      week: playerGameStatsTable.week,
+      weekIndex: playerGameStatsTable.weekIndex,
+      stageIndex: playerGameStatsTable.stageIndex,
+      pssAtt: playerGameStatsTable.pssAtt,
+      pssCmp: playerGameStatsTable.pssCmp,
+      pssYds: playerGameStatsTable.pssYds,
+      pssTds: playerGameStatsTable.pssTds,
+      pssInts: playerGameStatsTable.pssInts,
+      pssSacks: playerGameStatsTable.pssSacks,
+      pssLng: playerGameStatsTable.pssLng,
+      pssRating: playerGameStatsTable.pssRating,
+      rshAtt: playerGameStatsTable.rshAtt,
+      rshYds: playerGameStatsTable.rshYds,
+      rshTds: playerGameStatsTable.rshTds,
+      rshLng: playerGameStatsTable.rshLng,
+      fmb: playerGameStatsTable.fmb,
+      fmbLost: playerGameStatsTable.fmbLost,
+      recCatches: playerGameStatsTable.recCatches,
+      recTgts: playerGameStatsTable.recTgts,
+      recYds: playerGameStatsTable.recYds,
+      recTds: playerGameStatsTable.recTds,
+      recDrops: playerGameStatsTable.recDrops,
+      recLng: playerGameStatsTable.recLng,
+      recYac: playerGameStatsTable.recYac,
+      defTotalTackles: playerGameStatsTable.defTotalTackles,
+      defTfl: playerGameStatsTable.defTfl,
+      defSacks: playerGameStatsTable.defSacks,
+      defInts: playerGameStatsTable.defInts,
+      defFf: playerGameStatsTable.defFf,
+      defPd: playerGameStatsTable.defPd,
+      defTds: playerGameStatsTable.defTds,
+      defFumRec: playerGameStatsTable.defFumRec,
+      fgAtt: playerGameStatsTable.fgAtt,
+      fgMade: playerGameStatsTable.fgMade,
+      fgLng: playerGameStatsTable.fgLng,
+      xpAtt: playerGameStatsTable.xpAtt,
+      xpMade: playerGameStatsTable.xpMade,
+      puntAtt: playerGameStatsTable.puntAtt,
+      puntYds: playerGameStatsTable.puntYds,
+      puntAvg: playerGameStatsTable.puntAvg,
+      puntLng: playerGameStatsTable.puntLng,
+      puntIn20: playerGameStatsTable.puntIn20,
+      puntTbs: playerGameStatsTable.puntTbs,
+      gameStatus: gamesTable.status,
+      homeTeamId: gamesTable.homeTeamId,
+      homeScore: gamesTable.homeScore,
+      awayScore: gamesTable.awayScore,
+      homeAbbr: homeTeamAlias.abbreviation,
+      homeColor: homeTeamAlias.primaryColor,
+      awayAbbr: awayTeamAlias.abbreviation,
+      awayColor: awayTeamAlias.primaryColor,
+    })
+    .from(playerGameStatsTable)
+    .leftJoin(gamesTable, eq(playerGameStatsTable.gameId, gamesTable.id))
+    .leftJoin(homeTeamAlias, eq(gamesTable.homeTeamId, homeTeamAlias.id))
+    .leftJoin(awayTeamAlias, eq(gamesTable.awayTeamId, awayTeamAlias.id))
+    .where(eq(playerGameStatsTable.playerId, id))
+    .orderBy(playerGameStatsTable.season, playerGameStatsTable.weekIndex);
+
+  res.json(rows.map(r => {
+    const isHome = r.homeTeamId != null ? r.homeTeamId === teamId : null;
+    const isFinal = r.gameStatus === "FINAL";
+    const ps = isHome ? r.homeScore : r.awayScore;
+    const os = isHome ? r.awayScore : r.homeScore;
+    let result: string | null = null;
+    if (isFinal && ps != null && os != null) {
+      result = ps > os ? "W" : ps < os ? "L" : "T";
+    }
+    return {
+      id: r.id,
+      season: r.season,
+      week: r.week,
+      week_index: r.weekIndex,
+      stage_index: r.stageIndex,
+      game_status: r.gameStatus ?? null,
+      opponent_abbreviation: (isHome ? r.awayAbbr : r.homeAbbr) ?? null,
+      opponent_primary_color: (isHome ? r.awayColor : r.homeColor) ?? null,
+      is_home: isHome,
+      result,
+      player_score: ps ?? null,
+      opponent_score: os ?? null,
+      pss_att: r.pssAtt ?? null,
+      pss_cmp: r.pssCmp ?? null,
+      pss_yds: r.pssYds ?? null,
+      pss_tds: r.pssTds ?? null,
+      pss_ints: r.pssInts ?? null,
+      pss_sacks: r.pssSacks ?? null,
+      pss_lng: r.pssLng ?? null,
+      pss_rating: r.pssRating ?? null,
+      rsh_att: r.rshAtt ?? null,
+      rsh_yds: r.rshYds ?? null,
+      rsh_tds: r.rshTds ?? null,
+      rsh_lng: r.rshLng ?? null,
+      fmb: r.fmb ?? null,
+      fmb_lost: r.fmbLost ?? null,
+      rec_catches: r.recCatches ?? null,
+      rec_tgts: r.recTgts ?? null,
+      rec_yds: r.recYds ?? null,
+      rec_tds: r.recTds ?? null,
+      rec_drops: r.recDrops ?? null,
+      rec_lng: r.recLng ?? null,
+      rec_yac: r.recYac ?? null,
+      def_total_tackles: r.defTotalTackles ?? null,
+      def_tfl: r.defTfl ?? null,
+      def_sacks: r.defSacks ?? null,
+      def_ints: r.defInts ?? null,
+      def_ff: r.defFf ?? null,
+      def_pd: r.defPd ?? null,
+      def_tds: r.defTds ?? null,
+      def_fum_rec: r.defFumRec ?? null,
+      fg_att: r.fgAtt ?? null,
+      fg_made: r.fgMade ?? null,
+      fg_lng: r.fgLng ?? null,
+      xp_att: r.xpAtt ?? null,
+      xp_made: r.xpMade ?? null,
+      punt_att: r.puntAtt ?? null,
+      punt_yds: r.puntYds ?? null,
+      punt_avg: r.puntAvg ?? null,
+      punt_lng: r.puntLng ?? null,
+      punt_in20: r.puntIn20 ?? null,
+      punt_tbs: r.puntTbs ?? null,
+    };
+  }));
 });
 
 // PATCH /players/:id

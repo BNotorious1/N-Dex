@@ -3,6 +3,8 @@ import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
+import { useGetPlayerGameLog } from "@workspace/api-client-react";
+import type { GameLogEntry } from "@workspace/api-client-react";
 import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X } from "lucide-react";
 import devTraitNormal from "@assets/Normal_1781202579092.png";
 import devTraitStar from "@assets/Star_1781202579092.png";
@@ -536,6 +538,209 @@ const DEV_TIER_META: Record<number, { label: string; color: string; img: string 
 };
 const SUPERSTAR_COLOR = "#9333ea";
 
+// ─── Game Log Tab ─────────────────────────────────────────────────────────────
+
+type ColDef = { header: string; render: (g: GameLogEntry) => string | number; dim?: boolean };
+
+const QB_COLS: ColDef[] = [
+  { header: "CMP/ATT", render: g => g.pss_cmp != null ? `${g.pss_cmp}/${g.pss_att ?? 0}` : "–" },
+  { header: "YDS",     render: g => g.pss_yds ?? "–" },
+  { header: "TD",      render: g => g.pss_tds ?? "–" },
+  { header: "INT",     render: g => g.pss_ints ?? "–" },
+  { header: "SCK",     render: g => g.pss_sacks ?? "–", dim: true },
+  { header: "RTG",     render: g => g.pss_rating ?? "–" },
+  { header: "RSH",     render: g => g.rsh_yds != null ? `${g.rsh_yds}` : "–", dim: true },
+  { header: "RSH TD",  render: g => g.rsh_tds ?? "–", dim: true },
+];
+const RB_COLS: ColDef[] = [
+  { header: "CAR",  render: g => g.rsh_att ?? "–" },
+  { header: "YDS",  render: g => g.rsh_yds ?? "–" },
+  { header: "AVG",  render: g => g.rsh_att ? ((g.rsh_yds ?? 0) / g.rsh_att).toFixed(1) : "–" },
+  { header: "TD",   render: g => g.rsh_tds ?? "–" },
+  { header: "LNG",  render: g => g.rsh_lng ?? "–", dim: true },
+  { header: "TGT",  render: g => g.rec_tgts ?? "–", dim: true },
+  { header: "REC",  render: g => g.rec_catches ?? "–" },
+  { header: "RYDS", render: g => g.rec_yds ?? "–" },
+  { header: "RTD",  render: g => g.rec_tds ?? "–" },
+  { header: "FMB",  render: g => g.fmb_lost ?? "–", dim: true },
+];
+const WR_TE_COLS: ColDef[] = [
+  { header: "TGT",  render: g => g.rec_tgts ?? "–" },
+  { header: "REC",  render: g => g.rec_catches ?? "–" },
+  { header: "YDS",  render: g => g.rec_yds ?? "–" },
+  { header: "AVG",  render: g => g.rec_catches ? ((g.rec_yds ?? 0) / g.rec_catches).toFixed(1) : "–" },
+  { header: "TD",   render: g => g.rec_tds ?? "–" },
+  { header: "LNG",  render: g => g.rec_lng ?? "–", dim: true },
+  { header: "DROP", render: g => g.rec_drops ?? "–", dim: true },
+  { header: "YAC",  render: g => g.rec_yac ?? "–", dim: true },
+];
+const DEF_COLS: ColDef[] = [
+  { header: "TKL",  render: g => g.def_total_tackles ?? "–" },
+  { header: "TFL",  render: g => g.def_tfl ?? "–" },
+  { header: "SCK",  render: g => g.def_sacks ?? "–" },
+  { header: "INT",  render: g => g.def_ints ?? "–" },
+  { header: "FF",   render: g => g.def_ff ?? "–", dim: true },
+  { header: "PD",   render: g => g.def_pd ?? "–" },
+  { header: "TD",   render: g => g.def_tds ?? "–", dim: true },
+  { header: "FR",   render: g => g.def_fum_rec ?? "–", dim: true },
+];
+const K_COLS: ColDef[] = [
+  { header: "FG M/A", render: g => `${g.fg_made ?? 0}/${g.fg_att ?? 0}` },
+  { header: "LNG",    render: g => g.fg_lng ?? "–" },
+  { header: "XP M/A", render: g => `${g.xp_made ?? 0}/${g.xp_att ?? 0}` },
+];
+const P_COLS: ColDef[] = [
+  { header: "NO",   render: g => g.punt_att ?? "–" },
+  { header: "YDS",  render: g => g.punt_yds ?? "–" },
+  { header: "AVG",  render: g => g.punt_avg ?? "–" },
+  { header: "LNG",  render: g => g.punt_lng ?? "–" },
+  { header: "IN20", render: g => g.punt_in20 ?? "–" },
+  { header: "TB",   render: g => g.punt_tbs ?? "–", dim: true },
+];
+
+const QB_POS  = new Set(["QB"]);
+const RB_POS  = new Set(["HB", "FB", "RB"]);
+const WRTE    = new Set(["WR", "TE"]);
+const DEF_POS = new Set(["MLB","LOLB","ROLB","OLB","RE","LE","DT","LEDGE","CB","FS","SS","ILB","LB"]);
+const K_POS   = new Set(["K"]);
+const P_POS   = new Set(["P"]);
+
+function getColsForPosition(position: string): ColDef[] {
+  if (QB_POS.has(position))  return QB_COLS;
+  if (RB_POS.has(position))  return RB_COLS;
+  if (WRTE.has(position))    return WR_TE_COLS;
+  if (DEF_POS.has(position)) return DEF_COLS;
+  if (K_POS.has(position))   return K_COLS;
+  if (P_POS.has(position))   return P_COLS;
+  return DEF_COLS;
+}
+
+const STAGE_LABEL: Record<number, string> = {
+  2: "Wild Card", 3: "Divisional", 4: "Conf. Championship", 5: "Super Bowl",
+};
+
+function weekLabel(g: GameLogEntry): string {
+  return STAGE_LABEL[g.stage_index] ?? `WK ${g.week}`;
+}
+
+function resultStyle(result: string | null | undefined) {
+  if (result === "W") return "bg-green-900/60 text-green-400 border border-green-700/40";
+  if (result === "L") return "bg-red-900/60 text-red-400 border border-red-600/40";
+  if (result === "T") return "bg-zinc-700/60 text-zinc-300 border border-zinc-600/40";
+  return "bg-zinc-800/40 text-zinc-500 border border-zinc-700/20";
+}
+
+function GameLogTab({ playerId, position }: { playerId: number; position: string }) {
+  const { data: log, isLoading } = useGetPlayerGameLog(playerId, {
+    query: { queryKey: ["player-gamelog", playerId] },
+  });
+
+  const cols = getColsForPosition(position);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-white/30 text-sm">
+        Loading game log…
+      </div>
+    );
+  }
+
+  if (!log || log.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+        <BarChart3 className="h-8 w-8 text-white/15" />
+        <p className="text-sm text-white/30 font-medium">No games played yet</p>
+        <p className="text-xs text-white/20">Game log will populate after weekly stat imports.</p>
+      </div>
+    );
+  }
+
+  const bySeason = Map.groupBy(log, g => g.season);
+  const seasons = [...bySeason.keys()].sort((a, b) => b - a);
+
+  return (
+    <div className="space-y-6">
+      {seasons.map(season => {
+        const games = bySeason.get(season)!;
+        return (
+          <div key={season}>
+            <div className="flex items-center gap-3 mb-2 px-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/30">
+                {season} Season
+              </span>
+              <div className="flex-1 h-px bg-white/5" />
+              <span className="text-[10px] text-white/20">
+                {games.length} game{games.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-white/5">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-white/8">
+                    <th className="text-left py-2 px-3 text-white/30 font-semibold tracking-wide w-12">WK</th>
+                    <th className="text-left py-2 px-3 text-white/30 font-semibold tracking-wide">OPP</th>
+                    <th className="text-center py-2 px-3 text-white/30 font-semibold tracking-wide w-10">RES</th>
+                    <th className="text-center py-2 px-2 text-white/30 font-semibold tracking-wide w-14">SCORE</th>
+                    {cols.map(c => (
+                      <th key={c.header} className={`text-right py-2 px-3 font-semibold tracking-wide ${c.dim ? "text-white/20" : "text-white/30"}`}>
+                        {c.header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {games.map((g, i) => (
+                    <tr
+                      key={g.id}
+                      className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
+                    >
+                      <td className="py-2 px-3 text-white/40 font-mono">{weekLabel(g)}</td>
+                      <td className="py-2 px-3">
+                        <div className="flex items-center gap-1.5">
+                          {g.opponent_abbreviation ? (
+                            <>
+                              <span
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: g.opponent_primary_color ?? "#6b7280" }}
+                              />
+                              <span className="text-white/50 text-[11px]">
+                                {g.is_home === false ? "@" : ""}
+                                <span className="text-white/80 font-bold">{g.opponent_abbreviation}</span>
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-white/20">–</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        <span className={`inline-block px-1.5 py-px rounded text-[10px] font-black ${resultStyle(g.result)}`}>
+                          {g.result ?? "–"}
+                        </span>
+                      </td>
+                      <td className="py-1.5 px-2 text-center font-mono text-white/40 text-[11px]">
+                        {g.player_score != null
+                          ? `${g.player_score}-${g.opponent_score ?? "?"}`
+                          : "–"}
+                      </td>
+                      {cols.map(c => (
+                        <td key={c.header} className={`py-2 px-3 text-right font-mono ${c.dim ? "text-white/25" : "text-white/70"}`}>
+                          {c.render(g)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AbilitiesTab({ player }: { player: PlayerDetail }) {
   const devTier  = player.dev_trait ?? 0;
   const meta     = DEV_TIER_META[devTier] ?? DEV_TIER_META[0]!;
@@ -812,12 +1017,8 @@ export default function PlayerDetail() {
             {tab === "attributes" && <AttributesTab player={player} teamColor={teamColor} />}
             {tab === "traits" && <TraitsTab player={player} teamColor={teamColor} />}
             {tab === "abilities" && <AbilitiesTab player={player} />}
-            {tab === "gamelog" && (
-              <PlaceholderTab
-                icon={<BarChart3 className="h-6 w-6" />}
-                title="Game Log Not Yet Available"
-                description="Per-game stat lines will appear here once weekly stat imports are configured."
-              />
+            {tab === "gamelog" && player && (
+              <GameLogTab playerId={player.id} position={player.position} />
             )}
             {tab === "career" && (
               <PlaceholderTab
