@@ -982,14 +982,6 @@ async function detectActualSeason(
 router.post("/import-all-stats", async (req, res) => {
   const leagueId = getLeagueId(req);
   try {
-    const lastRun = statCooldowns.get(leagueId) ?? 0;
-    const remaining = Math.ceil((STATS_COOLDOWN_MS - (Date.now() - lastRun)) / 1000);
-    if (remaining > 0) {
-      res.status(429).json({ message: `Please wait ${remaining} seconds before importing again.` });
-      return;
-    }
-    statCooldowns.set(leagueId, Date.now());
-
     const { sessionKey, eaLeagueId, platform, league } = await getBlazeSession(leagueId);
     const currentWeek = league.week ?? 1;
     const baseSeason = league.season ?? 2025;
@@ -1087,7 +1079,7 @@ router.get("/export-info", async (req, res) => {
   if (!league) { res.status(404).json({ error: "League not found" }); return; }
 
   const exportInfo = (league.exportInfo as Record<string, unknown> | null) ?? buildDefaultExportInfo();
-  const cooldownRemainingMs = STATS_COOLDOWN_MS - (Date.now() - (statCooldowns.get(leagueId) ?? 0));
+  const cooldownRemainingMs = 0;
 
   res.json({
     is_ea_connected: league.isEaConnected,
