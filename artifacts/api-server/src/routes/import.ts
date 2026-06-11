@@ -540,7 +540,99 @@ router.post("/:leagueId/:platform/:eaLeagueId/:week/:stage/schedules", async (re
 
 type RawStat = Record<string, unknown>;
 
-async function upsertPlayerStats(
+export function buildStatSet(
+  statType: string,
+  s: RawStat,
+): Partial<typeof playerGameStatsTable.$inferInsert> {
+  if (statType === "passing") {
+    return {
+      pssAtt:    num(s["pssAtt"]),
+      pssCmp:    num(s["pssCmp"]),
+      pssYds:    num(s["pssYds"]),
+      pssTds:    num(s["passTDs"] ?? s["pssTDs"]),
+      pssInts:   num(s["pssInts"]),
+      pssSacks:  num(s["pssSacks"]),
+      pssLng:    num(s["pssLng"]),
+      pssRating: num(s["pssRate"] ?? s["pssRating"]),
+    };
+  }
+  if (statType === "rushing") {
+    return {
+      rshAtt:  num(s["rshAtt"]),
+      rshYds:  num(s["rshYds"]),
+      rshTds:  num(s["rshTDs"] ?? s["rushTDs"]),
+      rshLng:  num(s["rshLng"]),
+      fmb:     num(s["fmb"]),
+      fmbLost: num(s["fmbLost"]),
+    };
+  }
+  if (statType === "receiving") {
+    return {
+      recCatches: num(s["recCatches"]),
+      recTgts:    num(s["recTgts"]),
+      recYds:     num(s["recYds"]),
+      recTds:     num(s["recTDs"] ?? s["recTds"]),
+      recDrops:   num(s["recDrops"]),
+      recLng:     num(s["recLng"]),
+      recYac:     num(s["recYac"]),
+    };
+  }
+  if (statType === "defense") {
+    return {
+      defTotalTackles: num(s["defTotalTackles"]),
+      defTfl:          num(s["defTackleForLoss"] ?? s["defTFL"]),
+      defSacks:        num(s["defSacks"]),
+      defInts:         num(s["defInts"]),
+      defFf:           num(s["defForcedFum"] ?? s["defFF"]),
+      defPd:           num(s["defPassDef"] ?? s["defPD"]),
+      defTds:          num(s["defTDs"] ?? s["defTds"]),
+      defFumRec:       num(s["defFumRec"]),
+    };
+  }
+  if (statType === "kicking") {
+    return {
+      fgAtt:  num(s["fGAtt"] ?? s["fgAtt"]),
+      fgMade: num(s["fGMade"] ?? s["fgMade"]),
+      fgLng:  num(s["fGLng"] ?? s["fgLng"]),
+      xpAtt:  num(s["xPAtt"] ?? s["xpAtt"]),
+      xpMade: num(s["xPMade"] ?? s["xpMade"]),
+    };
+  }
+  // punting
+  return {
+    puntAtt:  num(s["puntAtt"]),
+    puntYds:  num(s["puntYds"]),
+    puntAvg:  num(s["puntAvg"] ?? s["puntYdsPerAtt"]),
+    puntLng:  num(s["puntLng"]),
+    puntIn20: num(s["puntIn20"]),
+    puntTbs:  num(s["puntTBs"] ?? s["puntTbs"]),
+  };
+}
+
+export const STAT_KEY_MAP: Record<string, string> = {
+  passing:   "playerPassingStatInfoList",
+  rushing:   "playerRushingStatInfoList",
+  receiving: "playerReceivingStatInfoList",
+  defense:   "playerDefensiveStatInfoList",
+  kicking:   "playerKickingStatInfoList",
+  punting:   "playerPuntingStatInfoList",
+};
+
+export async function processStatBlob(
+  leagueId: number,
+  weekIndex: number,
+  stageIndex: number,
+  season: number,
+  statType: string,
+  body: Record<string, unknown>,
+): Promise<number> {
+  const listKey = STAT_KEY_MAP[statType];
+  if (!listKey) return 0;
+  const stats = getNestedArray<RawStat>(body, listKey);
+  return upsertPlayerStats(leagueId, weekIndex, stageIndex, season, stats, s => buildStatSet(statType, s));
+}
+
+export async function upsertPlayerStats(
   leagueId: number,
   weekIndex: number,
   stageIndex: number,
@@ -621,88 +713,13 @@ for (const stat of STAT_TYPES) {
 
     const body = req.body as Record<string, unknown>;
 
-    const KEY_MAP: Record<string, string> = {
-      passing: "playerPassingStatInfoList",
-      rushing: "playerRushingStatInfoList",
-      receiving: "playerReceivingStatInfoList",
-      defense: "playerDefensiveStatInfoList",
-      kicking: "playerKickingStatInfoList",
-      punting: "playerPuntingStatInfoList",
-    };
-
-    const listKey = KEY_MAP[stat]!;
+    const listKey = STAT_KEY_MAP[stat]!;
     const stats = getNestedArray<RawStat>(body, listKey);
-
-    function buildSet(s: RawStat): Partial<typeof playerGameStatsTable.$inferInsert> {
-      if (stat === "passing") {
-        return {
-          pssAtt:    num(s["pssAtt"]),
-          pssCmp:    num(s["pssCmp"]),
-          pssYds:    num(s["pssYds"]),
-          pssTds:    num(s["passTDs"] ?? s["pssTDs"]),
-          pssInts:   num(s["pssInts"]),
-          pssSacks:  num(s["pssSacks"]),
-          pssLng:    num(s["pssLng"]),
-          pssRating: num(s["pssRate"] ?? s["pssRating"]),
-        };
-      }
-      if (stat === "rushing") {
-        return {
-          rshAtt:  num(s["rshAtt"]),
-          rshYds:  num(s["rshYds"]),
-          rshTds:  num(s["rshTDs"] ?? s["rushTDs"]),
-          rshLng:  num(s["rshLng"]),
-          fmb:     num(s["fmb"]),
-          fmbLost: num(s["fmbLost"]),
-        };
-      }
-      if (stat === "receiving") {
-        return {
-          recCatches: num(s["recCatches"]),
-          recTgts:    num(s["recTgts"]),
-          recYds:     num(s["recYds"]),
-          recTds:     num(s["recTDs"] ?? s["recTds"]),
-          recDrops:   num(s["recDrops"]),
-          recLng:     num(s["recLng"]),
-          recYac:     num(s["recYac"]),
-        };
-      }
-      if (stat === "defense") {
-        return {
-          defTotalTackles: num(s["defTotalTackles"]),
-          defTfl:          num(s["defTackleForLoss"] ?? s["defTFL"]),
-          defSacks:        num(s["defSacks"]),
-          defInts:         num(s["defInts"]),
-          defFf:           num(s["defForcedFum"] ?? s["defFF"]),
-          defPd:           num(s["defPassDef"] ?? s["defPD"]),
-          defTds:          num(s["defTDs"] ?? s["defTds"]),
-          defFumRec:       num(s["defFumRec"]),
-        };
-      }
-      if (stat === "kicking") {
-        return {
-          fgAtt:  num(s["fGAtt"] ?? s["fgAtt"]),
-          fgMade: num(s["fGMade"] ?? s["fgMade"]),
-          fgLng:  num(s["fGLng"] ?? s["fgLng"]),
-          xpAtt:  num(s["xPAtt"] ?? s["xpAtt"]),
-          xpMade: num(s["xPMade"] ?? s["xpMade"]),
-        };
-      }
-      // punting
-      return {
-        puntAtt:  num(s["puntAtt"]),
-        puntYds:  num(s["puntYds"]),
-        puntAvg:  num(s["puntAvg"] ?? s["puntYdsPerAtt"]),
-        puntLng:  num(s["puntLng"]),
-        puntIn20: num(s["puntIn20"]),
-        puntTbs:  num(s["puntTBs"] ?? s["puntTbs"]),
-      };
-    }
 
     let recordsProcessed = 0;
     let status: "success" | "error" = "success";
     try {
-      recordsProcessed = await upsertPlayerStats(leagueId, weekIndex, stageIndex, league.season, stats, buildSet);
+      recordsProcessed = await upsertPlayerStats(leagueId, weekIndex, stageIndex, league.season, stats, s => buildStatSet(stat, s));
     } catch (e) {
       status = "error";
     }

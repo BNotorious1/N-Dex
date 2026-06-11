@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, leaguesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { upsertLeagueTeams, upsertTeamRoster, upsertWeekSchedule } from "./import";
+import { upsertLeagueTeams, upsertTeamRoster, upsertWeekSchedule, processStatBlob } from "./import";
 import crypto from "node:crypto";
 import https from "node:https";
 import { logger } from "../lib/logger";
@@ -943,6 +943,41 @@ router.post("/import-schedules", async (req, res) => {
   }
 });
 
+// Blaze export type → stat type name (used by processStatBlob)
+const PLAYER_STAT_EXPORT_MAP: Record<string, string> = {
+  "CareerMode_GetWeeklyPassingStatsExport":   "passing",
+  "CareerMode_GetWeeklyRushingStatsExport":   "rushing",
+  "CareerMode_GetWeeklyReceivingStatsExport": "receiving",
+  "CareerMode_GetWeeklyKickingStatsExport":   "kicking",
+  "CareerMode_GetWeeklyPuntingStatsExport":   "punting",
+  "CareerMode_GetWeeklyDefensiveStatsExport": "defense",
+};
+
+const PLAYER_STAT_EXPORTS = Object.keys(PLAYER_STAT_EXPORT_MAP);
+
+// Fetch the schedule for week 0 and extract seasonIndex to compute the actual franchise year.
+// seasonIndex is 0-indexed (year 1 = 0, year 5 = 4). Actual year = leagueSeason + seasonIndex.
+async function detectActualSeason(
+  sessionKey: string,
+  platform: string,
+  eaLeagueId: string,
+  baseSeason: number,
+): Promise<number> {
+  try {
+    type SchedExport = { gameScheduleInfoList?: Array<Record<string, unknown>> };
+    const data = await blazeExport<SchedExport>(
+      "CareerMode_GetWeeklySchedulesExport",
+      sessionKey, platform,
+      { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: 0 },
+    );
+    const first = data.gameScheduleInfoList?.[0];
+    const seasonIndex = typeof first?.["seasonIndex"] === "number" ? first["seasonIndex"] : 0;
+    return baseSeason + seasonIndex;
+  } catch {
+    return baseSeason;
+  }
+}
+
 // POST /import-all-stats
 router.post("/import-all-stats", async (req, res) => {
   const leagueId = getLeagueId(req);
@@ -957,18 +992,8 @@ router.post("/import-all-stats", async (req, res) => {
 
     const { sessionKey, eaLeagueId, platform, league } = await getBlazeSession(leagueId);
     const currentWeek = league.week ?? 1;
+    const baseSeason = league.season ?? 2025;
     const now = new Date().toISOString();
-
-    const STAT_EXPORTS = [
-      "CareerMode_GetWeeklyPassingStatsExport",
-      "CareerMode_GetWeeklyRushingStatsExport",
-      "CareerMode_GetWeeklyReceivingStatsExport",
-      "CareerMode_GetWeeklyKickingStatsExport",
-      "CareerMode_GetWeeklyPuntingStatsExport",
-      "CareerMode_GetWeeklyDefensiveStatsExport",
-      "CareerMode_GetWeeklyTeamStatsExport",
-      "CareerMode_GetWeeklySchedulesExport",
-    ];
 
     const exportInfo = await updateExportInfo(leagueId, (info) => {
       const stats = (info["statistics"] as Record<string, Record<string, unknown>> | null) ?? {};
@@ -978,16 +1003,30 @@ router.post("/import-all-stats", async (req, res) => {
       return { ...info, statistics: stats };
     });
 
-    // Fire Blaze calls async (don't wait for all to finish)
+    // Process stats in background — detect the real franchise year first, then save each week
     void (async () => {
+      const actualSeason = await detectActualSeason(sessionKey, platform, eaLeagueId, baseSeason);
+      req.log.info({ baseSeason, actualSeason }, "import-all-stats: detected season");
+
       for (let weekIdx = 0; weekIdx < currentWeek; weekIdx++) {
-        if (weekIdx === 21) continue; // Pro Bowl - no data
-        for (const exportType of STAT_EXPORTS) {
-          await blazeExport(exportType, sessionKey, platform, {
-            leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx,
-          }).catch(() => {});
+        if (weekIdx === 21) continue; // Pro Bowl — no player stat data
+        for (const exportType of PLAYER_STAT_EXPORTS) {
+          try {
+            const data = await blazeExport<Record<string, unknown>>(
+              exportType, sessionKey, platform,
+              { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx },
+            );
+            const statType = PLAYER_STAT_EXPORT_MAP[exportType]!;
+            const n = await processStatBlob(leagueId, weekIdx, 1, actualSeason, statType, data);
+            if (n > 0) {
+              req.log.info({ weekIdx, statType, n }, "import-all-stats: saved stat rows");
+            }
+          } catch (err) {
+            req.log.warn({ weekIdx, exportType, err }, "import-all-stats: skipping export due to error");
+          }
         }
       }
+      req.log.info({ leagueId, weeks: currentWeek }, "import-all-stats: background complete");
     })();
 
     res.json({ success: true, export_info: exportInfo });
@@ -1002,24 +1041,22 @@ router.post("/import-week-stats/:weekIndex", async (req, res) => {
   const leagueId = getLeagueId(req);
   const weekIndex = parseInt(req.params["weekIndex"] ?? "0", 10);
   try {
-    const { sessionKey, eaLeagueId, platform } = await getBlazeSession(leagueId);
+    const { sessionKey, eaLeagueId, platform, league } = await getBlazeSession(leagueId);
+    const baseSeason = league.season ?? 2025;
+    const actualSeason = await detectActualSeason(sessionKey, platform, eaLeagueId, baseSeason);
     const now = new Date().toISOString();
 
-    const STAT_EXPORTS = [
-      "CareerMode_GetWeeklyPassingStatsExport",
-      "CareerMode_GetWeeklyRushingStatsExport",
-      "CareerMode_GetWeeklyReceivingStatsExport",
-      "CareerMode_GetWeeklyKickingStatsExport",
-      "CareerMode_GetWeeklyPuntingStatsExport",
-      "CareerMode_GetWeeklyDefensiveStatsExport",
-      "CareerMode_GetWeeklyTeamStatsExport",
-      "CareerMode_GetWeeklySchedulesExport",
-    ];
-
-    for (const exportType of STAT_EXPORTS) {
-      await blazeExport(exportType, sessionKey, platform, {
-        leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex,
-      }).catch(() => {});
+    for (const exportType of PLAYER_STAT_EXPORTS) {
+      try {
+        const data = await blazeExport<Record<string, unknown>>(
+          exportType, sessionKey, platform,
+          { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex },
+        );
+        const statType = PLAYER_STAT_EXPORT_MAP[exportType]!;
+        await processStatBlob(leagueId, weekIndex, 1, actualSeason, statType, data);
+      } catch (err) {
+        req.log.warn({ weekIndex, exportType, err }, "import-week-stats: skipping export");
+      }
     }
 
     const exportInfo = await updateExportInfo(leagueId, (info) => {

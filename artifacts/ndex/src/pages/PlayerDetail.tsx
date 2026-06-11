@@ -655,7 +655,12 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
     );
   }
 
-  const bySeason = Map.groupBy(log, g => g.season);
+  const bySeason = log.reduce((m, g) => {
+    const arr = m.get(g.season) ?? [];
+    arr.push(g);
+    m.set(g.season, arr);
+    return m;
+  }, new Map<number, typeof log>());
   const seasons = [...bySeason.keys()].sort((a, b) => b - a);
 
   return (
