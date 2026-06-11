@@ -733,7 +733,32 @@ export const GetPlayerResponse = zod.object({
   "kick_accuracy": zod.number().nullish(),
   "kick_power": zod.number().nullish(),
   "kick_return": zod.number().nullish(),
-  "long_snap": zod.number().nullish()
+  "long_snap": zod.number().nullish(),
+  "clutch_trait": zod.number().nullish(),
+  "high_motor_trait": zod.number().nullish(),
+  "penalty_trait": zod.number().nullish(),
+  "predict_trait": zod.number().nullish(),
+  "decision_maker_trait": zod.number().nullish(),
+  "qb_style_trait": zod.number().nullish(),
+  "force_pass_trait": zod.number().nullish(),
+  "sense_pressure_trait": zod.number().nullish(),
+  "throw_away_trait": zod.number().nullish(),
+  "tight_spiral_trait": zod.number().nullish(),
+  "cover_ball_trait": zod.number().nullish(),
+  "fight_for_yards_trait": zod.number().nullish(),
+  "run_style": zod.number().nullish(),
+  "feet_in_bounds_trait": zod.number().nullish(),
+  "hp_catch_trait": zod.number().nullish(),
+  "play_ball_trait": zod.number().nullish(),
+  "pos_catch_trait": zod.number().nullish(),
+  "yac_catch_trait": zod.number().nullish(),
+  "drop_open_pass_trait": zod.number().nullish(),
+  "big_hit_trait": zod.number().nullish(),
+  "strip_ball_trait": zod.number().nullish(),
+  "dl_bull_rush_trait": zod.number().nullish(),
+  "dl_spin_trait": zod.number().nullish(),
+  "dl_swim_trait": zod.number().nullish(),
+  "lb_style_trait": zod.number().nullish()
 })
 
 

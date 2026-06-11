@@ -1118,6 +1118,56 @@ components:
           type: ["integer", "null"]
         long_snap:
           type: ["integer", "null"]
+        clutch_trait:
+          type: ["integer", "null"]
+        high_motor_trait:
+          type: ["integer", "null"]
+        penalty_trait:
+          type: ["integer", "null"]
+        predict_trait:
+          type: ["integer", "null"]
+        decision_maker_trait:
+          type: ["integer", "null"]
+        qb_style_trait:
+          type: ["integer", "null"]
+        force_pass_trait:
+          type: ["integer", "null"]
+        sense_pressure_trait:
+          type: ["integer", "null"]
+        throw_away_trait:
+          type: ["integer", "null"]
+        tight_spiral_trait:
+          type: ["integer", "null"]
+        cover_ball_trait:
+          type: ["integer", "null"]
+        fight_for_yards_trait:
+          type: ["integer", "null"]
+        run_style:
+          type: ["integer", "null"]
+        feet_in_bounds_trait:
+          type: ["integer", "null"]
+        hp_catch_trait:
+          type: ["integer", "null"]
+        play_ball_trait:
+          type: ["integer", "null"]
+        pos_catch_trait:
+          type: ["integer", "null"]
+        yac_catch_trait:
+          type: ["integer", "null"]
+        drop_open_pass_trait:
+          type: ["integer", "null"]
+        big_hit_trait:
+          type: ["integer", "null"]
+        strip_ball_trait:
+          type: ["integer", "null"]
+        dl_bull_rush_trait:
+          type: ["integer", "null"]
+        dl_spin_trait:
+          type: ["integer", "null"]
+        dl_swim_trait:
+          type: ["integer", "null"]
+        lb_style_trait:
+          type: ["integer", "null"]
 
     PlayerInput:
       type: object

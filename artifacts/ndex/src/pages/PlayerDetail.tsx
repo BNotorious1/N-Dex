@@ -3,7 +3,7 @@ import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
-import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2 } from "lucide-react";
+import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -91,6 +91,32 @@ interface PlayerDetail {
   kick_power: number | null;
   kick_return: number | null;
   long_snap: number | null;
+  // Traits
+  clutch_trait: number | null;
+  high_motor_trait: number | null;
+  penalty_trait: number | null;
+  predict_trait: number | null;
+  decision_maker_trait: number | null;
+  qb_style_trait: number | null;
+  force_pass_trait: number | null;
+  sense_pressure_trait: number | null;
+  throw_away_trait: number | null;
+  tight_spiral_trait: number | null;
+  cover_ball_trait: number | null;
+  fight_for_yards_trait: number | null;
+  run_style: number | null;
+  feet_in_bounds_trait: number | null;
+  hp_catch_trait: number | null;
+  play_ball_trait: number | null;
+  pos_catch_trait: number | null;
+  yac_catch_trait: number | null;
+  drop_open_pass_trait: number | null;
+  big_hit_trait: number | null;
+  strip_ball_trait: number | null;
+  dl_bull_rush_trait: number | null;
+  dl_spin_trait: number | null;
+  dl_swim_trait: number | null;
+  lb_style_trait: number | null;
 }
 
 type PageTab = "attributes" | "traits" | "abilities" | "gamelog" | "career" | "awards" | "history";
@@ -356,6 +382,136 @@ function AttributesTab({ player, teamColor }: { player: PlayerDetail; teamColor:
   );
 }
 
+// ─── Traits tab ───────────────────────────────────────────────────────────────
+
+type TraitDef =
+  | { kind: "bool";  label: string; value: number | null; activeLabel?: string; inactiveLabel?: string }
+  | { kind: "named"; label: string; value: number | null; map: Record<number, string> };
+
+function TraitRow({ trait, teamColor }: { trait: TraitDef; teamColor: string }) {
+  if (trait.value == null) return null;
+
+  if (trait.kind === "bool") {
+    const active = trait.value === 1;
+    return (
+      <div className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
+        <span className="text-[11px] text-white/50 uppercase tracking-wider">{trait.label}</span>
+        <div className="flex items-center gap-1.5">
+          {active ? (
+            <>
+              <span className="text-[11px] font-bold" style={{ color: teamColor }}>{trait.activeLabel ?? trait.label}</span>
+              <div className="flex items-center justify-center w-5 h-5 rounded-full" style={{ backgroundColor: `${teamColor}25` }}>
+                <Check className="h-3 w-3" style={{ color: teamColor }} />
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-[11px] font-medium text-white/20">{trait.inactiveLabel ?? "Normal"}</span>
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
+                <X className="h-3 w-3 text-white/20" />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const label = trait.map[trait.value] ?? `${trait.value}`;
+  return (
+    <div className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
+      <span className="text-[11px] text-white/50 uppercase tracking-wider">{trait.label}</span>
+      <span
+        className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+        style={{ backgroundColor: `${teamColor}20`, color: teamColor, border: `1px solid ${teamColor}40` }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function TraitCard({ title, traits, teamColor }: { title: string; traits: TraitDef[]; teamColor: string }) {
+  const visible = traits.filter(t => t.value != null);
+  if (visible.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+      <div className="px-4 py-2.5 flex items-center" style={{ backgroundColor: teamColor }}>
+        <span className="text-xs font-black uppercase tracking-widest text-white">{title}</span>
+      </div>
+      <div className="px-4">
+        {visible.map(t => <TraitRow key={t.label} trait={t} teamColor={teamColor} />)}
+      </div>
+    </div>
+  );
+}
+
+const QB_STYLE   = { 0: "Pocket", 1: "Scrambler", 2: "Improviser", 3: "Field General" };
+const SENSE_P    = { 0: "Paranoid", 1: "Average", 2: "Trigger Happy" };
+const LB_STYLE   = { 0: "Balanced", 1: "Run Stopper", 2: "Pass Rusher" };
+const RUN_STYLE  = { 0: "Balanced", 1: "Power", 2: "Elusive", 3: "Speed", 4: "Compact" };
+const DEC_MAKER  = { 0: "Conservative", 1: "Normal", 2: "Aggressive" };
+
+function TraitsTab({ player, teamColor }: { player: PlayerDetail; teamColor: string }) {
+  const core: TraitDef[] = [
+    { kind: "bool",  label: "Clutch",          value: player.clutch_trait,         activeLabel: "Clutch" },
+    { kind: "bool",  label: "High Motor",       value: player.high_motor_trait,     activeLabel: "High Motor" },
+    { kind: "bool",  label: "Penalty",          value: player.penalty_trait,        activeLabel: "Undisciplined" },
+    { kind: "bool",  label: "Predictable",      value: player.predict_trait,        activeLabel: "Predictable" },
+    { kind: "named", label: "Decision Maker",   value: player.decision_maker_trait, map: DEC_MAKER },
+  ];
+  const passing: TraitDef[] = [
+    { kind: "named", label: "QB Style",         value: player.qb_style_trait,       map: QB_STYLE },
+    { kind: "bool",  label: "Tight Spiral",     value: player.tight_spiral_trait,   activeLabel: "Tight Spiral" },
+    { kind: "named", label: "Sense Pressure",   value: player.sense_pressure_trait, map: SENSE_P },
+    { kind: "bool",  label: "Throw Away",       value: player.throw_away_trait,     activeLabel: "Throws Away" },
+    { kind: "bool",  label: "Force Pass",       value: player.force_pass_trait,     activeLabel: "Forces Passes" },
+  ];
+  const ballCarrier: TraitDef[] = [
+    { kind: "bool",  label: "Cover Ball",       value: player.cover_ball_trait,     activeLabel: "Covers Ball" },
+    { kind: "bool",  label: "Fight for Yards",  value: player.fight_for_yards_trait,activeLabel: "Fights for Yards" },
+    { kind: "named", label: "Run Style",        value: player.run_style,            map: RUN_STYLE },
+  ];
+  const receiving: TraitDef[] = [
+    { kind: "bool",  label: "Feet in Bounds",   value: player.feet_in_bounds_trait, activeLabel: "Keeps Feet In" },
+    { kind: "bool",  label: "High Point Catch", value: player.hp_catch_trait,       activeLabel: "High Points" },
+    { kind: "bool",  label: "Play Ball",        value: player.play_ball_trait,      activeLabel: "Aggressive" },
+    { kind: "bool",  label: "Possession Catch", value: player.pos_catch_trait,      activeLabel: "Possession" },
+    { kind: "bool",  label: "YAC Catch",        value: player.yac_catch_trait,      activeLabel: "RAC Specialist" },
+    { kind: "bool",  label: "Drop Open Pass",   value: player.drop_open_pass_trait, activeLabel: "Drops Passes" },
+  ];
+  const defense: TraitDef[] = [
+    { kind: "bool",  label: "Big Hitter",       value: player.big_hit_trait,        activeLabel: "Big Hitter" },
+    { kind: "bool",  label: "Strip Ball",       value: player.strip_ball_trait,     activeLabel: "Strip Ball" },
+    { kind: "bool",  label: "DL Bull Rush",     value: player.dl_bull_rush_trait,   activeLabel: "Bull Rush" },
+    { kind: "bool",  label: "DL Spin Move",     value: player.dl_spin_trait,        activeLabel: "Spin Move" },
+    { kind: "bool",  label: "DL Swim Move",     value: player.dl_swim_trait,        activeLabel: "Swim Move" },
+    { kind: "named", label: "LB Style",         value: player.lb_style_trait,       map: LB_STYLE },
+  ];
+
+  const hasAny = [core, passing, ballCarrier, receiving, defense]
+    .flat().some(t => t.value != null);
+
+  if (!hasAny) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <ShieldAlert className="h-10 w-10 text-white/15" />
+        <p className="text-sm text-white/30">No trait data imported yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <TraitCard title="Core"        traits={core}        teamColor={teamColor} />
+      <TraitCard title="Passing"     traits={passing}     teamColor={teamColor} />
+      <TraitCard title="Ball Carrier" traits={ballCarrier} teamColor={teamColor} />
+      <TraitCard title="Receiving"   traits={receiving}   teamColor={teamColor} />
+      <TraitCard title="Defense"     traits={defense}     teamColor={teamColor} />
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PlayerDetail() {
@@ -521,13 +677,7 @@ export default function PlayerDetail() {
 
             {/* Tab content */}
             {tab === "attributes" && <AttributesTab player={player} teamColor={teamColor} />}
-            {tab === "traits" && (
-              <PlaceholderTab
-                icon={<ShieldAlert className="h-6 w-6" />}
-                title="Traits Not Yet Imported"
-                description="Player trait data (e.g. clutch, penalties, possession receiver) will appear here once imported from Madden."
-              />
-            )}
+            {tab === "traits" && <TraitsTab player={player} teamColor={teamColor} />}
             {tab === "abilities" && (
               <PlaceholderTab
                 icon={<Zap className="h-6 w-6" />}

@@ -331,6 +331,56 @@ export interface PlayerDetail {
   kick_return?: number | null;
   /** @nullable */
   long_snap?: number | null;
+  /** @nullable */
+  clutch_trait?: number | null;
+  /** @nullable */
+  high_motor_trait?: number | null;
+  /** @nullable */
+  penalty_trait?: number | null;
+  /** @nullable */
+  predict_trait?: number | null;
+  /** @nullable */
+  decision_maker_trait?: number | null;
+  /** @nullable */
+  qb_style_trait?: number | null;
+  /** @nullable */
+  force_pass_trait?: number | null;
+  /** @nullable */
+  sense_pressure_trait?: number | null;
+  /** @nullable */
+  throw_away_trait?: number | null;
+  /** @nullable */
+  tight_spiral_trait?: number | null;
+  /** @nullable */
+  cover_ball_trait?: number | null;
+  /** @nullable */
+  fight_for_yards_trait?: number | null;
+  /** @nullable */
+  run_style?: number | null;
+  /** @nullable */
+  feet_in_bounds_trait?: number | null;
+  /** @nullable */
+  hp_catch_trait?: number | null;
+  /** @nullable */
+  play_ball_trait?: number | null;
+  /** @nullable */
+  pos_catch_trait?: number | null;
+  /** @nullable */
+  yac_catch_trait?: number | null;
+  /** @nullable */
+  drop_open_pass_trait?: number | null;
+  /** @nullable */
+  big_hit_trait?: number | null;
+  /** @nullable */
+  strip_ball_trait?: number | null;
+  /** @nullable */
+  dl_bull_rush_trait?: number | null;
+  /** @nullable */
+  dl_spin_trait?: number | null;
+  /** @nullable */
+  dl_swim_trait?: number | null;
+  /** @nullable */
+  lb_style_trait?: number | null;
 }
 
 export interface PlayerInput {

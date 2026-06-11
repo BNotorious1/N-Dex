@@ -89,6 +89,33 @@ export const playersTable = pgTable("players", {
   kickPower: integer("kick_power"),
   kickReturn: integer("kick_return"),
   longSnap: integer("long_snap"),
+
+  // ── Traits ───────────────────────────────────────────────────────────────
+  clutchTrait: integer("clutch_trait"),
+  highMotorTrait: integer("high_motor_trait"),
+  penaltyTrait: integer("penalty_trait"),
+  predictTrait: integer("predict_trait"),
+  decisionMakerTrait: integer("decision_maker_trait"),
+  qbStyleTrait: integer("qb_style_trait"),
+  forcePassTrait: integer("force_pass_trait"),
+  sensePressureTrait: integer("sense_pressure_trait"),
+  throwAwayTrait: integer("throw_away_trait"),
+  tightSpiralTrait: integer("tight_spiral_trait"),
+  coverBallTrait: integer("cover_ball_trait"),
+  fightForYardsTrait: integer("fight_for_yards_trait"),
+  runStyle: integer("run_style"),
+  feetInBoundsTrait: integer("feet_in_bounds_trait"),
+  hpCatchTrait: integer("hp_catch_trait"),
+  playBallTrait: integer("play_ball_trait"),
+  posCatchTrait: integer("pos_catch_trait"),
+  yacCatchTrait: integer("yac_catch_trait"),
+  dropOpenPassTrait: integer("drop_open_pass_trait"),
+  bigHitTrait: integer("big_hit_trait"),
+  stripBallTrait: integer("strip_ball_trait"),
+  dlBullRushTrait: integer("dl_bull_rush_trait"),
+  dlSpinTrait: integer("dl_spin_trait"),
+  dlSwimTrait: integer("dl_swim_trait"),
+  lbStyleTrait: integer("lb_style_trait"),
 });
 
 export const insertPlayerSchema = createInsertSchema(playersTable).omit({ id: true });
