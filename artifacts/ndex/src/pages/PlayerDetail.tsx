@@ -134,9 +134,16 @@ function ratingBarColor(v: number) {
   return "#b91c1c";
 }
 
+const NAME_SUFFIXES = new Set(["jr", "jr.", "sr", "sr.", "ii", "iii", "iv", "v"]);
+
 function splitName(fullName: string): [string, string] {
   const parts = fullName.trim().split(" ");
   if (parts.length === 1) return ["", parts[0]!];
+  const suffix = parts[parts.length - 1]!;
+  if (NAME_SUFFIXES.has(suffix.toLowerCase()) && parts.length >= 3) {
+    const last = parts.slice(-2).join(" ");
+    return [parts.slice(0, -2).join(" "), last];
+  }
   const last = parts.pop()!;
   return [parts.join(" "), last];
 }
