@@ -177,8 +177,8 @@ function RatingRow({ label, value, max = 99 }: { label: string; value: number | 
 function AttrCard({ title, teamColor, children }: { title: string; teamColor: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-white/8" style={{ backgroundColor: `${teamColor}22` }}>
-        <span className="font-black uppercase tracking-widest text-[16px] text-left" style={{ color: teamColor }}>{title}</span>
+      <div className="px-4 py-2.5 flex items-center" style={{ backgroundColor: teamColor }}>
+        <span className="text-xs font-black uppercase tracking-widest text-white">{title}</span>
       </div>
       <div className="px-4">{children}</div>
     </div>
