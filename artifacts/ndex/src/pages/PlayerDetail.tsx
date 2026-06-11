@@ -140,10 +140,10 @@ type PageTab = "attributes" | "traits" | "abilities" | "gamelog" | "career" | "a
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const DEV_TRAIT = [
-  { label: "Normal",    color: "#6b7280", glow: "#6b728040" },
-  { label: "Star",      color: "#f59e0b", glow: "#f59e0b30" },
-  { label: "Superstar", color: "#f97316", glow: "#f9731630" },
-  { label: "X-Factor",  color: "#00C8FF", glow: "#00C8FF30" },
+  { label: "Normal",    color: "#a16207", glow: "#a1620720", img: devTraitNormal    },
+  { label: "Star",      color: "#9ca3af", glow: "#9ca3af20", img: devTraitStar      },
+  { label: "Superstar", color: "#d97706", glow: "#d9770620", img: devTraitSuperstar },
+  { label: "X-Factor",  color: "#ef4444", glow: "#ef444420", img: devTraitXFactor   },
 ];
 
 const TABS: { key: PageTab; label: string; icon: React.ReactNode }[] = [
@@ -772,14 +772,13 @@ export default function PlayerDetail() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2.5">
-                    {devInfo && devInfo.label !== "Normal" && (
+                    {devInfo && (
                       <span
-                        className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide border"
+                        className="inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-md border"
                         style={{ color: devInfo.color, backgroundColor: devInfo.glow, borderColor: `${devInfo.color}40` }}
                       >
-                        {devInfo.label === "X-Factor" && <Zap className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
-                        {(devInfo.label === "Superstar" || devInfo.label === "Star") && <Star className="inline h-2.5 w-2.5 mr-1 -mt-px" />}
-                        {devInfo.label}
+                        <img src={devInfo.img} alt={devInfo.label} className="w-5 h-5 object-contain" />
+                        <span className="text-xs font-bold uppercase tracking-wide">{devInfo.label}</span>
                       </span>
                     )}
                     <span className="text-xs text-white/35">
