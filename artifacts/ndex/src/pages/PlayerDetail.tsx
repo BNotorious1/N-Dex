@@ -4,6 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
 import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X } from "lucide-react";
+import devTraitNormal from "@assets/Normal_1781202579092.png";
+import devTraitStar from "@assets/Star_1781202579092.png";
+import devTraitSuperstar from "@assets/Superstar_1781202579092.png";
+import devTraitXFactor from "@assets/Superstar_X-Factor_1781202579092.png";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -524,11 +528,11 @@ function TraitsTab({ player, teamColor }: { player: PlayerDetail; teamColor: str
 
 // ─── Abilities tab ────────────────────────────────────────────────────────────
 
-const DEV_TIER_META: Record<number, { label: string; color: string }> = {
-  0: { label: "Normal",     color: "#6b7280" },
-  1: { label: "Star",       color: "#3b82f6" },
-  2: { label: "Superstar",  color: "#9333ea" },
-  3: { label: "X-Factor",   color: "#f59e0b" },
+const DEV_TIER_META: Record<number, { label: string; color: string; img: string }> = {
+  0: { label: "Normal",    color: "#a16207", img: devTraitNormal   },
+  1: { label: "Star",      color: "#9ca3af", img: devTraitStar     },
+  2: { label: "Superstar", color: "#d97706", img: devTraitSuperstar },
+  3: { label: "X-Factor",  color: "#ef4444", img: devTraitXFactor  },
 };
 const SUPERSTAR_COLOR = "#9333ea";
 
@@ -543,14 +547,8 @@ function AbilitiesTab({ player }: { player: PlayerDetail }) {
   if (abilities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-        <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
-          style={{ borderColor: `${meta.color}40`, backgroundColor: `${meta.color}10` }}
-        >
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
-          <span className="text-xs font-black uppercase tracking-widest" style={{ color: meta.color }}>{meta.label}</span>
-        </div>
-        <Zap className="h-10 w-10 text-white/15" />
+        <img src={meta.img} alt={meta.label} className="w-16 h-16 object-contain opacity-60" />
+        <span className="text-xs font-black uppercase tracking-widest" style={{ color: meta.color }}>{meta.label}</span>
         <p className="text-sm text-white/30">
           {devTier <= 1
             ? `${meta.label} players don't have signature abilities`
@@ -565,10 +563,10 @@ function AbilitiesTab({ player }: { player: PlayerDetail }) {
       {/* Dev tier badge */}
       <div className="flex items-center gap-3">
         <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
-          style={{ borderColor: `${meta.color}50`, backgroundColor: `${meta.color}15` }}
+          className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border"
+          style={{ borderColor: `${meta.color}40`, backgroundColor: `${meta.color}10` }}
         >
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
+          <img src={meta.img} alt={meta.label} className="w-7 h-7 object-contain" />
           <span className="text-xs font-black uppercase tracking-widest" style={{ color: meta.color }}>{meta.label}</span>
         </div>
         <span className="text-[11px] text-white/30">
