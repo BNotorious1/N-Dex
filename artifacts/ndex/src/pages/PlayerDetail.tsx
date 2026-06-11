@@ -117,6 +117,16 @@ interface PlayerDetail {
   dl_spin_trait: number | null;
   dl_swim_trait: number | null;
   lb_style_trait: number | null;
+  abilities: Array<{
+    slot_index: number;
+    title: string;
+    description: string;
+    activation_description: string | null;
+    deactivation_description: string | null;
+    is_passive: boolean;
+    logo_id: number | null;
+    ovr_threshold: number | null;
+  }>;
 }
 
 type PageTab = "attributes" | "traits" | "abilities" | "gamelog" | "career" | "awards" | "history";
@@ -512,6 +522,132 @@ function TraitsTab({ player, teamColor }: { player: PlayerDetail; teamColor: str
   );
 }
 
+// ─── Abilities tab ────────────────────────────────────────────────────────────
+
+const DEV_TIER_META: Record<number, { label: string; color: string }> = {
+  0: { label: "Normal",     color: "#6b7280" },
+  1: { label: "Star",       color: "#3b82f6" },
+  2: { label: "Superstar",  color: "#9333ea" },
+  3: { label: "X-Factor",   color: "#f59e0b" },
+};
+const SUPERSTAR_COLOR = "#9333ea";
+
+function AbilitiesTab({ player }: { player: PlayerDetail }) {
+  const devTier  = player.dev_trait ?? 0;
+  const meta     = DEV_TIER_META[devTier] ?? DEV_TIER_META[0]!;
+  const abilities = player.abilities ?? [];
+
+  const xfAbility  = abilities.find(a => a.activation_description);
+  const ssAbilities = abilities.filter(a => !a.activation_description);
+
+  if (abilities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
+          style={{ borderColor: `${meta.color}40`, backgroundColor: `${meta.color}10` }}
+        >
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
+          <span className="text-xs font-black uppercase tracking-widest" style={{ color: meta.color }}>{meta.label}</span>
+        </div>
+        <Zap className="h-10 w-10 text-white/15" />
+        <p className="text-sm text-white/30">
+          {devTier <= 1
+            ? `${meta.label} players don't have signature abilities`
+            : "Ability data not yet imported from Madden"}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Dev tier badge */}
+      <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
+          style={{ borderColor: `${meta.color}50`, backgroundColor: `${meta.color}15` }}
+        >
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
+          <span className="text-xs font-black uppercase tracking-widest" style={{ color: meta.color }}>{meta.label}</span>
+        </div>
+        <span className="text-[11px] text-white/30">
+          {devTier === 3 && xfAbility
+            ? `Zone ability + ${ssAbilities.length} superstar ${ssAbilities.length === 1 ? "ability" : "abilities"}`
+            : `${ssAbilities.length} superstar ${ssAbilities.length === 1 ? "ability" : "abilities"}`}
+        </span>
+      </div>
+
+      {/* X-Factor zone ability */}
+      {xfAbility && (
+        <div className="rounded-xl overflow-hidden border" style={{ borderColor: `${meta.color}30` }}>
+          <div className="px-4 py-2.5 flex items-center gap-2" style={{ backgroundColor: `${meta.color}15` }}>
+            <Zap className="h-3.5 w-3.5" style={{ color: meta.color }} />
+            <span className="text-xs font-black uppercase tracking-widest" style={{ color: meta.color }}>X-Factor Zone</span>
+          </div>
+          <div className="px-4 pt-4 pb-4 bg-[#141414]">
+            <div className="flex items-start gap-3">
+              <div
+                className="w-11 h-11 rounded-lg flex-shrink-0 flex items-center justify-center"
+                style={{ backgroundColor: `${meta.color}15`, border: `1px solid ${meta.color}30` }}
+              >
+                <Zap className="h-5 w-5" style={{ color: meta.color }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[15px] font-black uppercase tracking-wide text-white leading-tight">{xfAbility.title}</h3>
+                <p className="text-[12px] text-white/55 mt-1 leading-relaxed">{xfAbility.description}</p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-lg p-3" style={{ backgroundColor: `${meta.color}08`, border: `1px solid ${meta.color}20` }}>
+                <div className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: meta.color }}>In Zone When</div>
+                <p className="text-[12px] text-white/60 leading-relaxed">{xfAbility.activation_description}</p>
+              </div>
+              <div className="rounded-lg p-3 bg-white/[0.03] border border-white/8">
+                <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5">Out of Zone When</div>
+                <p className="text-[12px] text-white/40 leading-relaxed">{xfAbility.deactivation_description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Superstar abilities */}
+      {ssAbilities.length > 0 && (
+        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+          <div className="px-4 py-2.5 flex items-center gap-2 bg-[#1d1d1d]">
+            <Star className="h-3.5 w-3.5" style={{ color: SUPERSTAR_COLOR }} />
+            <span className="text-xs font-black uppercase tracking-widest" style={{ color: SUPERSTAR_COLOR }}>Superstar Abilities</span>
+          </div>
+          <div className="divide-y divide-white/5">
+            {ssAbilities.map(a => (
+              <div key={a.slot_index} className="px-4 py-3.5 flex items-start gap-3">
+                <div
+                  className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5"
+                  style={{ backgroundColor: `${SUPERSTAR_COLOR}12`, border: `1px solid ${SUPERSTAR_COLOR}28` }}
+                >
+                  <Star className="h-4 w-4" style={{ color: SUPERSTAR_COLOR }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13px] font-black uppercase tracking-wide text-white">{a.title}</span>
+                    {a.ovr_threshold != null && a.ovr_threshold > 0 && (
+                      <span className="text-[10px] font-bold text-white/25 border border-white/10 px-1.5 py-0.5 rounded-full">
+                        REQ {a.ovr_threshold} OVR
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[12px] text-white/50 mt-0.5 leading-relaxed">{a.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PlayerDetail() {
@@ -678,13 +814,7 @@ export default function PlayerDetail() {
             {/* Tab content */}
             {tab === "attributes" && <AttributesTab player={player} teamColor={teamColor} />}
             {tab === "traits" && <TraitsTab player={player} teamColor={teamColor} />}
-            {tab === "abilities" && (
-              <PlaceholderTab
-                icon={<Zap className="h-6 w-6" />}
-                title="Abilities Not Yet Imported"
-                description="X-Factor and Superstar ability data will appear here once imported from Madden."
-              />
-            )}
+            {tab === "abilities" && <AbilitiesTab player={player} />}
             {tab === "gamelog" && (
               <PlaceholderTab
                 icon={<BarChart3 className="h-6 w-6" />}

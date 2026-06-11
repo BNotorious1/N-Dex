@@ -758,7 +758,17 @@ export const GetPlayerResponse = zod.object({
   "dl_bull_rush_trait": zod.number().nullish(),
   "dl_spin_trait": zod.number().nullish(),
   "dl_swim_trait": zod.number().nullish(),
-  "lb_style_trait": zod.number().nullish()
+  "lb_style_trait": zod.number().nullish(),
+  "abilities": zod.array(zod.object({
+  "slot_index": zod.number().optional(),
+  "title": zod.string().optional(),
+  "description": zod.string().optional(),
+  "activation_description": zod.string().nullish(),
+  "deactivation_description": zod.string().nullish(),
+  "is_passive": zod.boolean().optional(),
+  "logo_id": zod.number().nullish(),
+  "ovr_threshold": zod.number().nullish()
+})).optional()
 })
 
 

@@ -184,6 +184,21 @@ export interface TeamUpdate {
   secondary_color?: string;
 }
 
+export type PlayerDetailAbilitiesItem = {
+  slot_index?: number;
+  title?: string;
+  description?: string;
+  /** @nullable */
+  activation_description?: string | null;
+  /** @nullable */
+  deactivation_description?: string | null;
+  is_passive?: boolean;
+  /** @nullable */
+  logo_id?: number | null;
+  /** @nullable */
+  ovr_threshold?: number | null;
+};
+
 export interface PlayerDetail {
   id: number;
   team_id: number;
@@ -381,6 +396,7 @@ export interface PlayerDetail {
   dl_swim_trait?: number | null;
   /** @nullable */
   lb_style_trait?: number | null;
+  abilities?: PlayerDetailAbilitiesItem[];
 }
 
 export interface PlayerInput {

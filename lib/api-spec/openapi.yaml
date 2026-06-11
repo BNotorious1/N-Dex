@@ -1168,6 +1168,27 @@ components:
           type: ["integer", "null"]
         lb_style_trait:
           type: ["integer", "null"]
+        abilities:
+          type: array
+          items:
+            type: object
+            properties:
+              slot_index:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              activation_description:
+                type: ["string", "null"]
+              deactivation_description:
+                type: ["string", "null"]
+              is_passive:
+                type: boolean
+              logo_id:
+                type: ["integer", "null"]
+              ovr_threshold:
+                type: ["integer", "null"]
 
     PlayerInput:
       type: object

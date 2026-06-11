@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, playersTable, teamsTable } from "@workspace/db";
+import { db, playersTable, teamsTable, playerAbilitiesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody } from "@workspace/api-zod";
 
@@ -53,6 +53,13 @@ router.get("/:id", async (req, res) => {
   }
 
   const { player, team } = rows[0]!;
+
+  const abilities = await db
+    .select()
+    .from(playerAbilitiesTable)
+    .where(eq(playerAbilitiesTable.playerId, player.id))
+    .orderBy(playerAbilitiesTable.slotIndex);
+
   res.json({
     id: player.id,
     team_id: player.teamId,
@@ -163,6 +170,16 @@ router.get("/:id", async (req, res) => {
     dl_spin_trait: player.dlSpinTrait,
     dl_swim_trait: player.dlSwimTrait,
     lb_style_trait: player.lbStyleTrait,
+    abilities: abilities.map(a => ({
+      slot_index: a.slotIndex,
+      title: a.title,
+      description: a.description,
+      activation_description: a.activationDescription,
+      deactivation_description: a.deactivationDescription,
+      is_passive: a.isPassive,
+      logo_id: a.logoId,
+      ovr_threshold: a.ovrThreshold,
+    })),
   });
 });
 

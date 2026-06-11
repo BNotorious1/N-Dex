@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, playersTable, gamesTable, leagueImportsTable } from "@workspace/db";
+import { db, leaguesTable, teamsTable, playersTable, playerAbilitiesTable, gamesTable, leagueImportsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -125,9 +125,10 @@ export async function upsertTeamRoster(
     return typeof p[key] === "number" ? (p[key] as number) : null;
   }
 
-  const rows = players
-    .filter((p): p is RawPlayer => typeof p === "object" && p !== null)
-    .map((p) => ({
+  const validPlayers = players
+    .filter((p): p is RawPlayer => typeof p === "object" && p !== null);
+
+  const rows = validPlayers.map((p) => ({
       teamId,
       name: `${str(p["firstName"])} ${str(p["lastName"])}`.trim() || "Unknown",
       position: str(p["position"], "OL"),
@@ -232,7 +233,41 @@ export async function upsertTeamRoster(
       lbStyleTrait: ni(p, "lBStyleTrait"),
     }));
 
-  if (rows.length > 0) await db.insert(playersTable).values(rows);
+  const insertedPlayers = rows.length > 0
+    ? await db.insert(playersTable).values(rows).returning({ id: playersTable.id })
+    : [];
+
+  // Insert abilities
+  type AbilityRow = typeof playerAbilitiesTable.$inferInsert;
+  const abilityRows: AbilityRow[] = [];
+  for (let i = 0; i < insertedPlayers.length; i++) {
+    const playerId = insertedPlayers[i]!.id;
+    const p = validPlayers[i]!;
+    const slots = toArray<Record<string, unknown>>(p["signatureSlotList"]);
+    slots.forEach((slot, slotIdx) => {
+      if (slot["isEmpty"] === true) return;
+      const ability = slot["signatureAbility"];
+      if (!ability || typeof ability !== "object") return;
+      const ab = ability as Record<string, unknown>;
+      const title = str(ab["signatureTitle"]);
+      if (!title) return;
+      const activationDesc = str(ab["signatureActivationDescription"]) || null;
+      const deactivationDesc = str(ab["signatureDeactivationDescription"]) || null;
+      abilityRows.push({
+        playerId,
+        slotIndex: slotIdx,
+        title,
+        description: str(ab["signatureDescription"]),
+        activationDescription: activationDesc,
+        deactivationDescription: deactivationDesc,
+        isPassive: ab["isPassive"] === true,
+        logoId: typeof ab["signatureLogoId"] === "number" ? (ab["signatureLogoId"] as number) : null,
+        ovrThreshold: typeof slot["ovrThreshold"] === "number" ? (slot["ovrThreshold"] as number) : null,
+      });
+    });
+  }
+  if (abilityRows.length > 0) await db.insert(playerAbilitiesTable).values(abilityRows);
+
   return rows.length;
 }
 

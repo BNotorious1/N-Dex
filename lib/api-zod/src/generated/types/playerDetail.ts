@@ -5,6 +5,7 @@
  * NeonSportz API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PlayerDetailAbilitiesItem } from './playerDetailAbilitiesItem';
 
 export interface PlayerDetail {
   id: number;
@@ -203,4 +204,5 @@ export interface PlayerDetail {
   dl_swim_trait?: number | null;
   /** @nullable */
   lb_style_trait?: number | null;
+  abilities?: PlayerDetailAbilitiesItem[];
 }
