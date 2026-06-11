@@ -174,11 +174,11 @@ function RatingRow({ label, value, max = 99 }: { label: string; value: number | 
   );
 }
 
-function AttrCard({ title, children }: { title: string; children: React.ReactNode }) {
+function AttrCard({ title, teamColor, children }: { title: string; teamColor: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
-      <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
-        <span className="font-black uppercase tracking-widest text-[16px] text-[#ffffff] border-t-[#ffffff66] border-r-[#ffffff66] border-b-[#ffffff66] border-l-[#ffffff66] text-left">{title}</span>
+      <div className="px-4 py-2.5 border-b border-white/8" style={{ backgroundColor: `${teamColor}22` }}>
+        <span className="font-black uppercase tracking-widest text-[16px] text-left" style={{ color: teamColor }}>{title}</span>
       </div>
       <div className="px-4">{children}</div>
     </div>
@@ -328,7 +328,7 @@ function getAttrGroups(p: PlayerDetail): AttrGroup[] {
 
 // ─── Attributes tab ───────────────────────────────────────────────────────────
 
-function AttributesTab({ player }: { player: PlayerDetail }) {
+function AttributesTab({ player, teamColor }: { player: PlayerDetail; teamColor: string }) {
   const groups = getAttrGroups(player).map(g => ({
     ...g,
     rows: g.rows.filter(r => r.value != null),
@@ -346,7 +346,7 @@ function AttributesTab({ player }: { player: PlayerDetail }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       {groups.map(g => (
-        <AttrCard key={g.title} title={g.title}>
+        <AttrCard key={g.title} title={g.title} teamColor={teamColor}>
           {g.rows.map(r => (
             <RatingRow key={r.label} label={r.label} value={r.value} />
           ))}
@@ -520,7 +520,7 @@ export default function PlayerDetail() {
             </div>
 
             {/* Tab content */}
-            {tab === "attributes" && <AttributesTab player={player} />}
+            {tab === "attributes" && <AttributesTab player={player} teamColor={teamColor} />}
             {tab === "traits" && (
               <PlaceholderTab
                 icon={<ShieldAlert className="h-6 w-6" />}
