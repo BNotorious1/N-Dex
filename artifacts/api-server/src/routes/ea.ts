@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, leaguesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, leaguesTable, gamesTable } from "@workspace/db";
+import { eq, and, max } from "drizzle-orm";
 import { upsertLeagueTeams, upsertTeamRoster, upsertWeekSchedule, processStatBlob } from "./import";
 import crypto from "node:crypto";
 import https from "node:https";
@@ -455,6 +455,18 @@ async function getBlazeSession(
   return { sessionKey, blazeId: blazeId ? blazeId : (league.eaBlazeId ?? ""), eaLeagueId: league.eaSelectedLeague ?? "", platform, league };
 }
 
+// ─── Week detection ───────────────────────────────────────────────────────────
+// Returns the 1-indexed current week based on the highest weekIndex that has
+// at least one FINAL game. Returns null if no schedule data exists yet.
+async function detectLeagueWeek(leagueId: number): Promise<number | null> {
+  const [row] = await db
+    .select({ maxIdx: max(gamesTable.weekIndex) })
+    .from(gamesTable)
+    .where(and(eq(gamesTable.leagueId, leagueId), eq(gamesTable.status, "FINAL")));
+  if (row?.maxIdx == null) return null;
+  return row.maxIdx + 1; // weekIndex is 0-based; league.week is 1-based
+}
+
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 // GET /login-url  (Step 1)
@@ -782,11 +794,18 @@ router.post("/import-league-info", async (req, res) => {
     const teamCount = await upsertLeagueTeams(leagueId, teamArray);
     req.log.info({ teamCount, eaLeagueId }, "import-league-info: teams upserted");
 
+    // Detect current week from existing schedule data and persist
+    const detectedWeek = await detectLeagueWeek(leagueId);
+    if (detectedWeek !== null) {
+      await db.update(leaguesTable).set({ week: detectedWeek }).where(eq(leaguesTable.id, leagueId));
+      req.log.info({ detectedWeek }, "import-league-info: updated league.week");
+    }
+
     const exportInfo = await updateExportInfo(leagueId, (info) => ({
       ...info,
       league: new Date().toISOString(),
     }));
-    res.json({ success: true, export_info: exportInfo, teams_imported: teamCount });
+    res.json({ success: true, export_info: exportInfo, teams_imported: teamCount, week: detectedWeek ?? undefined });
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });
@@ -932,11 +951,18 @@ router.post("/import-schedules", async (req, res) => {
 
     req.log.info({ totalGames }, "import-schedules: complete");
 
+    // Detect current week from FINAL games and persist
+    const detectedWeek = await detectLeagueWeek(leagueId);
+    if (detectedWeek !== null) {
+      await db.update(leaguesTable).set({ week: detectedWeek }).where(eq(leaguesTable.id, leagueId));
+      req.log.info({ detectedWeek }, "import-schedules: updated league.week");
+    }
+
     const exportInfo = await updateExportInfo(leagueId, (info) => ({
       ...info,
       schedules: new Date().toISOString(),
     }));
-    res.json({ success: true, export_info: exportInfo, games_imported: totalGames });
+    res.json({ success: true, export_info: exportInfo, games_imported: totalGames, week: detectedWeek ?? undefined });
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });

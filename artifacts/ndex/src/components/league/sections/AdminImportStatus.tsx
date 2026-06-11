@@ -97,10 +97,18 @@ export default function AdminImportStatus({ leagueId }: Props) {
     setImporting(key);
     try {
       const res = await fetch(`/api/leagues/${leagueId}/ea/${path}`, { method: "POST" });
-      const json = (await res.json()) as { export_info?: ExportInfo; message?: string };
+      const json = (await res.json()) as { export_info?: ExportInfo; message?: string; week?: number };
       if (!res.ok) throw new Error(json.message ?? "Import failed");
       if (json.export_info) {
-        setData((prev) => prev ? { ...prev, export_info: json.export_info! } : prev);
+        setData((prev) => prev ? {
+          ...prev,
+          export_info: json.export_info!,
+          ...(json.week !== undefined ? { week: json.week } : {}),
+        } : prev);
+      }
+      // Re-fetch full status after league/schedule imports — these update league.week
+      if (key === "league-info" || key === "schedules") {
+        await fetchStatus();
       }
     } catch (err) {
       console.error(err);
