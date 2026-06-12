@@ -3,3 +3,4 @@
 - [Blaze messageAuthData format](blaze-message-auth.md) — messageAuthData must be an object {authData,authCode,authType} not a blob; verified against Snallabot source
 - [EA import architecture](ea-import-architecture.md) — Blaze export API + Companion App push both use same JSON shapes; core upsert fns exported from import.ts
 - [Blaze Export Format](blaze-export-format.md) — flat arrays; schedules key is `gameScheduleInfoList`, status field not resultType, divName string not numeric conf/div
+- [Fractional stats in integer columns](fractional-stats-integer.md) — Blaze returns 0.5/1.5 for sacks/TFLs; Drizzle/pg sends floats as string "1.5" for integer columns which PostgreSQL rejects; fix is Math.round() in the num() helper.

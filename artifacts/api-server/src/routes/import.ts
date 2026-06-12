@@ -23,7 +23,8 @@ function getNestedArray<T>(obj: Record<string, unknown>, ...keys: string[]): T[]
 }
 
 function num(v: unknown, def = 0): number {
-  return typeof v === "number" ? v : def;
+  const n = typeof v === "number" ? v : def;
+  return Math.round(n);
 }
 
 function str(v: unknown, def = ""): string {
