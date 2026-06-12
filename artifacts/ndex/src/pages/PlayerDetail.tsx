@@ -827,13 +827,7 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                         return (
                           <td
                             key={c.header}
-                            className={`py-2 px-3 text-right [font-family:'Lora',serif] text-[14px] ${
-                              isHigh
-                                ? "font-bold text-white"
-                                : c.dim
-                                ? "text-white/25"
-                                : "text-white/70"
-                            }`}
+                            className="py-2 px-3 text-right [font-family:'Lora',serif] text-[14px] text-[#ffffff]"
                           >
                             {c.render(g)}
                           </td>

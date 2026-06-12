@@ -60,7 +60,7 @@ export default function TeamLogo({
       <img
         src={getEspnUrl(abbreviation)}
         alt={abbreviation}
-        className={`h-full w-full object-contain ${padding}`}
+        className="h-full w-full object-contain p-0 rounded-tl-[0px] rounded-tr-[0px] rounded-br-[0px] rounded-bl-[0px]"
         loading="lazy"
         onError={() => setFailed(true)}
       />
