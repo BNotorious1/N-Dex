@@ -630,7 +630,7 @@ function resultStyle(result: string | null | undefined) {
   return "bg-zinc-800/40 text-zinc-500 border border-zinc-700/20";
 }
 
-function GameLogTab({ playerId, position }: { playerId: number; position: string }) {
+function GameLogTab({ playerId, position, teamColor }: { playerId: number; position: string; teamColor: string }) {
   const { data: log, isLoading } = useGetPlayerGameLog(playerId, {
     query: { queryKey: ["player-gamelog", playerId] },
   });
@@ -681,13 +681,13 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
             <div className="overflow-x-auto rounded-lg border border-white/5">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-white/8">
-                    <th className="text-left py-2 px-3 text-white/30 font-semibold tracking-wide w-12">WK</th>
-                    <th className="text-left py-2 px-3 text-white/30 font-semibold tracking-wide">OPP</th>
-                    <th className="text-center py-2 px-3 text-white/30 font-semibold tracking-wide w-10">RES</th>
-                    <th className="text-center py-2 px-2 text-white/30 font-semibold tracking-wide w-14">SCORE</th>
+                  <tr style={{ backgroundColor: teamColor }}>
+                    <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-12">WK</th>
+                    <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">OPP</th>
+                    <th className="text-center py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-10">RES</th>
+                    <th className="text-center py-2 px-2 text-white font-black uppercase tracking-wider text-[10px] w-14">SCORE</th>
                     {cols.map(c => (
-                      <th key={c.header} className={`text-right py-2 px-3 font-semibold tracking-wide ${c.dim ? "text-white/20" : "text-white/30"}`}>
+                      <th key={c.header} className="text-right py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">
                         {c.header}
                       </th>
                     ))}
@@ -1022,7 +1022,7 @@ export default function PlayerDetail() {
             {tab === "traits" && <TraitsTab player={player} teamColor={teamColor} />}
             {tab === "abilities" && <AbilitiesTab player={player} />}
             {tab === "gamelog" && player && (
-              <GameLogTab playerId={player.id} position={player.position} />
+              <GameLogTab playerId={player.id} position={player.position} teamColor={teamColor} />
             )}
             {tab === "career" && (
               <PlaceholderTab

@@ -52,6 +52,10 @@ A full-stack Madden NFL franchise league management platform. Dark-themed (#0a0a
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
 
+## Table header convention
+
+All data tables use the team/league primary color as a solid background on the `<thead>` row, with white `font-black uppercase tracking-wider text-[10px]` column labels. Pass the color via `style={{ backgroundColor: teamColor }}` on the `<tr>`. Never use dark gray (`bg-[#0d0d0d]`) or dim text (`text-white/30`) for table headers.
+
 ## Gotchas
 
 - Do NOT use `dark` as a Tailwind utility class in `@apply` — Tailwind v4 doesn't support applying variant names
