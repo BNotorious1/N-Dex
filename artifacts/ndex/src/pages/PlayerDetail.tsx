@@ -678,7 +678,6 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                 {games.length} game{games.length !== 1 ? "s" : ""}
               </span>
             </div>
-
             <div className="overflow-x-auto rounded-lg border border-white/5">
               <table className="w-full text-xs border-collapse">
                 <thead>
@@ -724,7 +723,7 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                           {g.result ?? "–"}
                         </span>
                       </td>
-                      <td className="py-1.5 px-2 text-center font-mono text-white/40 text-[11px]">
+                      <td className="py-1.5 px-2 text-center font-mono text-[11px] text-[#ffffff]">
                         {g.player_score != null
                           ? `${g.player_score}-${g.opponent_score ?? "?"}`
                           : "–"}
