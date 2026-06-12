@@ -699,7 +699,7 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                       key={g.id}
                       className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
                     >
-                      <td className="py-2 px-3 text-white/40 font-mono">{weekLabel(g)}</td>
+                      <td className="py-2 px-3 font-mono text-[#ffffff]">{weekLabel(g)}</td>
                       <td className="py-2 px-3">
                         <div className="flex items-center gap-1.5">
                           {g.opponent_abbreviation ? (
@@ -723,13 +723,13 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                           {g.result ?? "–"}
                         </span>
                       </td>
-                      <td className="py-1.5 px-2 text-center [font-family:'Lora',serif] text-[11px] text-[#ffffff]">
+                      <td className="py-1.5 px-2 text-center [font-family:'Lora',serif] text-[#ffffff] text-[14px]">
                         {g.player_score != null
                           ? `${g.player_score}-${g.opponent_score ?? "?"}`
                           : "–"}
                       </td>
                       {cols.map(c => (
-                        <td key={c.header} className={`py-2 px-3 text-right [font-family:'Lora',serif] ${c.dim ? "text-white/25" : "text-white/70"}`}>
+                        <td key={c.header} className="py-2 px-3 text-right [font-family:'Lora',serif] text-[14px] text-[#ffffff]">
                           {c.render(g)}
                         </td>
                       ))}
