@@ -756,7 +756,7 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                 <thead>
                   <tr style={{ backgroundColor: teamColor }}>
                     <th
-                      className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-12 cursor-pointer select-none"
+                      className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-24 whitespace-nowrap cursor-pointer select-none"
                       onClick={() => handleSort("WK")}
                     >
                       <span className="inline-flex items-center gap-0.5">
@@ -793,7 +793,7 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                       key={g.id}
                       className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
                     >
-                      <td className="py-2 px-3 [font-family:'Lora',serif] text-[#ffffff]">{weekLabel(g)}</td>
+                      <td className="py-2 px-3 [font-family:'Lora',serif] text-[#ffffff] whitespace-nowrap">{weekLabel(g)}</td>
                       <td className="py-2 px-3">
                         <div className="flex items-center gap-1.5">
                           {g.opponent_abbreviation ? (
