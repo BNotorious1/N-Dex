@@ -1038,6 +1038,8 @@ router.post("/import-all-stats", async (req, res) => {
             const n = await processStatBlob(leagueId, weekIdx, 1, actualSeason, statType, data);
             if (n > 0) {
               req.log.info({ weekIdx, statType, n }, "import-all-stats: saved stat rows");
+            } else {
+              req.log.warn({ weekIdx, statType, exportType, bodyKeys: Object.keys(data) }, "import-all-stats: 0 rows for stat type — check export type and response key");
             }
           } catch (err) {
             req.log.warn({ weekIdx, exportType, err }, "import-all-stats: skipping export due to error");

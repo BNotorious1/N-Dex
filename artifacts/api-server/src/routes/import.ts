@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, leaguesTable, teamsTable, playersTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, leagueImportsTable } from "@workspace/db";
 import { eq, and, or, sql } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -629,6 +630,10 @@ export async function processStatBlob(
   const listKey = STAT_KEY_MAP[statType];
   if (!listKey) return 0;
   const stats = getNestedArray<RawStat>(body, listKey);
+  if (stats.length === 0) {
+    const bodyKeys = Object.keys(body);
+    logger.warn({ statType, listKey, weekIndex, bodyKeys }, "processStatBlob: 0 stats — response keys logged for diagnosis");
+  }
   return upsertPlayerStats(leagueId, weekIndex, stageIndex, season, stats, s => buildStatSet(statType, s));
 }
 
