@@ -693,6 +693,13 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
 
   function sortGames(games: GameLogEntry[]): GameLogEntry[] {
     if (!sortCol) return games;
+    if (sortCol === "WK") {
+      return [...games].sort((a, b) => {
+        const av = a.stage_index === 1 ? a.week : 100 + a.stage_index;
+        const bv = b.stage_index === 1 ? b.week : 100 + b.stage_index;
+        return sortDir === "desc" ? bv - av : av - bv;
+      });
+    }
     const col = cols.find(c => c.header === sortCol);
     if (!col?.sortValue) return games;
     return [...games].sort((a, b) =>
@@ -749,7 +756,17 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr style={{ backgroundColor: teamColor }}>
-                    <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-12">WK</th>
+                    <th
+                      className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-12 cursor-pointer select-none"
+                      onClick={() => handleSort("WK")}
+                    >
+                      <span className="inline-flex items-center gap-0.5">
+                        WK
+                        <span className="text-[9px] opacity-70 ml-0.5">
+                          {sortCol === "WK" ? (sortDir === "desc" ? "▼" : "▲") : "⇅"}
+                        </span>
+                      </span>
+                    </th>
                     <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">OPP</th>
                     <th className="text-center py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-10">RES</th>
                     <th className="text-center py-2 px-2 text-white font-black uppercase tracking-wider text-[10px] w-14">SCORE</th>
@@ -782,10 +799,7 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                         <div className="flex items-center gap-1.5">
                           {g.opponent_abbreviation ? (
                             <>
-                              <span
-                                className="w-1.5 h-1.5 rounded-full shrink-0"
-                                style={{ backgroundColor: g.opponent_primary_color ?? "#6b7280" }}
-                              />
+                              <TeamLogo abbreviation={g.opponent_abbreviation} primaryColor={g.opponent_primary_color} size="sm" shape="circle" />
                               <span className="text-white/50 text-[11px]">
                                 {g.is_home === false ? "@" : ""}
                                 <span className="text-white/80 font-bold">{g.opponent_abbreviation}</span>
