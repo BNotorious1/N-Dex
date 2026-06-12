@@ -946,65 +946,65 @@ function careerTotals(seasons: AggrRow[]): AggrRow {
   return c;
 }
 
-type CareerColDef = { header: string; render: (r: AggrRow) => string | number; dim?: boolean };
+type CareerColDef = { header: string; render: (r: AggrRow) => string | number; sortValue?: (r: AggrRow) => number; dim?: boolean };
 
 const QB_CAREER_COLS: CareerColDef[] = [
-  { header: "CMP",     render: r => r.pss_cmp  || "–" },
-  { header: "ATT",     render: r => r.pss_att  || "–" },
-  { header: "CMP%",    render: r => r.pss_att ? `${((r.pss_cmp / r.pss_att) * 100).toFixed(1)}%` : "–" },
-  { header: "YDS",     render: r => r.pss_yds  || "–" },
-  { header: "TD",      render: r => r.pss_tds  || "–" },
-  { header: "INT",     render: r => r.pss_ints || "–" },
-  { header: "SCK",     render: r => r.pss_sacks || "–", dim: true },
-  { header: "RTG",     render: r => r.pss_rtg_watts ? (r.pss_rtg_wsum / r.pss_rtg_watts).toFixed(1) : "–" },
-  { header: "RSH YDS", render: r => r.rsh_yds || "–", dim: true },
-  { header: "RSH TD",  render: r => r.rsh_tds || "–", dim: true },
+  { header: "CMP",     render: r => r.pss_cmp  || "–", sortValue: r => r.pss_cmp },
+  { header: "ATT",     render: r => r.pss_att  || "–", sortValue: r => r.pss_att },
+  { header: "CMP%",    render: r => r.pss_att ? `${((r.pss_cmp / r.pss_att) * 100).toFixed(1)}%` : "–", sortValue: r => r.pss_att ? r.pss_cmp / r.pss_att : 0 },
+  { header: "YDS",     render: r => r.pss_yds  || "–", sortValue: r => r.pss_yds },
+  { header: "TD",      render: r => r.pss_tds  || "–", sortValue: r => r.pss_tds },
+  { header: "INT",     render: r => r.pss_ints || "–", sortValue: r => r.pss_ints },
+  { header: "SCK",     render: r => r.pss_sacks || "–", sortValue: r => r.pss_sacks, dim: true },
+  { header: "RTG",     render: r => r.pss_rtg_watts ? (r.pss_rtg_wsum / r.pss_rtg_watts).toFixed(1) : "–", sortValue: r => r.pss_rtg_watts ? r.pss_rtg_wsum / r.pss_rtg_watts : 0 },
+  { header: "RSH YDS", render: r => r.rsh_yds || "–", sortValue: r => r.rsh_yds, dim: true },
+  { header: "RSH TD",  render: r => r.rsh_tds || "–", sortValue: r => r.rsh_tds, dim: true },
 ];
 const RB_CAREER_COLS: CareerColDef[] = [
-  { header: "CAR",   render: r => r.rsh_att    || "–" },
-  { header: "YDS",   render: r => r.rsh_yds    || "–" },
-  { header: "AVG",   render: r => r.rsh_att ? (r.rsh_yds / r.rsh_att).toFixed(1) : "–" },
-  { header: "TD",    render: r => r.rsh_tds    || "–" },
-  { header: "LNG",   render: r => r.rsh_lng    || "–", dim: true },
-  { header: "REC",   render: r => r.rec_catches || "–" },
-  { header: "RYDS",  render: r => r.rec_yds    || "–" },
-  { header: "RTD",   render: r => r.rec_tds    || "–" },
-  { header: "FMB",   render: r => r.fmb_lost   || "–", dim: true },
+  { header: "CAR",   render: r => r.rsh_att    || "–", sortValue: r => r.rsh_att },
+  { header: "YDS",   render: r => r.rsh_yds    || "–", sortValue: r => r.rsh_yds },
+  { header: "AVG",   render: r => r.rsh_att ? (r.rsh_yds / r.rsh_att).toFixed(1) : "–", sortValue: r => r.rsh_att ? r.rsh_yds / r.rsh_att : 0 },
+  { header: "TD",    render: r => r.rsh_tds    || "–", sortValue: r => r.rsh_tds },
+  { header: "LNG",   render: r => r.rsh_lng    || "–", sortValue: r => r.rsh_lng, dim: true },
+  { header: "REC",   render: r => r.rec_catches || "–", sortValue: r => r.rec_catches },
+  { header: "RYDS",  render: r => r.rec_yds    || "–", sortValue: r => r.rec_yds },
+  { header: "RTD",   render: r => r.rec_tds    || "–", sortValue: r => r.rec_tds },
+  { header: "FMB",   render: r => r.fmb_lost   || "–", sortValue: r => r.fmb_lost, dim: true },
 ];
 const WR_TE_CAREER_COLS: CareerColDef[] = [
-  { header: "REC",   render: r => r.rec_catches || "–" },
-  { header: "YDS",   render: r => r.rec_yds     || "–" },
-  { header: "AVG",   render: r => r.rec_catches ? (r.rec_yds / r.rec_catches).toFixed(1) : "–" },
-  { header: "TD",    render: r => r.rec_tds     || "–" },
-  { header: "LNG",   render: r => r.rec_lng     || "–", dim: true },
-  { header: "DROP",  render: r => r.rec_drops   || "–", dim: true },
-  { header: "YAC",   render: r => r.rec_yac     || "–", dim: true },
+  { header: "REC",   render: r => r.rec_catches || "–", sortValue: r => r.rec_catches },
+  { header: "YDS",   render: r => r.rec_yds     || "–", sortValue: r => r.rec_yds },
+  { header: "AVG",   render: r => r.rec_catches ? (r.rec_yds / r.rec_catches).toFixed(1) : "–", sortValue: r => r.rec_catches ? r.rec_yds / r.rec_catches : 0 },
+  { header: "TD",    render: r => r.rec_tds     || "–", sortValue: r => r.rec_tds },
+  { header: "LNG",   render: r => r.rec_lng     || "–", sortValue: r => r.rec_lng, dim: true },
+  { header: "DROP",  render: r => r.rec_drops   || "–", sortValue: r => r.rec_drops, dim: true },
+  { header: "YAC",   render: r => r.rec_yac     || "–", sortValue: r => r.rec_yac, dim: true },
 ];
 const DEF_CAREER_COLS: CareerColDef[] = [
-  { header: "TKL",   render: r => r.def_total_tackles || "–" },
-  { header: "TFL",   render: r => r.def_tfl     || "–" },
-  { header: "SCK",   render: r => r.def_sacks   || "–" },
-  { header: "INT",   render: r => r.def_ints    || "–" },
-  { header: "FF",    render: r => r.def_ff      || "–", dim: true },
-  { header: "PD",    render: r => r.def_pd      || "–" },
-  { header: "TD",    render: r => r.def_tds     || "–", dim: true },
-  { header: "FR",    render: r => r.def_fum_rec || "–", dim: true },
+  { header: "TKL",   render: r => r.def_total_tackles || "–", sortValue: r => r.def_total_tackles },
+  { header: "TFL",   render: r => r.def_tfl     || "–", sortValue: r => r.def_tfl },
+  { header: "SCK",   render: r => r.def_sacks   || "–", sortValue: r => r.def_sacks },
+  { header: "INT",   render: r => r.def_ints    || "–", sortValue: r => r.def_ints },
+  { header: "FF",    render: r => r.def_ff      || "–", sortValue: r => r.def_ff, dim: true },
+  { header: "PD",    render: r => r.def_pd      || "–", sortValue: r => r.def_pd },
+  { header: "TD",    render: r => r.def_tds     || "–", sortValue: r => r.def_tds, dim: true },
+  { header: "FR",    render: r => r.def_fum_rec || "–", sortValue: r => r.def_fum_rec, dim: true },
 ];
 const K_CAREER_COLS: CareerColDef[] = [
-  { header: "FGM",  render: r => r.fg_made  || "–" },
-  { header: "FGA",  render: r => r.fg_att   || "–" },
-  { header: "FG%",  render: r => r.fg_att ? `${((r.fg_made / r.fg_att) * 100).toFixed(1)}%` : "–" },
-  { header: "LNG",  render: r => r.fg_lng   || "–", dim: true },
-  { header: "XPM",  render: r => r.xp_made  || "–" },
-  { header: "XPA",  render: r => r.xp_att   || "–" },
+  { header: "FGM",  render: r => r.fg_made  || "–", sortValue: r => r.fg_made },
+  { header: "FGA",  render: r => r.fg_att   || "–", sortValue: r => r.fg_att },
+  { header: "FG%",  render: r => r.fg_att ? `${((r.fg_made / r.fg_att) * 100).toFixed(1)}%` : "–", sortValue: r => r.fg_att ? r.fg_made / r.fg_att : 0 },
+  { header: "LNG",  render: r => r.fg_lng   || "–", sortValue: r => r.fg_lng, dim: true },
+  { header: "XPM",  render: r => r.xp_made  || "–", sortValue: r => r.xp_made },
+  { header: "XPA",  render: r => r.xp_att   || "–", sortValue: r => r.xp_att },
 ];
 const P_CAREER_COLS: CareerColDef[] = [
-  { header: "NO",   render: r => r.punt_att  || "–" },
-  { header: "YDS",  render: r => r.punt_yds  || "–" },
-  { header: "AVG",  render: r => r.punt_att ? (r.punt_yds / r.punt_att).toFixed(1) : "–" },
-  { header: "LNG",  render: r => r.punt_lng  || "–", dim: true },
-  { header: "IN20", render: r => r.punt_in20 || "–" },
-  { header: "TB",   render: r => r.punt_tbs  || "–", dim: true },
+  { header: "NO",   render: r => r.punt_att  || "–", sortValue: r => r.punt_att },
+  { header: "YDS",  render: r => r.punt_yds  || "–", sortValue: r => r.punt_yds },
+  { header: "AVG",  render: r => r.punt_att ? (r.punt_yds / r.punt_att).toFixed(1) : "–", sortValue: r => r.punt_att ? r.punt_yds / r.punt_att : 0 },
+  { header: "LNG",  render: r => r.punt_lng  || "–", sortValue: r => r.punt_lng, dim: true },
+  { header: "IN20", render: r => r.punt_in20 || "–", sortValue: r => r.punt_in20 },
+  { header: "TB",   render: r => r.punt_tbs  || "–", sortValue: r => r.punt_tbs, dim: true },
 ];
 
 function getCareerCols(position: string): CareerColDef[] {
@@ -1080,10 +1080,42 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
     );
   }
 
-  const seasons = aggregateLog(log);
-  const career  = careerTotals(seasons);
-  const cols    = getCareerCols(position);
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const allSeasons = aggregateLog(log);
+  const career     = careerTotals(allSeasons);
+  const cols       = getCareerCols(position);
   const highlights = getCareerHighlights(career, position);
+
+  function handleSort(header: string) {
+    if (sortCol === header) {
+      setSortDir(d => d === "desc" ? "asc" : "desc");
+    } else {
+      setSortCol(header);
+      setSortDir("desc");
+    }
+  }
+
+  const seasons = (() => {
+    if (!sortCol) return allSeasons;
+    if (sortCol === "SEASON") {
+      return [...allSeasons].sort((a, b) => sortDir === "desc" ? b.season - a.season : a.season - b.season);
+    }
+    if (sortCol === "GP") {
+      return [...allSeasons].sort((a, b) => sortDir === "desc" ? b.gp - a.gp : a.gp - b.gp);
+    }
+    const col = cols.find(c => c.header === sortCol);
+    if (!col?.sortValue) return allSeasons;
+    return [...allSeasons].sort((a, b) =>
+      sortDir === "desc" ? col.sortValue!(b) - col.sortValue!(a) : col.sortValue!(a) - col.sortValue!(b)
+    );
+  })();
+
+  function sortIcon(header: string) {
+    if (sortCol !== header) return <span className="text-[9px] opacity-70 ml-0.5">⇅</span>;
+    return <span className="text-[9px] opacity-90 ml-0.5">{sortDir === "desc" ? "▼" : "▲"}</span>;
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -1091,7 +1123,7 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         <div className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border border-white/8 bg-[#141414]">
           <span className="text-[10px] font-black uppercase tracking-wider text-white/30">Seasons</span>
-          <span className="text-2xl font-black tabular-nums leading-tight" style={{ color: teamColor }}>{seasons.length}</span>
+          <span className="text-2xl font-black tabular-nums leading-tight" style={{ color: teamColor }}>{allSeasons.length}</span>
         </div>
         <div className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border border-white/8 bg-[#141414]">
           <span className="text-[10px] font-black uppercase tracking-wider text-white/30">Games</span>
@@ -1110,14 +1142,25 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr style={{ backgroundColor: teamColor }}>
-              <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] whitespace-nowrap">Season</th>
-              <th className="text-center py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">GP</th>
+              <th
+                className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] whitespace-nowrap cursor-pointer select-none"
+                onClick={() => handleSort("SEASON")}
+              >
+                <span className="inline-flex items-center gap-0.5">Season{sortIcon("SEASON")}</span>
+              </th>
+              <th
+                className="text-center py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] cursor-pointer select-none"
+                onClick={() => handleSort("GP")}
+              >
+                <span className="inline-flex items-center justify-center gap-0.5">GP{sortIcon("GP")}</span>
+              </th>
               {cols.map(c => (
                 <th
                   key={c.header}
-                  className={`text-right py-2 px-3 font-black uppercase tracking-wider text-[10px] whitespace-nowrap ${c.dim ? "text-white/55" : "text-white"}`}
+                  onClick={() => handleSort(c.header)}
+                  className={`text-right py-2 px-3 font-black uppercase tracking-wider text-[10px] whitespace-nowrap cursor-pointer select-none ${c.dim ? "text-white/55" : "text-white"}`}
                 >
-                  {c.header}
+                  <span className="inline-flex items-center justify-end gap-0.5">{c.header}{sortIcon(c.header)}</span>
                 </th>
               ))}
             </tr>
