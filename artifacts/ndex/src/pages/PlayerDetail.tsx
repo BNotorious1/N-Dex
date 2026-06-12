@@ -699,7 +699,7 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                       key={g.id}
                       className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
                     >
-                      <td className="py-2 px-3 font-mono text-[#ffffff]">{weekLabel(g)}</td>
+                      <td className="py-2 px-3 [font-family:'Lora',serif] text-[#ffffff]">{weekLabel(g)}</td>
                       <td className="py-2 px-3">
                         <div className="flex items-center gap-1.5">
                           {g.opponent_abbreviation ? (
