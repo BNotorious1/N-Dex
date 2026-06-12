@@ -1062,6 +1062,9 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
     query: { queryKey: ["player-gamelog", playerId] },
   });
 
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16 text-white/30 text-sm">
@@ -1079,9 +1082,6 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
       </div>
     );
   }
-
-  const [sortCol, setSortCol] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const allSeasons = aggregateLog(log);
   const career     = careerTotals(allSeasons);
