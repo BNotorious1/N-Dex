@@ -540,62 +540,65 @@ const SUPERSTAR_COLOR = "#9333ea";
 
 // ─── Game Log Tab ─────────────────────────────────────────────────────────────
 
-type ColDef = { header: string; render: (g: GameLogEntry) => string | number; dim?: boolean };
+type ColDef = {
+  header: string;
+  render: (g: GameLogEntry) => string | number;
+  sortValue?: (g: GameLogEntry) => number;
+  dim?: boolean;
+};
 
 const QB_COLS: ColDef[] = [
   { header: "CMP/ATT", render: g => g.pss_cmp != null ? `${g.pss_cmp}/${g.pss_att ?? 0}` : "–" },
-  { header: "YDS",     render: g => g.pss_yds ?? "–" },
-  { header: "TD",      render: g => g.pss_tds ?? "–" },
-  { header: "INT",     render: g => g.pss_ints ?? "–" },
-  { header: "SCK",     render: g => g.pss_sacks ?? "–", dim: true },
-  { header: "RTG",     render: g => g.pss_rating ?? "–" },
-  { header: "RSH",     render: g => g.rsh_yds != null ? `${g.rsh_yds}` : "–", dim: true },
-  { header: "RSH TD",  render: g => g.rsh_tds ?? "–", dim: true },
+  { header: "YDS",    render: g => g.pss_yds ?? "–",    sortValue: g => g.pss_yds ?? 0 },
+  { header: "TD",     render: g => g.pss_tds ?? "–",    sortValue: g => g.pss_tds ?? 0 },
+  { header: "INT",    render: g => g.pss_ints ?? "–",   sortValue: g => g.pss_ints ?? 0 },
+  { header: "SCK",    render: g => g.pss_sacks ?? "–",  sortValue: g => g.pss_sacks ?? 0, dim: true },
+  { header: "RTG",    render: g => g.pss_rating ?? "–", sortValue: g => g.pss_rating ?? 0 },
+  { header: "RSH",    render: g => g.rsh_yds != null ? `${g.rsh_yds}` : "–", sortValue: g => g.rsh_yds ?? 0, dim: true },
+  { header: "RSH TD", render: g => g.rsh_tds ?? "–",   sortValue: g => g.rsh_tds ?? 0, dim: true },
 ];
 const RB_COLS: ColDef[] = [
-  { header: "CAR",  render: g => g.rsh_att ?? "–" },
-  { header: "YDS",  render: g => g.rsh_yds ?? "–" },
-  { header: "AVG",  render: g => g.rsh_att ? ((g.rsh_yds ?? 0) / g.rsh_att).toFixed(1) : "–" },
-  { header: "TD",   render: g => g.rsh_tds ?? "–" },
-  { header: "LNG",  render: g => g.rsh_lng ?? "–", dim: true },
-  { header: "TGT",  render: g => g.rec_tgts ?? "–", dim: true },
-  { header: "REC",  render: g => g.rec_catches ?? "–" },
-  { header: "RYDS", render: g => g.rec_yds ?? "–" },
-  { header: "RTD",  render: g => g.rec_tds ?? "–" },
-  { header: "FMB",  render: g => g.fmb_lost ?? "–", dim: true },
+  { header: "CAR",  render: g => g.rsh_att ?? "–",  sortValue: g => g.rsh_att ?? 0 },
+  { header: "YDS",  render: g => g.rsh_yds ?? "–",  sortValue: g => g.rsh_yds ?? 0 },
+  { header: "AVG",  render: g => g.rsh_att ? ((g.rsh_yds ?? 0) / g.rsh_att).toFixed(1) : "–", sortValue: g => g.rsh_att ? (g.rsh_yds ?? 0) / g.rsh_att : 0 },
+  { header: "TD",   render: g => g.rsh_tds ?? "–",  sortValue: g => g.rsh_tds ?? 0 },
+  { header: "LNG",  render: g => g.rsh_lng ?? "–",  sortValue: g => g.rsh_lng ?? 0, dim: true },
+  { header: "REC",  render: g => g.rec_catches ?? "–", sortValue: g => g.rec_catches ?? 0 },
+  { header: "RYDS", render: g => g.rec_yds ?? "–",  sortValue: g => g.rec_yds ?? 0 },
+  { header: "RTD",  render: g => g.rec_tds ?? "–",  sortValue: g => g.rec_tds ?? 0 },
+  { header: "FMB",  render: g => g.fmb_lost ?? "–", sortValue: g => g.fmb_lost ?? 0, dim: true },
 ];
 const WR_TE_COLS: ColDef[] = [
-  { header: "TGT",  render: g => g.rec_tgts ?? "–" },
-  { header: "REC",  render: g => g.rec_catches ?? "–" },
-  { header: "YDS",  render: g => g.rec_yds ?? "–" },
-  { header: "AVG",  render: g => g.rec_catches ? ((g.rec_yds ?? 0) / g.rec_catches).toFixed(1) : "–" },
-  { header: "TD",   render: g => g.rec_tds ?? "–" },
-  { header: "LNG",  render: g => g.rec_lng ?? "–", dim: true },
-  { header: "DROP", render: g => g.rec_drops ?? "–", dim: true },
-  { header: "YAC",  render: g => g.rec_yac ?? "–", dim: true },
+  { header: "REC",  render: g => g.rec_catches ?? "–", sortValue: g => g.rec_catches ?? 0 },
+  { header: "YDS",  render: g => g.rec_yds ?? "–",     sortValue: g => g.rec_yds ?? 0 },
+  { header: "AVG",  render: g => g.rec_catches ? ((g.rec_yds ?? 0) / g.rec_catches).toFixed(1) : "–", sortValue: g => g.rec_catches ? (g.rec_yds ?? 0) / g.rec_catches : 0 },
+  { header: "TD",   render: g => g.rec_tds ?? "–",     sortValue: g => g.rec_tds ?? 0 },
+  { header: "LNG",  render: g => g.rec_lng ?? "–",     sortValue: g => g.rec_lng ?? 0, dim: true },
+  { header: "DROP", render: g => g.rec_drops ?? "–",   sortValue: g => g.rec_drops ?? 0, dim: true },
+  { header: "YAC",  render: g => g.rec_yac ?? "–",     sortValue: g => g.rec_yac ?? 0, dim: true },
 ];
 const DEF_COLS: ColDef[] = [
-  { header: "TKL",  render: g => g.def_total_tackles ?? "–" },
-  { header: "TFL",  render: g => g.def_tfl ?? "–" },
-  { header: "SCK",  render: g => g.def_sacks ?? "–" },
-  { header: "INT",  render: g => g.def_ints ?? "–" },
-  { header: "FF",   render: g => g.def_ff ?? "–", dim: true },
-  { header: "PD",   render: g => g.def_pd ?? "–" },
-  { header: "TD",   render: g => g.def_tds ?? "–", dim: true },
-  { header: "FR",   render: g => g.def_fum_rec ?? "–", dim: true },
+  { header: "TKL",  render: g => g.def_total_tackles ?? "–", sortValue: g => g.def_total_tackles ?? 0 },
+  { header: "TFL",  render: g => g.def_tfl ?? "–",   sortValue: g => g.def_tfl ?? 0 },
+  { header: "SCK",  render: g => g.def_sacks ?? "–", sortValue: g => g.def_sacks ?? 0 },
+  { header: "INT",  render: g => g.def_ints ?? "–",  sortValue: g => g.def_ints ?? 0 },
+  { header: "FF",   render: g => g.def_ff ?? "–",    sortValue: g => g.def_ff ?? 0, dim: true },
+  { header: "PD",   render: g => g.def_pd ?? "–",    sortValue: g => g.def_pd ?? 0 },
+  { header: "TD",   render: g => g.def_tds ?? "–",   sortValue: g => g.def_tds ?? 0, dim: true },
+  { header: "FR",   render: g => g.def_fum_rec ?? "–", sortValue: g => g.def_fum_rec ?? 0, dim: true },
 ];
 const K_COLS: ColDef[] = [
   { header: "FG M/A", render: g => `${g.fg_made ?? 0}/${g.fg_att ?? 0}` },
-  { header: "LNG",    render: g => g.fg_lng ?? "–" },
+  { header: "LNG",    render: g => g.fg_lng ?? "–", sortValue: g => g.fg_lng ?? 0 },
   { header: "XP M/A", render: g => `${g.xp_made ?? 0}/${g.xp_att ?? 0}` },
 ];
 const P_COLS: ColDef[] = [
-  { header: "NO",   render: g => g.punt_att ?? "–" },
-  { header: "YDS",  render: g => g.punt_yds ?? "–" },
-  { header: "AVG",  render: g => g.punt_avg ?? "–" },
-  { header: "LNG",  render: g => g.punt_lng ?? "–" },
-  { header: "IN20", render: g => g.punt_in20 ?? "–" },
-  { header: "TB",   render: g => g.punt_tbs ?? "–", dim: true },
+  { header: "NO",   render: g => g.punt_att ?? "–",  sortValue: g => g.punt_att ?? 0 },
+  { header: "YDS",  render: g => g.punt_yds ?? "–",  sortValue: g => g.punt_yds ?? 0 },
+  { header: "AVG",  render: g => g.punt_avg ?? "–",  sortValue: g => g.punt_avg ?? 0 },
+  { header: "LNG",  render: g => g.punt_lng ?? "–",  sortValue: g => g.punt_lng ?? 0 },
+  { header: "IN20", render: g => g.punt_in20 ?? "–", sortValue: g => g.punt_in20 ?? 0 },
+  { header: "TB",   render: g => g.punt_tbs ?? "–",  sortValue: g => g.punt_tbs ?? 0, dim: true },
 ];
 
 const QB_POS  = new Set(["QB"]);
@@ -636,6 +639,9 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
   });
 
   const cols = getColsForPosition(position);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   if (isLoading) {
     return (
@@ -655,7 +661,10 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
     );
   }
 
-  const bySeason = log.reduce((m, g) => {
+  const allSeasons = [...new Set(log.map(g => g.season))].sort((a, b) => b - a);
+  const filteredLog = selectedSeason == null ? log : log.filter(g => g.season === selectedSeason);
+
+  const bySeason = filteredLog.reduce((m, g) => {
     const arr = m.get(g.season) ?? [];
     arr.push(g);
     m.set(g.season, arr);
@@ -663,10 +672,68 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
   }, new Map<number, typeof log>());
   const seasons = [...bySeason.keys()].sort((a, b) => b - a);
 
+  function computeHighs(games: GameLogEntry[]): Map<string, number> {
+    const highs = new Map<string, number>();
+    for (const col of cols) {
+      if (!col.sortValue) continue;
+      const max = Math.max(...games.map(g => col.sortValue!(g)));
+      if (max > 0) highs.set(col.header, max);
+    }
+    return highs;
+  }
+
+  function handleSort(header: string) {
+    if (sortCol === header) {
+      setSortDir(d => d === "desc" ? "asc" : "desc");
+    } else {
+      setSortCol(header);
+      setSortDir("desc");
+    }
+  }
+
+  function sortGames(games: GameLogEntry[]): GameLogEntry[] {
+    if (!sortCol) return games;
+    const col = cols.find(c => c.header === sortCol);
+    if (!col?.sortValue) return games;
+    return [...games].sort((a, b) =>
+      sortDir === "desc" ? col.sortValue!(b) - col.sortValue!(a) : col.sortValue!(a) - col.sortValue!(b)
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Season filter pills */}
+      {allSeasons.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setSelectedSeason(null)}
+            className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+            style={selectedSeason == null
+              ? { backgroundColor: teamColor, color: "#fff" }
+              : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }}
+          >
+            All
+          </button>
+          {allSeasons.map(s => (
+            <button
+              key={s}
+              onClick={() => setSelectedSeason(s)}
+              className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+              style={selectedSeason === s
+                ? { backgroundColor: teamColor, color: "#fff" }
+                : { backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
       {seasons.map(season => {
         const games = bySeason.get(season)!;
+        const sorted = sortGames(games);
+        const highs = computeHighs(games);
+
         return (
           <div key={season}>
             <div className="flex items-center gap-3 mb-2 px-1">
@@ -687,14 +754,25 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                     <th className="text-center py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-10">RES</th>
                     <th className="text-center py-2 px-2 text-white font-black uppercase tracking-wider text-[10px] w-14">SCORE</th>
                     {cols.map(c => (
-                      <th key={c.header} className="text-right py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">
-                        {c.header}
+                      <th
+                        key={c.header}
+                        className={`text-right py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] ${c.sortValue ? "cursor-pointer select-none" : ""}`}
+                        onClick={c.sortValue ? () => handleSort(c.header) : undefined}
+                      >
+                        <span className="inline-flex items-center justify-end gap-0.5">
+                          {c.header}
+                          {c.sortValue && (
+                            <span className="text-[9px] opacity-70 ml-0.5">
+                              {sortCol === c.header ? (sortDir === "desc" ? "▼" : "▲") : "⇅"}
+                            </span>
+                          )}
+                        </span>
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {games.map((g, i) => (
+                  {sorted.map((g, i) => (
                     <tr
                       key={g.id}
                       className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
@@ -728,11 +806,26 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                           ? `${g.player_score}-${g.opponent_score ?? "?"}`
                           : "–"}
                       </td>
-                      {cols.map(c => (
-                        <td key={c.header} className="py-2 px-3 text-right [font-family:'Lora',serif] text-[14px] text-[#ffffff]">
-                          {c.render(g)}
-                        </td>
-                      ))}
+                      {cols.map(c => {
+                        const isHigh = c.sortValue != null
+                          && highs.has(c.header)
+                          && c.sortValue(g) > 0
+                          && c.sortValue(g) === highs.get(c.header)!;
+                        return (
+                          <td
+                            key={c.header}
+                            className={`py-2 px-3 text-right [font-family:'Lora',serif] text-[14px] ${
+                              isHigh
+                                ? "font-bold text-white"
+                                : c.dim
+                                ? "text-white/25"
+                                : "text-white/70"
+                            }`}
+                          >
+                            {c.render(g)}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
