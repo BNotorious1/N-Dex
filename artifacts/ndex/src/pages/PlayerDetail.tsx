@@ -1206,16 +1206,19 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
 
 // ─── Awards Tab ───────────────────────────────────────────────────────────────
 
-const YEARLY_TYPES = new Set(["MVP", "AFC_OPOY", "NFC_OPOY", "DPOY", "DROY", "OROY"]);
+const YEARLY_TYPES = new Set(["MVP", "AFC_OPOY", "NFC_OPOY", "AFC_DPOY", "NFC_DPOY", "AFC_DROY", "NFC_DROY", "AFC_OROY", "NFC_OROY"]);
 const ALL_PRO_TYPES = new Set(["ALL_PRO_1ST", "ALL_PRO_2ND"]);
 
 const AWARD_LABELS: Record<string, string> = {
   MVP:        "MVP",
   AFC_OPOY:   "AFC Offensive POY",
   NFC_OPOY:   "NFC Offensive POY",
-  DPOY:       "Defensive POY",
-  DROY:       "Defensive ROY",
-  OROY:       "Offensive ROY",
+  AFC_DPOY:   "AFC Defensive POY",
+  NFC_DPOY:   "NFC Defensive POY",
+  AFC_DROY:   "AFC Defensive ROY",
+  NFC_DROY:   "NFC Defensive ROY",
+  AFC_OROY:   "AFC Offensive ROY",
+  NFC_OROY:   "NFC Offensive ROY",
   ALL_PRO_1ST: "1st Team All-Pro",
   ALL_PRO_2ND: "2nd Team All-Pro",
 };
@@ -1224,9 +1227,12 @@ const ALL_AWARD_OPTIONS = [
   { value: "MVP",        group: "Yearly Awards" },
   { value: "AFC_OPOY",   group: "Yearly Awards" },
   { value: "NFC_OPOY",   group: "Yearly Awards" },
-  { value: "DPOY",       group: "Yearly Awards" },
-  { value: "DROY",       group: "Yearly Awards" },
-  { value: "OROY",       group: "Yearly Awards" },
+  { value: "AFC_DPOY",   group: "Yearly Awards" },
+  { value: "NFC_DPOY",   group: "Yearly Awards" },
+  { value: "AFC_DROY",   group: "Yearly Awards" },
+  { value: "NFC_DROY",   group: "Yearly Awards" },
+  { value: "AFC_OROY",   group: "Yearly Awards" },
+  { value: "NFC_OROY",   group: "Yearly Awards" },
   { value: "ALL_PRO_1ST", group: "All-Pro" },
   { value: "ALL_PRO_2ND", group: "All-Pro" },
 ];
