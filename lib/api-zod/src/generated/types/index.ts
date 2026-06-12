@@ -20,6 +20,8 @@ export * from './member';
 export * from './memberInput';
 export * from './memberUpdate';
 export * from './player';
+export * from './playerAward';
+export * from './playerAwardInput';
 export * from './playerDetail';
 export * from './playerDetailAbilitiesItem';
 export * from './playerInput';

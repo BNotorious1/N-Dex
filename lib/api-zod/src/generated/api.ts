@@ -870,6 +870,47 @@ export const GetPlayerGameLogResponse = zod.array(GetPlayerGameLogResponseItem)
 
 
 /**
+ * @summary Get awards for a player
+ */
+export const GetPlayerAwardsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPlayerAwardsResponseItem = zod.object({
+  "id": zod.number(),
+  "player_id": zod.number(),
+  "league_id": zod.number(),
+  "season": zod.number(),
+  "award_type": zod.string(),
+  "created_at": zod.string()
+})
+export const GetPlayerAwardsResponse = zod.array(GetPlayerAwardsResponseItem)
+
+
+/**
+ * @summary Add an award to a player
+ */
+export const AddPlayerAwardParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddPlayerAwardBody = zod.object({
+  "league_id": zod.number(),
+  "season": zod.number(),
+  "award_type": zod.string()
+})
+
+
+/**
+ * @summary Remove an award from a player
+ */
+export const DeletePlayerAwardParams = zod.object({
+  "id": zod.coerce.number(),
+  "awardId": zod.coerce.number()
+})
+
+
+/**
  * @summary Update game score/status
  */
 export const UpdateGameParams = zod.object({

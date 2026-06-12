@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
-import { useGetPlayerGameLog } from "@workspace/api-client-react";
+import { useGetPlayerGameLog, useGetPlayerAwards, useAddPlayerAward, useDeletePlayerAward, getGetPlayerAwardsQueryKey } from "@workspace/api-client-react";
 import type { GameLogEntry } from "@workspace/api-client-react";
-import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X } from "lucide-react";
+import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus } from "lucide-react";
 import devTraitNormal from "@assets/Normal_1781202579092.png";
 import devTraitStar from "@assets/Star_1781202579092.png";
 import devTraitSuperstar from "@assets/Superstar_1781202579092.png";
@@ -1204,6 +1204,188 @@ function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; p
   );
 }
 
+// ─── Awards Tab ───────────────────────────────────────────────────────────────
+
+const YEARLY_TYPES = new Set(["MVP", "AFC_OPOY", "NFC_OPOY", "DPOY", "DROY", "OROY"]);
+const ALL_PRO_TYPES = new Set(["ALL_PRO_1ST", "ALL_PRO_2ND"]);
+
+const AWARD_LABELS: Record<string, string> = {
+  MVP:        "MVP",
+  AFC_OPOY:   "AFC Offensive POY",
+  NFC_OPOY:   "NFC Offensive POY",
+  DPOY:       "Defensive POY",
+  DROY:       "Defensive ROY",
+  OROY:       "Offensive ROY",
+  ALL_PRO_1ST: "1st Team All-Pro",
+  ALL_PRO_2ND: "2nd Team All-Pro",
+};
+
+const ALL_AWARD_OPTIONS = [
+  { value: "MVP",        group: "Yearly Awards" },
+  { value: "AFC_OPOY",   group: "Yearly Awards" },
+  { value: "NFC_OPOY",   group: "Yearly Awards" },
+  { value: "DPOY",       group: "Yearly Awards" },
+  { value: "DROY",       group: "Yearly Awards" },
+  { value: "OROY",       group: "Yearly Awards" },
+  { value: "ALL_PRO_1ST", group: "All-Pro" },
+  { value: "ALL_PRO_2ND", group: "All-Pro" },
+];
+
+type AwardRow = { id: number; season: number; award_type: string; player_id: number; league_id: number; created_at: string };
+
+function AwardTable({
+  rows,
+  emptyMsg,
+  teamColor,
+  onDelete,
+  deleteDisabled,
+}: {
+  rows: AwardRow[];
+  emptyMsg: string;
+  teamColor: string;
+  onDelete: (id: number) => void;
+  deleteDisabled: boolean;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-white/5">
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr style={{ backgroundColor: teamColor }}>
+            <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] w-24">Season</th>
+            <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">Award</th>
+            <th className="py-2 px-3 w-8" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={3} className="py-6 px-3 text-center text-white/20 text-xs">{emptyMsg}</td>
+            </tr>
+          ) : rows.map((a, i) => (
+            <tr
+              key={a.id}
+              className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
+            >
+              <td className="py-2 px-3 [font-family:'Lora',serif] text-white font-bold text-[14px]">{a.season}</td>
+              <td className="py-2 px-3 text-white/80 text-[13px] font-semibold">{AWARD_LABELS[a.award_type] ?? a.award_type}</td>
+              <td className="py-2 px-2 text-right">
+                <button
+                  onClick={() => onDelete(a.id)}
+                  disabled={deleteDisabled}
+                  className="h-6 w-6 rounded flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-40"
+                  title="Remove award"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AwardsTab({ playerId, leagueId, teamColor }: { playerId: number; leagueId: number; teamColor: string }) {
+  const queryClient = useQueryClient();
+
+  const { data: awards, isLoading } = useGetPlayerAwards(playerId, {
+    query: { queryKey: getGetPlayerAwardsQueryKey(playerId) },
+  });
+
+  const addAward    = useAddPlayerAward();
+  const deleteAward = useDeletePlayerAward();
+
+  const [season,    setSeason]    = useState<string>("");
+  const [awardType, setAwardType] = useState<string>("MVP");
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const s = Number(season);
+    if (!s || !awardType) return;
+    await addAward.mutateAsync({ id: playerId, data: { league_id: leagueId, season: s, award_type: awardType } });
+    await queryClient.invalidateQueries({ queryKey: getGetPlayerAwardsQueryKey(playerId) });
+    setSeason("");
+  }
+
+  async function handleDelete(awardId: number) {
+    await deleteAward.mutateAsync({ id: playerId, awardId });
+    await queryClient.invalidateQueries({ queryKey: getGetPlayerAwardsQueryKey(playerId) });
+  }
+
+  const yearlyAwards = (awards ?? []).filter(a => YEARLY_TYPES.has(a.award_type)).sort((a, b) => b.season - a.season);
+  const allProAwards = (awards ?? []).filter(a => ALL_PRO_TYPES.has(a.award_type)).sort((a, b) => b.season - a.season);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Admin — add award form */}
+      <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+        <div className="px-4 py-2.5 flex items-center gap-2" style={{ backgroundColor: teamColor }}>
+          <Plus className="h-3.5 w-3.5 text-white" />
+          <span className="text-xs font-black uppercase tracking-widest text-white">Add Award</span>
+        </div>
+        <form onSubmit={handleAdd} className="px-4 py-4 flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">Season</label>
+            <input
+              type="number"
+              value={season}
+              onChange={e => setSeason(e.target.value)}
+              placeholder="2025"
+              min={2000}
+              max={2100}
+              required
+              className="w-24 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">Award</label>
+            <select
+              value={awardType}
+              onChange={e => setAwardType(e.target.value)}
+              className="bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/30"
+            >
+              {ALL_AWARD_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{AWARD_LABELS[o.value]}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={addAward.isPending || !season}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider text-white disabled:opacity-40 transition-opacity"
+            style={{ backgroundColor: teamColor }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {addAward.isPending ? "Adding…" : "Add"}
+          </button>
+          {addAward.isError && (
+            <span className="text-xs text-red-400">Failed to add award.</span>
+          )}
+        </form>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12 text-white/30 text-sm">Loading awards…</div>
+      ) : (
+        <>
+          {/* Yearly Awards */}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-[11px] font-black uppercase tracking-widest text-white/40">Yearly Awards</h3>
+            <AwardTable rows={yearlyAwards} emptyMsg="No yearly awards recorded" teamColor={teamColor} onDelete={handleDelete} deleteDisabled={deleteAward.isPending} />
+          </div>
+
+          {/* All-Pro */}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-[11px] font-black uppercase tracking-widest text-white/40">All-Pro Selections</h3>
+            <AwardTable rows={allProAwards} emptyMsg="No All-Pro selections recorded" teamColor={teamColor} onDelete={handleDelete} deleteDisabled={deleteAward.isPending} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function AbilitiesTab({ player }: { player: PlayerDetail }) {
   const devTier  = player.dev_trait ?? 0;
   const meta     = DEV_TIER_META[devTier] ?? DEV_TIER_META[0]!;
@@ -1486,12 +1668,8 @@ export default function PlayerDetail() {
             {tab === "career" && player && (
               <CareerStatsTab playerId={player.id} position={player.position} teamColor={teamColor} />
             )}
-            {tab === "awards" && (
-              <PlaceholderTab
-                icon={<Trophy className="h-6 w-6" />}
-                title="No Awards Yet"
-                description="League awards and milestones earned by this player will be shown here."
-              />
+            {tab === "awards" && player && (
+              <AwardsTab playerId={player.id} leagueId={player.league_id} teamColor={teamColor} />
             )}
             {tab === "history" && (
               <PlaceholderTab

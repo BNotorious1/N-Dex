@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { db, playersTable, teamsTable, playerAbilitiesTable, playerGameStatsTable, gamesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, playersTable, teamsTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, playerAwardsTable, AWARD_TYPES } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody } from "@workspace/api-zod";
+import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody, GetPlayerAwardsParams, AddPlayerAwardParams, AddPlayerAwardBody, DeletePlayerAwardParams } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -328,6 +328,65 @@ router.get("/:id/gamelog", async (req, res) => {
       punt_tbs: r.puntTbs ?? null,
     };
   }));
+});
+
+// GET /players/:id/awards
+router.get("/:id/awards", async (req, res) => {
+  const parseResult = GetPlayerAwardsParams.safeParse({ id: Number(req.params.id) });
+  if (!parseResult.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const awards = await db
+    .select()
+    .from(playerAwardsTable)
+    .where(eq(playerAwardsTable.playerId, parseResult.data.id))
+    .orderBy(playerAwardsTable.season);
+  res.json(awards.map(a => ({
+    id: a.id,
+    player_id: a.playerId,
+    league_id: a.leagueId,
+    season: a.season,
+    award_type: a.awardType,
+    created_at: a.createdAt.toISOString(),
+  })));
+});
+
+// POST /players/:id/awards
+router.post("/:id/awards", async (req, res) => {
+  const paramResult = AddPlayerAwardParams.safeParse({ id: Number(req.params.id) });
+  if (!paramResult.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const bodyResult = AddPlayerAwardBody.safeParse(req.body);
+  if (!bodyResult.success) { res.status(400).json({ error: "Invalid body", details: bodyResult.error.issues }); return; }
+  const { league_id, season, award_type } = bodyResult.data;
+  if (!(AWARD_TYPES as readonly string[]).includes(award_type)) {
+    res.status(400).json({ error: `Invalid award_type. Must be one of: ${AWARD_TYPES.join(", ")}` });
+    return;
+  }
+  const [award] = await db.insert(playerAwardsTable).values({
+    playerId: paramResult.data.id,
+    leagueId: league_id,
+    season,
+    awardType: award_type,
+  }).returning();
+  if (!award) { res.status(500).json({ error: "Insert failed" }); return; }
+  res.status(201).json({
+    id: award.id,
+    player_id: award.playerId,
+    league_id: award.leagueId,
+    season: award.season,
+    award_type: award.awardType,
+    created_at: award.createdAt.toISOString(),
+  });
+});
+
+// DELETE /players/:id/awards/:awardId
+router.delete("/:id/awards/:awardId", async (req, res) => {
+  const parseResult = DeletePlayerAwardParams.safeParse({ id: Number(req.params.id), awardId: Number(req.params.awardId) });
+  if (!parseResult.success) { res.status(400).json({ error: "Invalid params" }); return; }
+  const deleted = await db
+    .delete(playerAwardsTable)
+    .where(and(eq(playerAwardsTable.id, parseResult.data.awardId), eq(playerAwardsTable.playerId, parseResult.data.id)))
+    .returning();
+  if (!deleted.length) { res.status(404).json({ error: "Award not found" }); return; }
+  res.status(204).end();
 });
 
 // PATCH /players/:id

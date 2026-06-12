@@ -575,6 +575,70 @@ paths:
                 items:
                   $ref: "#/components/schemas/GameLogEntry"
 
+  /players/{id}/awards:
+    get:
+      operationId: getPlayerAwards
+      tags: [players]
+      summary: Get awards for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Awards list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerAward"
+    post:
+      operationId: addPlayerAward
+      tags: [players]
+      summary: Add an award to a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerAwardInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAward"
+
+  /players/{id}/awards/{awardId}:
+    delete:
+      operationId: deletePlayerAward
+      tags: [players]
+      summary: Remove an award from a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: awardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /games/{id}:
     patch:
       operationId: updateGame
@@ -1377,6 +1441,34 @@ components:
               type: ["string", "null"]
             away_team_color:
               type: ["string", "null"]
+
+    PlayerAward:
+      type: object
+      required: [id, player_id, league_id, season, award_type, created_at]
+      properties:
+        id:
+          type: integer
+        player_id:
+          type: integer
+        league_id:
+          type: integer
+        season:
+          type: integer
+        award_type:
+          type: string
+        created_at:
+          type: string
+
+    PlayerAwardInput:
+      type: object
+      required: [league_id, season, award_type]
+      properties:
+        league_id:
+          type: integer
+        season:
+          type: integer
+        award_type:
+          type: string
 
     GameLogEntry:
       type: object

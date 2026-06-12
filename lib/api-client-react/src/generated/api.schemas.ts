@@ -474,6 +474,21 @@ export type TeamGame = Game & ({
   away_team_color?: string | null;
 });
 
+export interface PlayerAward {
+  id: number;
+  player_id: number;
+  league_id: number;
+  season: number;
+  award_type: string;
+  created_at: string;
+}
+
+export interface PlayerAwardInput {
+  league_id: number;
+  season: number;
+  award_type: string;
+}
+
 export interface GameLogEntry {
   id: number;
   season: number;
