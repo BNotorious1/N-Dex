@@ -735,7 +735,6 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
           ))}
         </div>
       )}
-
       {seasons.map(season => {
         const games = bySeason.get(season)!;
         const sorted = sortGames(games);
@@ -800,9 +799,9 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
                           {g.opponent_abbreviation ? (
                             <>
                               <TeamLogo abbreviation={g.opponent_abbreviation} primaryColor={g.opponent_primary_color} size="sm" shape="circle" />
-                              <span className="[font-family:'Lora',serif] text-white/50 text-[11px]">
+                              <span className="[font-family:'Lora',serif] text-white/50 text-[14px]">
                                 {g.is_home === false ? "@" : ""}
-                                <span className="text-white/80 font-bold">{g.opponent_abbreviation}</span>
+                                <span className="text-white/80 font-bold text-[14px]">{g.opponent_abbreviation}</span>
                               </span>
                             </>
                           ) : (
