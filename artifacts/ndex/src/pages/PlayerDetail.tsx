@@ -730,7 +730,7 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                           : "–"}
                       </td>
                       {cols.map(c => (
-                        <td key={c.header} className={`py-2 px-3 text-right font-mono ${c.dim ? "text-white/25" : "text-white/70"}`}>
+                        <td key={c.header} className={`py-2 px-3 text-right [font-family:'Lora',serif] ${c.dim ? "text-white/25" : "text-white/70"}`}>
                           {c.render(g)}
                         </td>
                       ))}
