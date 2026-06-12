@@ -845,6 +845,322 @@ function GameLogTab({ playerId, position, teamColor }: { playerId: number; posit
   );
 }
 
+// ─── Career Stats Tab ─────────────────────────────────────────────────────────
+
+type AggrRow = {
+  season: number; gp: number;
+  pss_att: number; pss_cmp: number; pss_yds: number; pss_tds: number; pss_ints: number; pss_sacks: number;
+  pss_rtg_wsum: number; pss_rtg_watts: number;
+  rsh_att: number; rsh_yds: number; rsh_tds: number; rsh_lng: number; fmb_lost: number;
+  rec_catches: number; rec_yds: number; rec_tds: number; rec_lng: number; rec_drops: number; rec_yac: number;
+  def_total_tackles: number; def_tfl: number; def_sacks: number; def_ints: number; def_ff: number; def_pd: number; def_tds: number; def_fum_rec: number;
+  fg_made: number; fg_att: number; fg_lng: number; xp_made: number; xp_att: number;
+  punt_att: number; punt_yds: number; punt_lng: number; punt_in20: number; punt_tbs: number;
+};
+
+function emptyAggr(season: number): AggrRow {
+  return {
+    season, gp: 0,
+    pss_att: 0, pss_cmp: 0, pss_yds: 0, pss_tds: 0, pss_ints: 0, pss_sacks: 0, pss_rtg_wsum: 0, pss_rtg_watts: 0,
+    rsh_att: 0, rsh_yds: 0, rsh_tds: 0, rsh_lng: 0, fmb_lost: 0,
+    rec_catches: 0, rec_yds: 0, rec_tds: 0, rec_lng: 0, rec_drops: 0, rec_yac: 0,
+    def_total_tackles: 0, def_tfl: 0, def_sacks: 0, def_ints: 0, def_ff: 0, def_pd: 0, def_tds: 0, def_fum_rec: 0,
+    fg_made: 0, fg_att: 0, fg_lng: 0, xp_made: 0, xp_att: 0,
+    punt_att: 0, punt_yds: 0, punt_lng: 0, punt_in20: 0, punt_tbs: 0,
+  };
+}
+
+function aggregateLog(log: GameLogEntry[]): AggrRow[] {
+  const map = new Map<number, AggrRow>();
+  for (const g of log) {
+    if (!map.has(g.season)) map.set(g.season, emptyAggr(g.season));
+    const r = map.get(g.season)!;
+    r.gp++;
+    r.pss_att      += g.pss_att      ?? 0;
+    r.pss_cmp      += g.pss_cmp      ?? 0;
+    r.pss_yds      += g.pss_yds      ?? 0;
+    r.pss_tds      += g.pss_tds      ?? 0;
+    r.pss_ints     += g.pss_ints     ?? 0;
+    r.pss_sacks    += g.pss_sacks    ?? 0;
+    if ((g.pss_att ?? 0) > 0 && g.pss_rating != null) {
+      r.pss_rtg_wsum   += g.pss_rating * (g.pss_att ?? 0);
+      r.pss_rtg_watts  += g.pss_att ?? 0;
+    }
+    r.rsh_att      += g.rsh_att      ?? 0;
+    r.rsh_yds      += g.rsh_yds      ?? 0;
+    r.rsh_tds      += g.rsh_tds      ?? 0;
+    r.rsh_lng       = Math.max(r.rsh_lng, g.rsh_lng ?? 0);
+    r.fmb_lost     += g.fmb_lost     ?? 0;
+    r.rec_catches  += g.rec_catches  ?? 0;
+    r.rec_yds      += g.rec_yds      ?? 0;
+    r.rec_tds      += g.rec_tds      ?? 0;
+    r.rec_lng       = Math.max(r.rec_lng, g.rec_lng ?? 0);
+    r.rec_drops    += g.rec_drops    ?? 0;
+    r.rec_yac      += g.rec_yac      ?? 0;
+    r.def_total_tackles += g.def_total_tackles ?? 0;
+    r.def_tfl      += g.def_tfl      ?? 0;
+    r.def_sacks    += g.def_sacks    ?? 0;
+    r.def_ints     += g.def_ints     ?? 0;
+    r.def_ff       += g.def_ff       ?? 0;
+    r.def_pd       += g.def_pd       ?? 0;
+    r.def_tds      += g.def_tds      ?? 0;
+    r.def_fum_rec  += g.def_fum_rec  ?? 0;
+    r.fg_made      += g.fg_made      ?? 0;
+    r.fg_att       += g.fg_att       ?? 0;
+    r.fg_lng        = Math.max(r.fg_lng, g.fg_lng ?? 0);
+    r.xp_made      += g.xp_made      ?? 0;
+    r.xp_att       += g.xp_att       ?? 0;
+    r.punt_att     += g.punt_att     ?? 0;
+    r.punt_yds     += g.punt_yds     ?? 0;
+    r.punt_lng      = Math.max(r.punt_lng, g.punt_lng ?? 0);
+    r.punt_in20    += g.punt_in20    ?? 0;
+    r.punt_tbs     += g.punt_tbs     ?? 0;
+  }
+  return [...map.values()].sort((a, b) => a.season - b.season);
+}
+
+function careerTotals(seasons: AggrRow[]): AggrRow {
+  const c = emptyAggr(0);
+  for (const s of seasons) {
+    c.gp           += s.gp;
+    c.pss_att      += s.pss_att;      c.pss_cmp  += s.pss_cmp;  c.pss_yds  += s.pss_yds;
+    c.pss_tds      += s.pss_tds;      c.pss_ints += s.pss_ints; c.pss_sacks += s.pss_sacks;
+    c.pss_rtg_wsum += s.pss_rtg_wsum; c.pss_rtg_watts += s.pss_rtg_watts;
+    c.rsh_att      += s.rsh_att;      c.rsh_yds  += s.rsh_yds;  c.rsh_tds  += s.rsh_tds;
+    c.rsh_lng       = Math.max(c.rsh_lng, s.rsh_lng);
+    c.fmb_lost     += s.fmb_lost;
+    c.rec_catches  += s.rec_catches;  c.rec_yds  += s.rec_yds;  c.rec_tds  += s.rec_tds;
+    c.rec_lng       = Math.max(c.rec_lng, s.rec_lng);
+    c.rec_drops    += s.rec_drops;    c.rec_yac  += s.rec_yac;
+    c.def_total_tackles += s.def_total_tackles;
+    c.def_tfl      += s.def_tfl;      c.def_sacks += s.def_sacks; c.def_ints += s.def_ints;
+    c.def_ff       += s.def_ff;       c.def_pd    += s.def_pd;    c.def_tds  += s.def_tds;
+    c.def_fum_rec  += s.def_fum_rec;
+    c.fg_made      += s.fg_made;      c.fg_att   += s.fg_att;
+    c.fg_lng        = Math.max(c.fg_lng, s.fg_lng);
+    c.xp_made      += s.xp_made;      c.xp_att   += s.xp_att;
+    c.punt_att     += s.punt_att;     c.punt_yds += s.punt_yds;
+    c.punt_lng      = Math.max(c.punt_lng, s.punt_lng);
+    c.punt_in20    += s.punt_in20;    c.punt_tbs += s.punt_tbs;
+  }
+  return c;
+}
+
+type CareerColDef = { header: string; render: (r: AggrRow) => string | number; dim?: boolean };
+
+const QB_CAREER_COLS: CareerColDef[] = [
+  { header: "CMP",     render: r => r.pss_cmp  || "–" },
+  { header: "ATT",     render: r => r.pss_att  || "–" },
+  { header: "CMP%",    render: r => r.pss_att ? `${((r.pss_cmp / r.pss_att) * 100).toFixed(1)}%` : "–" },
+  { header: "YDS",     render: r => r.pss_yds  || "–" },
+  { header: "TD",      render: r => r.pss_tds  || "–" },
+  { header: "INT",     render: r => r.pss_ints || "–" },
+  { header: "SCK",     render: r => r.pss_sacks || "–", dim: true },
+  { header: "RTG",     render: r => r.pss_rtg_watts ? (r.pss_rtg_wsum / r.pss_rtg_watts).toFixed(1) : "–" },
+  { header: "RSH YDS", render: r => r.rsh_yds || "–", dim: true },
+  { header: "RSH TD",  render: r => r.rsh_tds || "–", dim: true },
+];
+const RB_CAREER_COLS: CareerColDef[] = [
+  { header: "CAR",   render: r => r.rsh_att    || "–" },
+  { header: "YDS",   render: r => r.rsh_yds    || "–" },
+  { header: "AVG",   render: r => r.rsh_att ? (r.rsh_yds / r.rsh_att).toFixed(1) : "–" },
+  { header: "TD",    render: r => r.rsh_tds    || "–" },
+  { header: "LNG",   render: r => r.rsh_lng    || "–", dim: true },
+  { header: "REC",   render: r => r.rec_catches || "–" },
+  { header: "RYDS",  render: r => r.rec_yds    || "–" },
+  { header: "RTD",   render: r => r.rec_tds    || "–" },
+  { header: "FMB",   render: r => r.fmb_lost   || "–", dim: true },
+];
+const WR_TE_CAREER_COLS: CareerColDef[] = [
+  { header: "REC",   render: r => r.rec_catches || "–" },
+  { header: "YDS",   render: r => r.rec_yds     || "–" },
+  { header: "AVG",   render: r => r.rec_catches ? (r.rec_yds / r.rec_catches).toFixed(1) : "–" },
+  { header: "TD",    render: r => r.rec_tds     || "–" },
+  { header: "LNG",   render: r => r.rec_lng     || "–", dim: true },
+  { header: "DROP",  render: r => r.rec_drops   || "–", dim: true },
+  { header: "YAC",   render: r => r.rec_yac     || "–", dim: true },
+];
+const DEF_CAREER_COLS: CareerColDef[] = [
+  { header: "TKL",   render: r => r.def_total_tackles || "–" },
+  { header: "TFL",   render: r => r.def_tfl     || "–" },
+  { header: "SCK",   render: r => r.def_sacks   || "–" },
+  { header: "INT",   render: r => r.def_ints    || "–" },
+  { header: "FF",    render: r => r.def_ff      || "–", dim: true },
+  { header: "PD",    render: r => r.def_pd      || "–" },
+  { header: "TD",    render: r => r.def_tds     || "–", dim: true },
+  { header: "FR",    render: r => r.def_fum_rec || "–", dim: true },
+];
+const K_CAREER_COLS: CareerColDef[] = [
+  { header: "FGM",  render: r => r.fg_made  || "–" },
+  { header: "FGA",  render: r => r.fg_att   || "–" },
+  { header: "FG%",  render: r => r.fg_att ? `${((r.fg_made / r.fg_att) * 100).toFixed(1)}%` : "–" },
+  { header: "LNG",  render: r => r.fg_lng   || "–", dim: true },
+  { header: "XPM",  render: r => r.xp_made  || "–" },
+  { header: "XPA",  render: r => r.xp_att   || "–" },
+];
+const P_CAREER_COLS: CareerColDef[] = [
+  { header: "NO",   render: r => r.punt_att  || "–" },
+  { header: "YDS",  render: r => r.punt_yds  || "–" },
+  { header: "AVG",  render: r => r.punt_att ? (r.punt_yds / r.punt_att).toFixed(1) : "–" },
+  { header: "LNG",  render: r => r.punt_lng  || "–", dim: true },
+  { header: "IN20", render: r => r.punt_in20 || "–" },
+  { header: "TB",   render: r => r.punt_tbs  || "–", dim: true },
+];
+
+function getCareerCols(position: string): CareerColDef[] {
+  if (QB_POS.has(position))  return QB_CAREER_COLS;
+  if (RB_POS.has(position))  return RB_CAREER_COLS;
+  if (WRTE.has(position))    return WR_TE_CAREER_COLS;
+  if (DEF_POS.has(position)) return DEF_CAREER_COLS;
+  if (K_POS.has(position))   return K_CAREER_COLS;
+  if (P_POS.has(position))   return P_CAREER_COLS;
+  return DEF_CAREER_COLS;
+}
+
+function getCareerHighlights(career: AggrRow, position: string): { label: string; value: string | number }[] {
+  if (QB_POS.has(position)) return [
+    { label: "Pass YDS",  value: career.pss_yds  || "–" },
+    { label: "Pass TD",   value: career.pss_tds  || "–" },
+    { label: "INT",       value: career.pss_ints || "–" },
+    { label: "RTG",       value: career.pss_rtg_watts ? (career.pss_rtg_wsum / career.pss_rtg_watts).toFixed(1) : "–" },
+  ];
+  if (RB_POS.has(position)) return [
+    { label: "Rush YDS",  value: career.rsh_yds    || "–" },
+    { label: "Rush TD",   value: career.rsh_tds    || "–" },
+    { label: "Rec YDS",   value: career.rec_yds    || "–" },
+    { label: "Fumbles",   value: career.fmb_lost   || "–" },
+  ];
+  if (WRTE.has(position)) return [
+    { label: "Rec",       value: career.rec_catches || "–" },
+    { label: "Rec YDS",   value: career.rec_yds     || "–" },
+    { label: "Rec TD",    value: career.rec_tds     || "–" },
+    { label: "YAC",       value: career.rec_yac     || "–" },
+  ];
+  if (DEF_POS.has(position)) return [
+    { label: "Tackles",   value: career.def_total_tackles || "–" },
+    { label: "Sacks",     value: career.def_sacks   || "–" },
+    { label: "INT",       value: career.def_ints    || "–" },
+    { label: "PD",        value: career.def_pd      || "–" },
+  ];
+  if (K_POS.has(position)) return [
+    { label: "FG Made",   value: career.fg_made  || "–" },
+    { label: "FG%",       value: career.fg_att ? `${((career.fg_made / career.fg_att) * 100).toFixed(1)}%` : "–" },
+    { label: "Long",      value: career.fg_lng   || "–" },
+    { label: "XP Made",   value: career.xp_made  || "–" },
+  ];
+  if (P_POS.has(position)) return [
+    { label: "Punts",     value: career.punt_att  || "–" },
+    { label: "Avg",       value: career.punt_att ? (career.punt_yds / career.punt_att).toFixed(1) : "–" },
+    { label: "Long",      value: career.punt_lng  || "–" },
+    { label: "IN20",      value: career.punt_in20 || "–" },
+  ];
+  return [];
+}
+
+function CareerStatsTab({ playerId, position, teamColor }: { playerId: number; position: string; teamColor: string }) {
+  const { data: log, isLoading } = useGetPlayerGameLog(playerId, {
+    query: { queryKey: ["player-gamelog", playerId] },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-white/30 text-sm">
+        Loading career stats…
+      </div>
+    );
+  }
+
+  if (!log?.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <BookOpen className="h-10 w-10 text-white/15" />
+        <p className="text-sm text-white/30 font-medium">No game data yet</p>
+        <p className="text-xs text-white/20 max-w-xs">Career statistics will appear here after weekly stat imports.</p>
+      </div>
+    );
+  }
+
+  const seasons = aggregateLog(log);
+  const career  = careerTotals(seasons);
+  const cols    = getCareerCols(position);
+  const highlights = getCareerHighlights(career, position);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Highlight badges */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border border-white/8 bg-[#141414]">
+          <span className="text-[10px] font-black uppercase tracking-wider text-white/30">Seasons</span>
+          <span className="text-2xl font-black tabular-nums leading-tight" style={{ color: teamColor }}>{seasons.length}</span>
+        </div>
+        <div className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border border-white/8 bg-[#141414]">
+          <span className="text-[10px] font-black uppercase tracking-wider text-white/30">Games</span>
+          <span className="text-2xl font-black tabular-nums leading-tight" style={{ color: teamColor }}>{career.gp}</span>
+        </div>
+        {highlights.map(h => (
+          <div key={h.label} className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border border-white/8 bg-[#141414]">
+            <span className="text-[10px] font-black uppercase tracking-wider text-white/30">{h.label}</span>
+            <span className="text-2xl font-black tabular-nums leading-tight text-white">{h.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Season-by-season table */}
+      <div className="overflow-x-auto rounded-lg border border-white/5">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr style={{ backgroundColor: teamColor }}>
+              <th className="text-left py-2 px-3 text-white font-black uppercase tracking-wider text-[10px] whitespace-nowrap">Season</th>
+              <th className="text-center py-2 px-3 text-white font-black uppercase tracking-wider text-[10px]">GP</th>
+              {cols.map(c => (
+                <th
+                  key={c.header}
+                  className={`text-right py-2 px-3 font-black uppercase tracking-wider text-[10px] whitespace-nowrap ${c.dim ? "text-white/55" : "text-white"}`}
+                >
+                  {c.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {seasons.map((row, i) => (
+              <tr
+                key={row.season}
+                className={`border-b border-white/4 transition-colors hover:bg-white/[0.03] ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}
+              >
+                <td className="py-2 px-3 [font-family:'Lora',serif] text-white font-bold text-[14px] whitespace-nowrap">{row.season}</td>
+                <td className="py-2 px-3 text-center [font-family:'Lora',serif] text-white/60 text-[14px]">{row.gp}</td>
+                {cols.map(c => (
+                  <td
+                    key={c.header}
+                    className={`py-2 px-3 text-right [font-family:'Lora',serif] text-[14px] ${c.dim ? "text-white/25" : "text-white/70"}`}
+                  >
+                    {c.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ backgroundColor: `${teamColor}18` }} className="border-t-2 border-white/15">
+              <td className="py-2.5 px-3 font-black uppercase tracking-wider text-[10px] text-white whitespace-nowrap">Career</td>
+              <td className="py-2.5 px-3 text-center [font-family:'Lora',serif] text-white font-bold text-[14px]">{career.gp}</td>
+              {cols.map(c => (
+                <td
+                  key={c.header}
+                  className="py-2.5 px-3 text-right [font-family:'Lora',serif] text-[14px] font-bold text-white"
+                >
+                  {c.render(career)}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function AbilitiesTab({ player }: { player: PlayerDetail }) {
   const devTier  = player.dev_trait ?? 0;
   const meta     = DEV_TIER_META[devTier] ?? DEV_TIER_META[0]!;
@@ -1124,12 +1440,8 @@ export default function PlayerDetail() {
             {tab === "gamelog" && player && (
               <GameLogTab playerId={player.id} position={player.position} teamColor={teamColor} />
             )}
-            {tab === "career" && (
-              <PlaceholderTab
-                icon={<BookOpen className="h-6 w-6" />}
-                title="Career Stats Not Yet Available"
-                description="Aggregated season and career statistics will appear here once stat data is imported."
-              />
+            {tab === "career" && player && (
+              <CareerStatsTab playerId={player.id} position={player.position} teamColor={teamColor} />
             )}
             {tab === "awards" && (
               <PlaceholderTab
