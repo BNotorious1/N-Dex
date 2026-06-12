@@ -26,6 +26,8 @@ export * from './playerDetail';
 export * from './playerDetailAbilitiesItem';
 export * from './playerInput';
 export * from './playerStatLine';
+export * from './playerTransaction';
+export * from './playerTransactionInput';
 export * from './playerUpdate';
 export * from './standingEntry';
 export * from './statLeaders';

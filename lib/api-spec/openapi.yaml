@@ -639,6 +639,70 @@ paths:
         "204":
           description: Deleted
 
+  /players/{id}/transactions:
+    get:
+      operationId: getPlayerTransactions
+      tags: [players]
+      summary: Get transaction history for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerTransaction"
+    post:
+      operationId: addPlayerTransaction
+      tags: [players]
+      summary: Add a transaction to a player's history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerTransactionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerTransaction"
+
+  /players/{id}/transactions/{transactionId}:
+    delete:
+      operationId: deletePlayerTransaction
+      tags: [players]
+      summary: Remove a transaction from a player's history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /games/{id}:
     patch:
       operationId: updateGame
@@ -1469,6 +1533,50 @@ components:
           type: integer
         award_type:
           type: string
+
+    PlayerTransaction:
+      type: object
+      required: [id, player_id, league_id, season, transaction_type, created_at]
+      properties:
+        id:
+          type: integer
+        player_id:
+          type: integer
+        league_id:
+          type: integer
+        season:
+          type: integer
+        week:
+          type: ["integer", "null"]
+        transaction_type:
+          type: string
+        from_team:
+          type: ["string", "null"]
+        to_team:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    PlayerTransactionInput:
+      type: object
+      required: [league_id, season, transaction_type]
+      properties:
+        league_id:
+          type: integer
+        season:
+          type: integer
+        week:
+          type: ["integer", "null"]
+        transaction_type:
+          type: string
+        from_team:
+          type: ["string", "null"]
+        to_team:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
 
     GameLogEntry:
       type: object

@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { db, playersTable, teamsTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, playerAwardsTable, AWARD_TYPES } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { db, playersTable, teamsTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, playerAwardsTable, AWARD_TYPES, playerTransactionsTable, TRANSACTION_TYPES } from "@workspace/db";
+import { eq, and, desc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody, GetPlayerAwardsParams, AddPlayerAwardParams, AddPlayerAwardBody, DeletePlayerAwardParams } from "@workspace/api-zod";
+import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody, GetPlayerAwardsParams, AddPlayerAwardParams, AddPlayerAwardBody, DeletePlayerAwardParams, GetPlayerTransactionsParams, AddPlayerTransactionParams, AddPlayerTransactionBody, DeletePlayerTransactionParams } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -386,6 +386,77 @@ router.delete("/:id/awards/:awardId", async (req, res) => {
     .where(and(eq(playerAwardsTable.id, parseResult.data.awardId), eq(playerAwardsTable.playerId, parseResult.data.id)))
     .returning();
   if (!deleted.length) { res.status(404).json({ error: "Award not found" }); return; }
+  res.status(204).end();
+});
+
+// GET /players/:id/transactions
+router.get("/:id/transactions", async (req, res) => {
+  const parseResult = GetPlayerTransactionsParams.safeParse({ id: Number(req.params.id) });
+  if (!parseResult.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const rows = await db
+    .select()
+    .from(playerTransactionsTable)
+    .where(eq(playerTransactionsTable.playerId, parseResult.data.id))
+    .orderBy(desc(playerTransactionsTable.season), desc(playerTransactionsTable.week));
+  res.json(rows.map(t => ({
+    id: t.id,
+    player_id: t.playerId,
+    league_id: t.leagueId,
+    season: t.season,
+    week: t.week ?? null,
+    transaction_type: t.transactionType,
+    from_team: t.fromTeam ?? null,
+    to_team: t.toTeam ?? null,
+    notes: t.notes ?? null,
+    created_at: t.createdAt.toISOString(),
+  })));
+});
+
+// POST /players/:id/transactions
+router.post("/:id/transactions", async (req, res) => {
+  const paramResult = AddPlayerTransactionParams.safeParse({ id: Number(req.params.id) });
+  if (!paramResult.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const bodyResult = AddPlayerTransactionBody.safeParse(req.body);
+  if (!bodyResult.success) { res.status(400).json({ error: "Invalid body", details: bodyResult.error.issues }); return; }
+  const { league_id, season, week, transaction_type, from_team, to_team, notes } = bodyResult.data;
+  if (!(TRANSACTION_TYPES as readonly string[]).includes(transaction_type)) {
+    res.status(400).json({ error: `Invalid transaction_type. Must be one of: ${TRANSACTION_TYPES.join(", ")}` });
+    return;
+  }
+  const [row] = await db.insert(playerTransactionsTable).values({
+    playerId: paramResult.data.id,
+    leagueId: league_id,
+    season,
+    week: week ?? null,
+    transactionType: transaction_type,
+    fromTeam: from_team ?? null,
+    toTeam: to_team ?? null,
+    notes: notes ?? null,
+  }).returning();
+  if (!row) { res.status(500).json({ error: "Insert failed" }); return; }
+  res.status(201).json({
+    id: row.id,
+    player_id: row.playerId,
+    league_id: row.leagueId,
+    season: row.season,
+    week: row.week ?? null,
+    transaction_type: row.transactionType,
+    from_team: row.fromTeam ?? null,
+    to_team: row.toTeam ?? null,
+    notes: row.notes ?? null,
+    created_at: row.createdAt.toISOString(),
+  });
+});
+
+// DELETE /players/:id/transactions/:transactionId
+router.delete("/:id/transactions/:transactionId", async (req, res) => {
+  const parseResult = DeletePlayerTransactionParams.safeParse({ id: Number(req.params.id), transactionId: Number(req.params.transactionId) });
+  if (!parseResult.success) { res.status(400).json({ error: "Invalid params" }); return; }
+  const deleted = await db
+    .delete(playerTransactionsTable)
+    .where(and(eq(playerTransactionsTable.id, parseResult.data.transactionId), eq(playerTransactionsTable.playerId, parseResult.data.id)))
+    .returning();
+  if (!deleted.length) { res.status(404).json({ error: "Transaction not found" }); return; }
   res.status(204).end();
 });
 

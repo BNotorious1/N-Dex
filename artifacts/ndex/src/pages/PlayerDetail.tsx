@@ -3,9 +3,9 @@ import { Link, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
-import { useGetPlayerGameLog, useGetPlayerAwards, useAddPlayerAward, useDeletePlayerAward, getGetPlayerAwardsQueryKey } from "@workspace/api-client-react";
+import { useGetPlayerGameLog, useGetPlayerAwards, useAddPlayerAward, useDeletePlayerAward, getGetPlayerAwardsQueryKey, useGetPlayerTransactions, useAddPlayerTransaction, useDeletePlayerTransaction, getGetPlayerTransactionsQueryKey } from "@workspace/api-client-react";
 import type { GameLogEntry } from "@workspace/api-client-react";
-import { ArrowLeft, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus } from "lucide-react";
 import devTraitNormal from "@assets/Normal_1781202579092.png";
 import devTraitStar from "@assets/Star_1781202579092.png";
 import devTraitSuperstar from "@assets/Superstar_1781202579092.png";
@@ -1392,6 +1392,249 @@ function AwardsTab({ playerId, leagueId, teamColor }: { playerId: number; league
   );
 }
 
+// ─── History Tab ──────────────────────────────────────────────────────────────
+
+const TRANSACTION_TYPE_OPTIONS = [
+  "DRAFTED",
+  "SIGNED",
+  "RELEASED",
+  "TRADED",
+  "WAIVER",
+  "PRACTICE_SQUAD",
+  "RETIRED",
+  "RESTRUCTURED",
+] as const;
+
+const TRANSACTION_LABELS: Record<string, string> = {
+  DRAFTED:       "Drafted",
+  SIGNED:        "Signed",
+  RELEASED:      "Released",
+  TRADED:        "Traded",
+  WAIVER:        "Waiver Claim",
+  PRACTICE_SQUAD:"Practice Squad",
+  RETIRED:       "Retired",
+  RESTRUCTURED:  "Restructured",
+};
+
+const TRANSACTION_COLORS: Record<string, string> = {
+  DRAFTED:       "#F5A623",
+  SIGNED:        "#4CAF50",
+  RELEASED:      "#F44336",
+  TRADED:        "#00C8FF",
+  WAIVER:        "#9C27B0",
+  PRACTICE_SQUAD:"#607D8B",
+  RETIRED:       "#78909C",
+  RESTRUCTURED:  "#FF9800",
+};
+
+type TxRow = {
+  id: number;
+  player_id: number;
+  league_id: number;
+  season: number;
+  week?: number | null;
+  transaction_type: string;
+  from_team?: string | null;
+  to_team?: string | null;
+  notes?: string | null;
+  created_at: string;
+};
+
+function HistoryTab({ playerId, leagueId, teamColor }: { playerId: number; leagueId: number; teamColor: string }) {
+  const queryClient = useQueryClient();
+
+  const { data: transactions, isLoading } = useGetPlayerTransactions(playerId, {
+    query: { queryKey: getGetPlayerTransactionsQueryKey(playerId) },
+  });
+
+  const addTx    = useAddPlayerTransaction();
+  const deleteTx = useDeletePlayerTransaction();
+
+  const [season, setSeason]     = useState<string>("");
+  const [week,   setWeek]       = useState<string>("");
+  const [txType, setTxType]     = useState<string>("SIGNED");
+  const [fromTeam, setFromTeam] = useState<string>("");
+  const [toTeam, setToTeam]     = useState<string>("");
+  const [notes,  setNotes]      = useState<string>("");
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const s = Number(season);
+    if (!s || !txType) return;
+    await addTx.mutateAsync({
+      id: playerId,
+      data: {
+        league_id: leagueId,
+        season: s,
+        week: week ? Number(week) : null,
+        transaction_type: txType,
+        from_team: fromTeam.trim() || null,
+        to_team: toTeam.trim() || null,
+        notes: notes.trim() || null,
+      },
+    });
+    await queryClient.invalidateQueries({ queryKey: getGetPlayerTransactionsQueryKey(playerId) });
+    setSeason(""); setWeek(""); setFromTeam(""); setToTeam(""); setNotes("");
+  }
+
+  async function handleDelete(txId: number) {
+    await deleteTx.mutateAsync({ id: playerId, transactionId: txId });
+    await queryClient.invalidateQueries({ queryKey: getGetPlayerTransactionsQueryKey(playerId) });
+  }
+
+  const rows = (transactions ?? []) as TxRow[];
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Add form */}
+      <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+        <div className="px-4 py-2.5 flex items-center gap-2" style={{ backgroundColor: teamColor }}>
+          <Plus className="h-3.5 w-3.5 text-white" />
+          <span className="text-xs font-black uppercase tracking-widest text-white">Log Transaction</span>
+        </div>
+        <form onSubmit={handleAdd} className="px-4 py-4 flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">Season</label>
+            <input
+              type="number" value={season} onChange={e => setSeason(e.target.value)}
+              placeholder="2025" min={2000} max={2100} required
+              className="w-24 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">Week</label>
+            <input
+              type="number" value={week} onChange={e => setWeek(e.target.value)}
+              placeholder="—" min={1} max={22}
+              className="w-20 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">Type</label>
+            <select
+              value={txType} onChange={e => setTxType(e.target.value)}
+              className="bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/30"
+            >
+              {TRANSACTION_TYPE_OPTIONS.map(t => (
+                <option key={t} value={t}>{TRANSACTION_LABELS[t]}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">From Team</label>
+            <input
+              type="text" value={fromTeam} onChange={e => setFromTeam(e.target.value)}
+              placeholder="e.g. Eagles"
+              className="w-32 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">To Team</label>
+            <input
+              type="text" value={toTeam} onChange={e => setToTeam(e.target.value)}
+              placeholder="e.g. Chiefs"
+              className="w-32 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1 flex-1 min-w-40">
+            <label className="text-[10px] font-black uppercase tracking-wider text-white/30">Notes</label>
+            <input
+              type="text" value={notes} onChange={e => setNotes(e.target.value)}
+              placeholder="Optional details…"
+              className="w-full bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30"
+            />
+          </div>
+          <button
+            type="submit" disabled={addTx.isPending || !season}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider text-white disabled:opacity-40 transition-opacity"
+            style={{ backgroundColor: teamColor }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {addTx.isPending ? "Adding…" : "Add"}
+          </button>
+          {addTx.isError && <span className="text-xs text-red-400">Failed to add.</span>}
+        </form>
+      </div>
+
+      {/* Timeline */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12 text-white/30 text-sm">Loading history…</div>
+      ) : rows.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+          <Clock className="h-10 w-10 text-white/10" />
+          <p className="text-sm text-white/25 font-medium">No transactions recorded</p>
+          <p className="text-xs text-white/15 max-w-xs">Use the form above to log trades, signings, and other moves.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-0">
+          {rows.map((tx, i) => {
+            const color = TRANSACTION_COLORS[tx.transaction_type] ?? "#666";
+            const label = TRANSACTION_LABELS[tx.transaction_type] ?? tx.transaction_type;
+            const isLast = i === rows.length - 1;
+            return (
+              <div key={tx.id} className="flex gap-3 group">
+                {/* Timeline spine */}
+                <div className="flex flex-col items-center w-8 shrink-0 pt-1">
+                  <div className="h-3 w-3 rounded-full ring-2 ring-[#0a0a0a] shrink-0" style={{ backgroundColor: color }} />
+                  {!isLast && <div className="w-px flex-1 mt-1" style={{ backgroundColor: color + "33" }} />}
+                </div>
+
+                {/* Card */}
+                <div className={`flex-1 pb-5 ${isLast ? "" : ""}`}>
+                  <div className="rounded-xl border border-white/6 bg-[#111] px-4 py-3 flex flex-col gap-2">
+                    {/* Header row */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
+                          style={{ backgroundColor: color + "22", color }}
+                        >
+                          {label}
+                        </span>
+                        <span className="text-xs text-white/30 font-medium">
+                          S{tx.season}{tx.week != null ? ` · Wk ${tx.week}` : ""}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDelete(tx.id)}
+                        disabled={deleteTx.isPending}
+                        className="opacity-0 group-hover:opacity-100 h-6 w-6 rounded flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-900/30 transition-all disabled:opacity-40"
+                        title="Remove"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Team transfer */}
+                    {(tx.from_team || tx.to_team) && (
+                      <div className="flex items-center gap-2 text-sm font-bold">
+                        {tx.from_team && (
+                          <span className="text-white/50">{tx.from_team}</span>
+                        )}
+                        {tx.from_team && tx.to_team && (
+                          <ArrowRight className="h-3.5 w-3.5 text-white/30 shrink-0" />
+                        )}
+                        {tx.to_team && (
+                          <span className="text-white">{tx.to_team}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Notes */}
+                    {tx.notes && (
+                      <p className="text-xs text-white/40 leading-relaxed">{tx.notes}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AbilitiesTab({ player }: { player: PlayerDetail }) {
   const devTier  = player.dev_trait ?? 0;
   const meta     = DEV_TIER_META[devTier] ?? DEV_TIER_META[0]!;
@@ -1677,12 +1920,8 @@ export default function PlayerDetail() {
             {tab === "awards" && player && (
               <AwardsTab playerId={player.id} leagueId={player.league_id} teamColor={teamColor} />
             )}
-            {tab === "history" && (
-              <PlaceholderTab
-                icon={<Clock className="h-6 w-6" />}
-                title="No History Yet"
-                description="Team transaction history, trades, and contract data will appear here."
-              />
+            {tab === "history" && player && (
+              <HistoryTab playerId={player.id} leagueId={player.league_id} teamColor={teamColor} />
             )}
           </div>
         </>

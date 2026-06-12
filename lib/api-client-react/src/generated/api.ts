@@ -38,6 +38,8 @@ import type {
   PlayerAwardInput,
   PlayerDetail,
   PlayerInput,
+  PlayerTransaction,
+  PlayerTransactionInput,
   PlayerUpdate,
   StandingEntry,
   StatLeaders,
@@ -2232,6 +2234,227 @@ export const useDeletePlayerAward = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeletePlayerAwardMutationOptions(options));
+    }
+
+export const getGetPlayerTransactionsUrl = (id: number,) => {
+
+
+
+
+  return `/api/players/${id}/transactions`
+}
+
+/**
+ * @summary Get transaction history for a player
+ */
+export const getPlayerTransactions = async (id: number, options?: RequestInit): Promise<PlayerTransaction[]> => {
+
+  return customFetch<PlayerTransaction[]>(getGetPlayerTransactionsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPlayerTransactionsQueryKey = (id: number,) => {
+    return [
+    `/api/players/${id}/transactions`
+    ] as const;
+    }
+
+
+export const getGetPlayerTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof getPlayerTransactions>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlayerTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlayerTransactionsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlayerTransactions>>> = ({ signal }) => getPlayerTransactions(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlayerTransactions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPlayerTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlayerTransactions>>>
+export type GetPlayerTransactionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get transaction history for a player
+ */
+
+export function useGetPlayerTransactions<TData = Awaited<ReturnType<typeof getPlayerTransactions>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPlayerTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPlayerTransactionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAddPlayerTransactionUrl = (id: number,) => {
+
+
+
+
+  return `/api/players/${id}/transactions`
+}
+
+/**
+ * @summary Add a transaction to a player's history
+ */
+export const addPlayerTransaction = async (id: number,
+    playerTransactionInput: PlayerTransactionInput, options?: RequestInit): Promise<PlayerTransaction> => {
+
+  return customFetch<PlayerTransaction>(getAddPlayerTransactionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      playerTransactionInput,)
+  }
+);}
+
+
+
+
+export const getAddPlayerTransactionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addPlayerTransaction>>, TError,{id: number;data: BodyType<PlayerTransactionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addPlayerTransaction>>, TError,{id: number;data: BodyType<PlayerTransactionInput>}, TContext> => {
+
+const mutationKey = ['addPlayerTransaction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addPlayerTransaction>>, {id: number;data: BodyType<PlayerTransactionInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addPlayerTransaction(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddPlayerTransactionMutationResult = NonNullable<Awaited<ReturnType<typeof addPlayerTransaction>>>
+    export type AddPlayerTransactionMutationBody = BodyType<PlayerTransactionInput>
+    export type AddPlayerTransactionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add a transaction to a player's history
+ */
+export const useAddPlayerTransaction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addPlayerTransaction>>, TError,{id: number;data: BodyType<PlayerTransactionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addPlayerTransaction>>,
+        TError,
+        {id: number;data: BodyType<PlayerTransactionInput>},
+        TContext
+      > => {
+      return useMutation(getAddPlayerTransactionMutationOptions(options));
+    }
+
+export const getDeletePlayerTransactionUrl = (id: number,
+    transactionId: number,) => {
+
+
+
+
+  return `/api/players/${id}/transactions/${transactionId}`
+}
+
+/**
+ * @summary Remove a transaction from a player's history
+ */
+export const deletePlayerTransaction = async (id: number,
+    transactionId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeletePlayerTransactionUrl(id,transactionId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeletePlayerTransactionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlayerTransaction>>, TError,{id: number;transactionId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePlayerTransaction>>, TError,{id: number;transactionId: number}, TContext> => {
+
+const mutationKey = ['deletePlayerTransaction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlayerTransaction>>, {id: number;transactionId: number}> = (props) => {
+          const {id,transactionId} = props ?? {};
+
+          return  deletePlayerTransaction(id,transactionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePlayerTransactionMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlayerTransaction>>>
+
+    export type DeletePlayerTransactionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove a transaction from a player's history
+ */
+export const useDeletePlayerTransaction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlayerTransaction>>, TError,{id: number;transactionId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deletePlayerTransaction>>,
+        TError,
+        {id: number;transactionId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePlayerTransactionMutationOptions(options));
     }
 
 export const getUpdateGameUrl = (id: number,) => {

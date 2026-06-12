@@ -911,6 +911,55 @@ export const DeletePlayerAwardParams = zod.object({
 
 
 /**
+ * @summary Get transaction history for a player
+ */
+export const GetPlayerTransactionsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPlayerTransactionsResponseItem = zod.object({
+  "id": zod.number(),
+  "player_id": zod.number(),
+  "league_id": zod.number(),
+  "season": zod.number(),
+  "week": zod.number().nullish(),
+  "transaction_type": zod.string(),
+  "from_team": zod.string().nullish(),
+  "to_team": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "created_at": zod.string()
+})
+export const GetPlayerTransactionsResponse = zod.array(GetPlayerTransactionsResponseItem)
+
+
+/**
+ * @summary Add a transaction to a player's history
+ */
+export const AddPlayerTransactionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddPlayerTransactionBody = zod.object({
+  "league_id": zod.number(),
+  "season": zod.number(),
+  "week": zod.number().nullish(),
+  "transaction_type": zod.string(),
+  "from_team": zod.string().nullish(),
+  "to_team": zod.string().nullish(),
+  "notes": zod.string().nullish()
+})
+
+
+/**
+ * @summary Remove a transaction from a player's history
+ */
+export const DeletePlayerTransactionParams = zod.object({
+  "id": zod.coerce.number(),
+  "transactionId": zod.coerce.number()
+})
+
+
+/**
  * @summary Update game score/status
  */
 export const UpdateGameParams = zod.object({
