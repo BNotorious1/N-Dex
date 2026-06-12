@@ -723,7 +723,7 @@ function GameLogTab({ playerId, position }: { playerId: number; position: string
                           {g.result ?? "–"}
                         </span>
                       </td>
-                      <td className="py-1.5 px-2 text-center font-mono text-[11px] text-[#ffffff]">
+                      <td className="py-1.5 px-2 text-center [font-family:'Lora',serif] text-[11px] text-[#ffffff]">
                         {g.player_score != null
                           ? `${g.player_score}-${g.opponent_score ?? "?"}`
                           : "–"}
