@@ -261,76 +261,130 @@ function FilterSelect({
 
 // ─── League Leaders ──────────────────────────────────────────────────────────
 
-type LeaderDef = {
-  label: string;
-  color: string;
-  pool: (d: LeaguePlayerStats) => PlayerSeasonStats[];
-  scoreOf: (p: PlayerSeasonStats) => number;
-  display: (p: PlayerSeasonStats) => string;
-  unit: string;
-};
-
-const LEADER_DEFS: LeaderDef[] = [
-  { label: "Pass Yards",   color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_yds),   display: p => String(n(p.pss_yds)),  unit: "YDS" },
-  { label: "Pass TDs",     color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_tds),   display: p => String(n(p.pss_tds)),  unit: "TD" },
-  { label: "Comp %",       color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_cmp) / Math.max(n(p.pss_att), 1), display: p => pct(n(p.pss_cmp), n(p.pss_att)), unit: "PCT" },
-  { label: "QB Rating",    color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_rating), display: p => rtg(n(p.pss_rating)), unit: "RTG" },
-  { label: "Rush Yards",   color: C.rushing,   pool: d => d.rushing,   scoreOf: p => n(p.rsh_yds),   display: p => String(n(p.rsh_yds)),  unit: "YDS" },
-  { label: "Rush TDs",     color: C.rushing,   pool: d => d.rushing,   scoreOf: p => n(p.rsh_tds),   display: p => String(n(p.rsh_tds)),  unit: "TD" },
-  { label: "Rush YPC",     color: C.rushing,   pool: d => d.rushing,   scoreOf: p => n(p.rsh_yds) / Math.max(n(p.rsh_att), 1), display: p => per(n(p.rsh_yds), n(p.rsh_att)), unit: "YPC" },
-  { label: "Rec Yards",    color: C.receiving, pool: d => d.receiving, scoreOf: p => n(p.rec_yds),   display: p => String(n(p.rec_yds)),  unit: "YDS" },
-  { label: "Rec TDs",      color: C.receiving, pool: d => d.receiving, scoreOf: p => n(p.rec_tds),   display: p => String(n(p.rec_tds)),  unit: "TD" },
-  { label: "Receptions",   color: C.receiving, pool: d => d.receiving, scoreOf: p => n(p.rec_catches), display: p => String(n(p.rec_catches)), unit: "REC" },
-  { label: "Tackles",      color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_total_tackles), display: p => String(n(p.def_total_tackles)), unit: "TKL" },
-  { label: "Sacks",        color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_sacks), display: p => half(n(p.def_sacks)), unit: "SCK" },
-  { label: "Interceptions",color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_ints),  display: p => String(n(p.def_ints)),  unit: "INT" },
-  { label: "Pass Deflect", color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_pd),    display: p => String(n(p.def_pd)),    unit: "PD" },
-  { label: "Forced Fmb",   color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_ff),    display: p => String(n(p.def_ff)),    unit: "FF" },
-  { label: "FG Made",      color: C.kicking,   pool: d => d.kicking,   scoreOf: p => n(p.fg_made),   display: p => `${n(p.fg_made)}/${n(p.fg_att)}`, unit: "FGM/A" },
-  { label: "FG %",         color: C.kicking,   pool: d => d.kicking,   scoreOf: p => n(p.fg_made) / Math.max(n(p.fg_att), 1), display: p => pct(n(p.fg_made), n(p.fg_att)), unit: "FG%" },
-  { label: "Punt Avg",     color: C.kicking,   pool: d => d.punting,   scoreOf: p => n(p.punt_avg),  display: p => String(n(p.punt_avg)),  unit: "AVG" },
-];
-
-function LeaderCard({ def, data }: { def: LeaderDef; data: LeaguePlayerStats }) {
-  const pool = def.pool(data).filter(p => def.scoreOf(p) > 0);
-  const top = pool.reduce<PlayerSeasonStats | null>((best, p) =>
-    !best || def.scoreOf(p) > def.scoreOf(best) ? p : best, null);
-
+function LeagueLeadersTab({ data }: { data: LeaguePlayerStats }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden flex flex-col">
-      <div className="h-1" style={{ backgroundColor: def.color }} />
-      <div className="p-3 flex flex-col gap-1.5 flex-1">
-        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: def.color }}>{def.label}</p>
-        {top ? (
-          <>
-            <Link href={`/players/${top.player.id}`} className="text-sm font-bold text-white hover:underline leading-tight truncate">
-              {top.player.name}
-            </Link>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] px-1.5 py-0.5 rounded border border-white/12 bg-white/5 font-bold text-white/60">{top.player.position}</span>
-              <Link href={`/teams/${top.team_id}`} className="text-[10px] text-white/40 truncate hover:text-[#00C8FF] transition-colors">
-                {top.team_name}
-              </Link>
-            </div>
-            <div className="mt-auto pt-1 flex items-baseline gap-1">
-              <span className="text-2xl font-black" style={{ color: def.color }}>{def.display(top)}</span>
-              <span className="text-[9px] text-white/30 font-bold">{def.unit}</span>
-            </div>
-          </>
-        ) : (
-          <p className="text-[11px] text-white/20 mt-2">No data</p>
-        )}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Offensive Leaders */}
+        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+          <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Offensive Leaders</p>
+          </div>
+          <LeaderPanel label="Passing"   unit="YDS" color={C.passing}   pool={data.passing}   scoreOf={p => n(p.pss_yds)}           display={p => d(n(p.pss_yds))} />
+          <LeaderPanel label="Rushing"   unit="YDS" color={C.rushing}   pool={data.rushing}   scoreOf={p => n(p.rsh_yds)}           display={p => d(n(p.rsh_yds))} />
+          <LeaderPanel label="Receiving" unit="YDS" color={C.receiving} pool={data.receiving} scoreOf={p => n(p.rec_yds)}           display={p => d(n(p.rec_yds))} />
+        </div>
+
+        {/* Defensive Leaders */}
+        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+          <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Defensive Leaders</p>
+          </div>
+          <LeaderPanel label="Tackles"       unit="TKL" color={C.defense} pool={data.defense} scoreOf={p => n(p.def_total_tackles)} display={p => d(n(p.def_total_tackles))} />
+          <LeaderPanel label="Sacks"         unit="SCK" color={C.defense} pool={data.defense} scoreOf={p => n(p.def_sacks)}         display={p => half(n(p.def_sacks))} />
+          <LeaderPanel label="Interceptions" unit="INT" color={C.defense} pool={data.defense} scoreOf={p => n(p.def_ints)}           display={p => d(n(p.def_ints))} />
+        </div>
+      </div>
+
+      {/* Special Teams */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+          <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Special Teams</p>
+          </div>
+          <LeaderPanel label="Field Goals" unit="FGM/A" color={C.kicking} pool={data.kicking} scoreOf={p => n(p.fg_made)}   display={p => `${n(p.fg_made)}/${n(p.fg_att)}`} />
+          <LeaderPanel label="Punting"     unit="AVG"   color={C.kicking} pool={data.punting} scoreOf={p => n(p.punt_avg)} display={p => half(n(p.punt_avg))} />
+        </div>
+        <div className="hidden lg:block" />
       </div>
     </div>
   );
 }
 
-function LeagueLeadersTab({ data }: { data: LeaguePlayerStats }) {
+function LeaderPanel({
+  label, unit, color, pool, scoreOf, display,
+}: {
+  label: string;
+  unit: string;
+  color: string;
+  pool: PlayerSeasonStats[];
+  scoreOf: (p: PlayerSeasonStats) => number;
+  display: (p: PlayerSeasonStats) => string;
+}) {
+  const top5 = useMemo(() =>
+    [...pool].filter(p => scoreOf(p) > 0).sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, 5),
+    [pool]
+  );
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-      {LEADER_DEFS.map(def => (
-        <LeaderCard key={def.label} def={def} data={data} />
-      ))}
+    <div className="border-b border-white/5 last:border-0">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#111111]">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/55">{label}</span>
+        </div>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-white/25">{unit}</span>
+      </div>
+      {top5.length === 0 ? (
+        <div className="px-4 py-4 text-[11px] text-white/20">No data yet</div>
+      ) : (
+        top5.map((p, i) => (
+          <LeaderRow key={p.player.id} rank={i + 1} p={p} value={display(p)} isLast={i === top5.length - 1} />
+        ))
+      )}
+    </div>
+  );
+}
+
+function LeaderRow({ rank, p, value, isLast }: {
+  rank: number;
+  p: PlayerSeasonStats;
+  value: string;
+  isLast: boolean;
+}) {
+  const [portraitErr, setPortraitErr] = useState(false);
+  const hasPortrait = !!p.player.portrait_id && !portraitErr;
+
+  return (
+    <div
+      className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors ${!isLast ? "border-b border-white/5" : ""}`}
+      style={rowGradient(p.team_color)}
+    >
+      <span className="w-4 shrink-0 text-center text-[11px] font-black text-white/20 tabular-nums">{rank}</span>
+
+      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/10">
+        {hasPortrait ? (
+          <img
+            src={eaPortraitUrl(p.player.portrait_id!)}
+            alt={p.player.name}
+            className="w-full h-full object-cover object-[center_10%] scale-125 translate-y-0.5"
+            loading="lazy"
+            onError={() => setPortraitErr(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-[9px] font-black text-white/30">
+            {p.player.name.charAt(0)}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <Link
+          href={`/players/${p.player.id}`}
+          className="block font-bold text-[13px] text-white hover:text-[#00C8FF] transition-colors leading-tight truncate"
+        >
+          {p.player.name}
+        </Link>
+        <div className="flex items-center gap-1 mt-0.5">
+          <span className="text-[9px] font-bold text-white/30">{p.player.position}</span>
+          <span className="text-[9px] text-white/15">·</span>
+          <Link href={`/teams/${p.team_id}`} className="text-[9px] text-white/30 hover:text-[#00C8FF] transition-colors">
+            {p.team_abbreviation}
+          </Link>
+        </div>
+      </div>
+
+      <span className="shrink-0 font-black text-[15px] text-[#ffffffb3] tabular-nums">{value}</span>
     </div>
   );
 }
