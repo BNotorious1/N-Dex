@@ -741,6 +741,22 @@ export interface GameDetail {
   /** @nullable */
   away_team_color?: string | null;
   /** @nullable */
+  home_team_city?: string | null;
+  /** @nullable */
+  away_team_city?: string | null;
+  /** @nullable */
+  home_team_wins?: number | null;
+  /** @nullable */
+  away_team_wins?: number | null;
+  /** @nullable */
+  home_team_losses?: number | null;
+  /** @nullable */
+  away_team_losses?: number | null;
+  /** @nullable */
+  home_member_discord?: string | null;
+  /** @nullable */
+  away_member_discord?: string | null;
+  /** @nullable */
   home_score?: number | null;
   /** @nullable */
   away_score?: number | null;

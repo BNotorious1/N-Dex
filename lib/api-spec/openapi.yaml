@@ -1852,6 +1852,22 @@ components:
           type: ["string", "null"]
         away_team_color:
           type: ["string", "null"]
+        home_team_city:
+          type: ["string", "null"]
+        away_team_city:
+          type: ["string", "null"]
+        home_team_wins:
+          type: ["integer", "null"]
+        away_team_wins:
+          type: ["integer", "null"]
+        home_team_losses:
+          type: ["integer", "null"]
+        away_team_losses:
+          type: ["integer", "null"]
+        home_member_discord:
+          type: ["string", "null"]
+        away_member_discord:
+          type: ["string", "null"]
         home_score:
           type: ["integer", "null"]
         away_score:

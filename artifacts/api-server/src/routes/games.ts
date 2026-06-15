@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, gamesTable, teamsTable, playerGameStatsTable, playersTable } from "@workspace/db";
+import { db, gamesTable, teamsTable, playerGameStatsTable, playersTable, membersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { UpdateGameParams, UpdateGameBody } from "@workspace/api-zod";
 
@@ -21,6 +21,8 @@ router.get("/:id", async (req, res) => {
 
   const [homeTeam] = await db.select().from(teamsTable).where(eq(teamsTable.id, game.homeTeamId));
   const [awayTeam] = await db.select().from(teamsTable).where(eq(teamsTable.id, game.awayTeamId));
+  const [homeMember] = await db.select().from(membersTable).where(eq(membersTable.teamId, game.homeTeamId));
+  const [awayMember] = await db.select().from(membersTable).where(eq(membersTable.teamId, game.awayTeamId));
 
   const stats = await db
     .select({
@@ -138,6 +140,14 @@ router.get("/:id", async (req, res) => {
     away_team_abbreviation: awayTeam?.abbreviation ?? null,
     home_team_color: homeTeam?.primaryColor ?? null,
     away_team_color: awayTeam?.primaryColor ?? null,
+    home_team_city: homeTeam?.city ?? null,
+    away_team_city: awayTeam?.city ?? null,
+    home_team_wins: homeTeam?.wins ?? null,
+    away_team_wins: awayTeam?.wins ?? null,
+    home_team_losses: homeTeam?.losses ?? null,
+    away_team_losses: awayTeam?.losses ?? null,
+    home_member_discord: homeMember?.discordName ?? null,
+    away_member_discord: awayMember?.discordName ?? null,
     home_score: game.homeScore,
     away_score: game.awayScore,
     week: game.week,

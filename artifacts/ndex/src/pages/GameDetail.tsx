@@ -63,6 +63,7 @@ interface TeamStats {
   rushYds: number;
   rushAtt: number;
   rushTds: number;
+  recYds: number;
   totalYds: number;
   turnovers: number;
   fmbLost: number;
@@ -83,6 +84,7 @@ function computeTeamStats(players: GamePlayerStat[]): TeamStats {
     rushYds:   players.reduce((s, p) => s + (p.rsh_yds ?? 0), 0),
     rushAtt:   players.reduce((s, p) => s + (p.rsh_att ?? 0), 0),
     rushTds:   players.reduce((s, p) => s + (p.rsh_tds ?? 0), 0),
+    recYds:    players.reduce((s, p) => s + (p.rec_yds ?? 0), 0),
     totalYds:  players.reduce((s, p) => s + (p.pss_yds ?? 0) + (p.rsh_yds ?? 0), 0),
     fmbLost:   players.reduce((s, p) => s + (p.fmb_lost ?? 0), 0),
     turnovers: players.reduce((s, p) => s + (p.pss_ints ?? 0) + (p.fmb_lost ?? 0), 0),
@@ -511,14 +513,14 @@ function buildStatLine(p: GamePlayerStat): string {
     if (p.pss_ints) parts.push(`${p.pss_ints} INT`);
     return parts.join(", ");
   }
-  if ((p.rsh_att ?? 0) > 0) {
-    const parts = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} YDS`];
-    if (p.rsh_tds) parts.push(`${p.rsh_tds} TD`);
-    return parts.join(", ");
-  }
   if ((p.rec_catches ?? 0) > 0) {
     const parts = [`${p.rec_catches} REC`, `${p.rec_yds ?? 0} YDS`];
     if (p.rec_tds) parts.push(`${p.rec_tds} TD`);
+    return parts.join(", ");
+  }
+  if ((p.rsh_att ?? 0) > 0) {
+    const parts = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} YDS`];
+    if (p.rsh_tds) parts.push(`${p.rsh_tds} TD`);
     return parts.join(", ");
   }
   if (hasDefenseStats(p)) {
@@ -540,8 +542,8 @@ function hexRgb(hex: string): string {
 
 function getPosLabel(p: GamePlayerStat): string {
   if ((p.pss_att ?? 0) > 0) return "QB";
-  if ((p.rsh_att ?? 0) > 0) return "RB";
   if ((p.rec_catches ?? 0) > 0) return "WR";
+  if ((p.rsh_att ?? 0) > 0) return "RB";
   if (hasDefenseStats(p)) return "DEF";
   return p.position ?? "—";
 }
@@ -562,53 +564,75 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
   const pos = getPosLabel(player);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, position: "relative" }}>
-      {/* Avatar with team-color ring + position badge */}
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 13, marginBottom: 16 }}>
+      {/* Portrait card */}
       <div
         style={{
-          width: 50,
-          height: 50,
-          borderRadius: "50%",
+          width: 44,
+          height: 58,
+          borderRadius: 5,
           flexShrink: 0,
           position: "relative",
-          background: `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.45) 100%)`,
-          border: `2.5px solid ${color}`,
-          boxShadow: `0 0 14px ${color}55, inset 0 1px 0 rgba(255,255,255,0.12)`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 15,
-          fontWeight: 900,
-          color: "white",
-          letterSpacing: "-0.02em",
+          overflow: "hidden",
+          background: `linear-gradient(170deg, ${color}55 0%, ${color}18 60%, rgba(0,0,0,0.5) 100%)`,
+          border: `1.5px solid ${color}90`,
+          boxShadow: `0 2px 10px ${color}30`,
         }}
       >
-        {initials}
+        {/* Football player silhouette */}
+        <svg
+          viewBox="0 0 44 58"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        >
+          <ellipse cx="22" cy="13" rx="9" ry="10" fill="white" fillOpacity="0.18" />
+          <path d="M8 32 L15 25 L22 27 L29 25 L36 32 L34 54 L10 54 Z" fill="white" fillOpacity="0.18" />
+          <path d="M8 32 L2 46 L9 47 L13 34 Z" fill="white" fillOpacity="0.18" />
+          <path d="M36 32 L42 46 L35 47 L31 34 Z" fill="white" fillOpacity="0.18" />
+        </svg>
+
+        {/* Position badge — top center */}
         <div
           style={{
             position: "absolute",
-            bottom: -9,
+            top: 3,
             left: "50%",
             transform: "translateX(-50%)",
             background: color,
             color: "white",
-            fontSize: 6.5,
+            fontSize: 6,
             fontWeight: 900,
-            letterSpacing: "0.09em",
-            padding: "2px 5px",
-            borderRadius: 3,
+            letterSpacing: "0.07em",
+            padding: "1.5px 4px",
+            borderRadius: 2,
             whiteSpace: "nowrap",
           }}
         >
           {pos}
         </div>
+
+        {/* Initials — bottom center */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 5,
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            fontSize: 14,
+            fontWeight: 900,
+            color: "white",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {initials}
+        </div>
       </div>
 
       {/* Name + stat line */}
-      <div style={{ minWidth: 0, paddingTop: 5 }}>
+      <div style={{ minWidth: 0, paddingTop: 3 }}>
         <div
           style={{
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: 900,
             color: "white",
             textTransform: "uppercase",
@@ -625,11 +649,10 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
           style={{
             fontSize: 10,
             color: "rgba(255,255,255,0.55)",
-            marginTop: 6,
+            marginTop: 5,
             lineHeight: 1,
             fontStyle: "italic",
             fontWeight: 500,
-            letterSpacing: "0.01em",
           }}
         >
           {buildStatLine(player)}
@@ -654,6 +677,14 @@ interface RecapTabProps {
   homeName: string;
   awayPlayers: GamePlayerStat[];
   homePlayers: GamePlayerStat[];
+  awayCity: string;
+  homeCity: string;
+  awayWins: number;
+  awayLosses: number;
+  homeWins: number;
+  homeLosses: number;
+  awayDiscord: string | null;
+  homeDiscord: string | null;
 }
 
 function RecapTab({
@@ -671,6 +702,14 @@ function RecapTab({
   homeName,
   awayPlayers,
   homePlayers,
+  awayCity,
+  homeCity,
+  awayWins,
+  awayLosses,
+  homeWins,
+  homeLosses,
+  awayDiscord,
+  homeDiscord,
 }: RecapTabProps) {
   const CARD_W = 1200;
   const CARD_H = 630;
@@ -721,10 +760,11 @@ function RecapTab({
   const noStats = awayPlayers.length === 0 && homePlayers.length === 0;
 
   const teamStatRows = [
-    { label: "TOTAL YARDS",   away: awayStats.totalYds,  home: homeStats.totalYds  },
-    { label: "PASSING YDS",   away: awayStats.passYds,   home: homeStats.passYds   },
-    { label: "RUSHING YDS",   away: awayStats.rushYds,   home: homeStats.rushYds   },
-    { label: "TURNOVERS",     away: awayStats.turnovers, home: homeStats.turnovers, lowerBetter: true },
+    { label: "TOTAL YARDS",  away: awayStats.totalYds,  home: homeStats.totalYds  },
+    { label: "PASSING YDS",  away: awayStats.passYds,   home: homeStats.passYds   },
+    { label: "RUSHING YDS",  away: awayStats.rushYds,   home: homeStats.rushYds   },
+    { label: "RECEIVING YDS",away: awayStats.recYds,    home: homeStats.recYds    },
+    { label: "TURNOVERS",    away: awayStats.turnovers, home: homeStats.turnovers, lowerBetter: true },
   ];
 
   async function handleDownload() {
@@ -852,25 +892,6 @@ function RecapTab({
                 gap: 16,
               }}
             >
-              {/* Ghost watermark abbr */}
-              <div
-                style={{
-                  position: "absolute",
-                  right: -10,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: 130,
-                  fontWeight: 900,
-                  color: "rgba(0,0,0,0.18)",
-                  letterSpacing: "-0.06em",
-                  lineHeight: 1,
-                  pointerEvents: "none",
-                  userSelect: "none",
-                }}
-              >
-                {awayAbbr}
-              </div>
-
               {/* Logo */}
               {awayLogoSrc ? (
                 <img
@@ -892,12 +913,18 @@ function RecapTab({
 
               {/* Team info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>AWAY</div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>{awayCity}</div>
                 <div style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
                   {awayName}
                 </div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.13em", marginTop: 5 }}>
-                  {awayAbbr}
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 6 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}>
+                    {awayDiscord ?? "—"}
+                  </div>
+                  <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
+                  <div style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>
+                    {awayWins}–{awayLosses}
+                  </div>
                 </div>
               </div>
 
@@ -955,25 +982,6 @@ function RecapTab({
                 flexDirection: "row-reverse",
               }}
             >
-              {/* Ghost watermark abbr */}
-              <div
-                style={{
-                  position: "absolute",
-                  left: -10,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: 130,
-                  fontWeight: 900,
-                  color: "rgba(0,0,0,0.18)",
-                  letterSpacing: "-0.06em",
-                  lineHeight: 1,
-                  pointerEvents: "none",
-                  userSelect: "none",
-                }}
-              >
-                {homeAbbr}
-              </div>
-
               {/* Logo */}
               {homeLogoSrc ? (
                 <img
@@ -995,12 +1003,18 @@ function RecapTab({
 
               {/* Team info */}
               <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>HOME</div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>{homeCity}</div>
                 <div style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
                   {homeName}
                 </div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.13em", marginTop: 5 }}>
-                  {homeAbbr}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 7, marginTop: 6 }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>
+                    {homeWins}–{homeLosses}
+                  </div>
+                  <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}>
+                    {homeDiscord ?? "—"}
+                  </div>
                 </div>
               </div>
 
@@ -1376,6 +1390,14 @@ export default function GameDetail() {
                     homeName={homeName}
                     awayPlayers={stats.filter((p) => !p.is_home_team)}
                     homePlayers={stats.filter((p) => p.is_home_team)}
+                    awayCity={game.away_team_city ?? ""}
+                    homeCity={game.home_team_city ?? ""}
+                    awayWins={game.away_team_wins ?? 0}
+                    awayLosses={game.away_team_losses ?? 0}
+                    homeWins={game.home_team_wins ?? 0}
+                    homeLosses={game.home_team_losses ?? 0}
+                    awayDiscord={game.away_member_discord ?? null}
+                    homeDiscord={game.home_member_discord ?? null}
                   />
                 )}
 
