@@ -122,7 +122,7 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
     return rows.filter(p => {
       if (filterTeam      && p.team_name !== filterTeam)       return false;
       if (filterPos       && p.player.position !== filterPos)  return false;
-      if (filterRookiesOnly && (p.player.years_pro ?? 1) !== 0) return false;
+      if (filterRookiesOnly && p.player.years_pro != null && p.player.years_pro !== 0) return false;
       return true;
     });
   }
