@@ -809,6 +809,14 @@ function RecapTab({
         allowTaint: false,
         backgroundColor: "#070b14",
         logging: false,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
+        onclone: (_doc, el) => {
+          el.style.transform = "none";
+          el.style.position = "relative";
+        },
       });
       const link = document.createElement("a");
       link.download = `${awayAbbr}-vs-${homeAbbr}-week${week}.png`;
