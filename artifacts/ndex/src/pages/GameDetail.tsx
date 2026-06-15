@@ -506,11 +506,19 @@ function getTopFour(players: GamePlayerStat[]): GamePlayerStat[] {
   return out;
 }
 
+const RUSHER_POSITIONS = new Set(["HB", "RB", "FB"]);
+
 function buildStatLine(p: GamePlayerStat): string {
-  if ((p.pss_att ?? 0) > 0) {
+  const pos = (p.position ?? "").toUpperCase();
+  if ((p.pss_att ?? 0) > 0 && pos === "QB") {
     const parts = [`${p.pss_cmp ?? 0}/${p.pss_att ?? 0}`, `${p.pss_yds ?? 0} YDS`];
     if (p.pss_tds) parts.push(`${p.pss_tds} TD`);
     if (p.pss_ints) parts.push(`${p.pss_ints} INT`);
+    return parts.join(", ");
+  }
+  if (RUSHER_POSITIONS.has(pos) && (p.rsh_att ?? 0) > 0) {
+    const parts = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} YDS`];
+    if (p.rsh_tds) parts.push(`${p.rsh_tds} TD`);
     return parts.join(", ");
   }
   if ((p.rec_catches ?? 0) > 0) {
@@ -541,11 +549,13 @@ function hexRgb(hex: string): string {
 }
 
 function getPosLabel(p: GamePlayerStat): string {
-  if ((p.pss_att ?? 0) > 0) return "QB";
+  const pos = (p.position ?? "").toUpperCase();
+  if ((p.pss_att ?? 0) > 0 && pos === "QB") return "QB";
+  if (RUSHER_POSITIONS.has(pos) && (p.rsh_att ?? 0) > 0) return "RB";
   if ((p.rec_catches ?? 0) > 0) return "WR";
   if ((p.rsh_att ?? 0) > 0) return "RB";
   if (hasDefenseStats(p)) return "DEF";
-  return p.position ?? "—";
+  return pos || "—";
 }
 
 const ESPN_SLUG_OVERRIDE: Record<string, string> = { WAS: "wsh" };
