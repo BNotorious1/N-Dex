@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "wouter";
 
 interface Game {
   id: number; week: number; season: number; status: string;
@@ -103,7 +104,10 @@ function GameRow({ game }: { game: Game }) {
   const statusLabel = STATUS_LABELS[game.status] ?? game.status;
 
   return (
-    <div className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 flex items-center gap-4 hover:border-white/15 transition-colors">
+    <Link
+      href={`/games/${game.id}`}
+      className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 flex items-center gap-4 hover:border-[#00C8FF]/30 hover:bg-[#00C8FF]/3 transition-colors block"
+    >
       {/* Away */}
       <div className="flex-1 text-right">
         <p className={`text-sm font-bold ${isCompleted && (game.away_score ?? 0) > (game.home_score ?? 0) ? "text-white" : "text-white/60"}`}>
@@ -139,6 +143,6 @@ function GameRow({ game }: { game: Game }) {
         </p>
         <p className="text-[10px] text-white/30">Home</p>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -960,6 +960,79 @@ export const DeletePlayerTransactionParams = zod.object({
 
 
 /**
+ * @summary Get game detail with player stats
+ */
+export const GetGameParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetGameResponse = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "home_team_id": zod.number(),
+  "away_team_id": zod.number(),
+  "home_team_name": zod.string().nullish(),
+  "away_team_name": zod.string().nullish(),
+  "home_team_abbreviation": zod.string().nullish(),
+  "away_team_abbreviation": zod.string().nullish(),
+  "home_team_color": zod.string().nullish(),
+  "away_team_color": zod.string().nullish(),
+  "home_score": zod.number().nullish(),
+  "away_score": zod.number().nullish(),
+  "week": zod.number(),
+  "season": zod.number(),
+  "status": zod.string(),
+  "player_stats": zod.array(zod.object({
+  "player_id": zod.number(),
+  "player_name": zod.string(),
+  "position": zod.string(),
+  "team_id": zod.number().nullish(),
+  "is_home_team": zod.boolean(),
+  "pss_att": zod.number().nullish(),
+  "pss_cmp": zod.number().nullish(),
+  "pss_yds": zod.number().nullish(),
+  "pss_tds": zod.number().nullish(),
+  "pss_ints": zod.number().nullish(),
+  "pss_sacks": zod.number().nullish(),
+  "pss_lng": zod.number().nullish(),
+  "pss_rating": zod.number().nullish(),
+  "rsh_att": zod.number().nullish(),
+  "rsh_yds": zod.number().nullish(),
+  "rsh_tds": zod.number().nullish(),
+  "rsh_lng": zod.number().nullish(),
+  "fmb": zod.number().nullish(),
+  "fmb_lost": zod.number().nullish(),
+  "rec_catches": zod.number().nullish(),
+  "rec_tgts": zod.number().nullish(),
+  "rec_yds": zod.number().nullish(),
+  "rec_tds": zod.number().nullish(),
+  "rec_drops": zod.number().nullish(),
+  "rec_lng": zod.number().nullish(),
+  "rec_yac": zod.number().nullish(),
+  "def_total_tackles": zod.number().nullish(),
+  "def_tfl": zod.number().nullish(),
+  "def_sacks": zod.number().nullish(),
+  "def_ints": zod.number().nullish(),
+  "def_ff": zod.number().nullish(),
+  "def_pd": zod.number().nullish(),
+  "def_tds": zod.number().nullish(),
+  "def_fum_rec": zod.number().nullish(),
+  "fg_att": zod.number().nullish(),
+  "fg_made": zod.number().nullish(),
+  "fg_lng": zod.number().nullish(),
+  "xp_att": zod.number().nullish(),
+  "xp_made": zod.number().nullish(),
+  "punt_att": zod.number().nullish(),
+  "punt_yds": zod.number().nullish(),
+  "punt_avg": zod.number().nullish(),
+  "punt_lng": zod.number().nullish(),
+  "punt_in20": zod.number().nullish(),
+  "punt_tbs": zod.number().nullish()
+}))
+})
+
+
+/**
  * @summary Update game score/status
  */
 export const UpdateGameParams = zod.object({

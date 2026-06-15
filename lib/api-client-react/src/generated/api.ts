@@ -21,6 +21,7 @@ import type {
 
 import type {
   Game,
+  GameDetail,
   GameInput,
   GameLogEntry,
   GameUpdate,
@@ -2456,6 +2457,83 @@ export const useDeletePlayerTransaction = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeletePlayerTransactionMutationOptions(options));
     }
+
+export const getGetGameUrl = (id: number,) => {
+
+
+
+
+  return `/api/games/${id}`
+}
+
+/**
+ * @summary Get game detail with player stats
+ */
+export const getGame = async (id: number, options?: RequestInit): Promise<GameDetail> => {
+
+  return customFetch<GameDetail>(getGetGameUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGameQueryKey = (id: number,) => {
+    return [
+    `/api/games/${id}`
+    ] as const;
+    }
+
+
+export const getGetGameQueryOptions = <TData = Awaited<ReturnType<typeof getGame>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGame>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGameQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGame>>> = ({ signal }) => getGame(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGame>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetGameQueryResult = NonNullable<Awaited<ReturnType<typeof getGame>>>
+export type GetGameQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get game detail with player stats
+ */
+
+export function useGetGame<TData = Awaited<ReturnType<typeof getGame>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGame>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetGameQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getUpdateGameUrl = (id: number,) => {
 

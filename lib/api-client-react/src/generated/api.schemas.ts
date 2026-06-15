@@ -622,6 +622,122 @@ export interface GameLogEntry {
   punt_tbs?: number | null;
 }
 
+export interface GamePlayerStat {
+  player_id: number;
+  player_name: string;
+  position: string;
+  /** @nullable */
+  team_id?: number | null;
+  is_home_team: boolean;
+  /** @nullable */
+  pss_att?: number | null;
+  /** @nullable */
+  pss_cmp?: number | null;
+  /** @nullable */
+  pss_yds?: number | null;
+  /** @nullable */
+  pss_tds?: number | null;
+  /** @nullable */
+  pss_ints?: number | null;
+  /** @nullable */
+  pss_sacks?: number | null;
+  /** @nullable */
+  pss_lng?: number | null;
+  /** @nullable */
+  pss_rating?: number | null;
+  /** @nullable */
+  rsh_att?: number | null;
+  /** @nullable */
+  rsh_yds?: number | null;
+  /** @nullable */
+  rsh_tds?: number | null;
+  /** @nullable */
+  rsh_lng?: number | null;
+  /** @nullable */
+  fmb?: number | null;
+  /** @nullable */
+  fmb_lost?: number | null;
+  /** @nullable */
+  rec_catches?: number | null;
+  /** @nullable */
+  rec_tgts?: number | null;
+  /** @nullable */
+  rec_yds?: number | null;
+  /** @nullable */
+  rec_tds?: number | null;
+  /** @nullable */
+  rec_drops?: number | null;
+  /** @nullable */
+  rec_lng?: number | null;
+  /** @nullable */
+  rec_yac?: number | null;
+  /** @nullable */
+  def_total_tackles?: number | null;
+  /** @nullable */
+  def_tfl?: number | null;
+  /** @nullable */
+  def_sacks?: number | null;
+  /** @nullable */
+  def_ints?: number | null;
+  /** @nullable */
+  def_ff?: number | null;
+  /** @nullable */
+  def_pd?: number | null;
+  /** @nullable */
+  def_tds?: number | null;
+  /** @nullable */
+  def_fum_rec?: number | null;
+  /** @nullable */
+  fg_att?: number | null;
+  /** @nullable */
+  fg_made?: number | null;
+  /** @nullable */
+  fg_lng?: number | null;
+  /** @nullable */
+  xp_att?: number | null;
+  /** @nullable */
+  xp_made?: number | null;
+  /** @nullable */
+  punt_att?: number | null;
+  /** @nullable */
+  punt_yds?: number | null;
+  /** @nullable */
+  punt_avg?: number | null;
+  /** @nullable */
+  punt_lng?: number | null;
+  /** @nullable */
+  punt_in20?: number | null;
+  /** @nullable */
+  punt_tbs?: number | null;
+}
+
+export interface GameDetail {
+  id: number;
+  league_id: number;
+  home_team_id: number;
+  away_team_id: number;
+  /** @nullable */
+  home_team_name?: string | null;
+  /** @nullable */
+  away_team_name?: string | null;
+  /** @nullable */
+  home_team_abbreviation?: string | null;
+  /** @nullable */
+  away_team_abbreviation?: string | null;
+  /** @nullable */
+  home_team_color?: string | null;
+  /** @nullable */
+  away_team_color?: string | null;
+  /** @nullable */
+  home_score?: number | null;
+  /** @nullable */
+  away_score?: number | null;
+  week: number;
+  season: number;
+  status: string;
+  player_stats: GamePlayerStat[];
+}
+
 export type ListLeaguesParams = {
 platform?: string;
 difficulty?: string;

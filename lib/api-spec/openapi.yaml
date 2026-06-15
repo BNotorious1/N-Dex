@@ -704,6 +704,23 @@ paths:
           description: Deleted
 
   /games/{id}:
+    get:
+      operationId: getGame
+      tags: [games]
+      summary: Get game detail with player stats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameDetail"
     patch:
       operationId: updateGame
       tags: [games]
@@ -1691,3 +1708,149 @@ components:
           type: ["integer", "null"]
         punt_tbs:
           type: ["integer", "null"]
+
+    GamePlayerStat:
+      type: object
+      required:
+        - player_id
+        - player_name
+        - position
+        - is_home_team
+      properties:
+        player_id:
+          type: integer
+        player_name:
+          type: string
+        position:
+          type: string
+        team_id:
+          type: ["integer", "null"]
+        is_home_team:
+          type: boolean
+        pss_att:
+          type: ["integer", "null"]
+        pss_cmp:
+          type: ["integer", "null"]
+        pss_yds:
+          type: ["integer", "null"]
+        pss_tds:
+          type: ["integer", "null"]
+        pss_ints:
+          type: ["integer", "null"]
+        pss_sacks:
+          type: ["integer", "null"]
+        pss_lng:
+          type: ["integer", "null"]
+        pss_rating:
+          type: ["integer", "null"]
+        rsh_att:
+          type: ["integer", "null"]
+        rsh_yds:
+          type: ["integer", "null"]
+        rsh_tds:
+          type: ["integer", "null"]
+        rsh_lng:
+          type: ["integer", "null"]
+        fmb:
+          type: ["integer", "null"]
+        fmb_lost:
+          type: ["integer", "null"]
+        rec_catches:
+          type: ["integer", "null"]
+        rec_tgts:
+          type: ["integer", "null"]
+        rec_yds:
+          type: ["integer", "null"]
+        rec_tds:
+          type: ["integer", "null"]
+        rec_drops:
+          type: ["integer", "null"]
+        rec_lng:
+          type: ["integer", "null"]
+        rec_yac:
+          type: ["integer", "null"]
+        def_total_tackles:
+          type: ["integer", "null"]
+        def_tfl:
+          type: ["integer", "null"]
+        def_sacks:
+          type: ["integer", "null"]
+        def_ints:
+          type: ["integer", "null"]
+        def_ff:
+          type: ["integer", "null"]
+        def_pd:
+          type: ["integer", "null"]
+        def_tds:
+          type: ["integer", "null"]
+        def_fum_rec:
+          type: ["integer", "null"]
+        fg_att:
+          type: ["integer", "null"]
+        fg_made:
+          type: ["integer", "null"]
+        fg_lng:
+          type: ["integer", "null"]
+        xp_att:
+          type: ["integer", "null"]
+        xp_made:
+          type: ["integer", "null"]
+        punt_att:
+          type: ["integer", "null"]
+        punt_yds:
+          type: ["integer", "null"]
+        punt_avg:
+          type: ["integer", "null"]
+        punt_lng:
+          type: ["integer", "null"]
+        punt_in20:
+          type: ["integer", "null"]
+        punt_tbs:
+          type: ["integer", "null"]
+
+    GameDetail:
+      type: object
+      required:
+        - id
+        - league_id
+        - home_team_id
+        - away_team_id
+        - week
+        - season
+        - status
+        - player_stats
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        home_team_id:
+          type: integer
+        away_team_id:
+          type: integer
+        home_team_name:
+          type: ["string", "null"]
+        away_team_name:
+          type: ["string", "null"]
+        home_team_abbreviation:
+          type: ["string", "null"]
+        away_team_abbreviation:
+          type: ["string", "null"]
+        home_team_color:
+          type: ["string", "null"]
+        away_team_color:
+          type: ["string", "null"]
+        home_score:
+          type: ["integer", "null"]
+        away_score:
+          type: ["integer", "null"]
+        week:
+          type: integer
+        season:
+          type: integer
+        status:
+          type: string
+        player_stats:
+          type: array
+          items:
+            $ref: "#/components/schemas/GamePlayerStat"
