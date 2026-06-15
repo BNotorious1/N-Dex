@@ -704,17 +704,6 @@ export default function GameDetail() {
 
                   </div>
 
-                  {/* Legend chips */}
-                  <div className="flex gap-2 mt-5">
-                    <div className="flex items-center gap-2 bg-white/4 border border-white/8 rounded-lg px-3 py-1.5">
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: awayColor }} />
-                      <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider">{awayAbbr} Away</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/4 border border-white/8 rounded-lg px-3 py-1.5">
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: homeColor }} />
-                      <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider">{homeAbbr} Home</span>
-                    </div>
-                  </div>
                 </div>
               </div>
 
