@@ -99,7 +99,7 @@ export default function GamesSection({ games }: Props) {
 }
 
 function GameRow({ game }: { game: Game }) {
-  const isCompleted = game.status === "COMPLETED";
+  const isCompleted = game.status === "COMPLETED" || game.status === "FINAL";
   const statusClass = STATUS_COLORS[game.status] ?? STATUS_COLORS.SCHEDULED;
   const statusLabel = STATUS_LABELS[game.status] ?? game.status;
 

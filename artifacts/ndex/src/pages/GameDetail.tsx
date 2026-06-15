@@ -19,25 +19,36 @@ type StatTab = "recap" | "team" | "passing" | "rushing" | "receiving" | "defense
 
 const STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Final",
+  FINAL: "Final",
   IN_PROGRESS: "Live",
   SCHEDULED: "Scheduled",
 };
 
+function isGameCompleted(status: string): boolean {
+  return status === "COMPLETED" || status === "FINAL";
+}
+
 function hasPassingStats(p: GamePlayerStat): boolean {
-  return (p.pss_att ?? 0) > 0 || (p.pss_yds ?? 0) > 0;
+  return (
+    (p.pss_att ?? 0) > 0 || (p.pss_yds ?? 0) > 0 ||
+    (p.pss_tds ?? 0) > 0 || (p.pss_ints ?? 0) > 0 ||
+    (p.pss_rating ?? 0) > 0
+  );
 }
 function hasRushingStats(p: GamePlayerStat): boolean {
-  return (p.rsh_att ?? 0) > 0 || (p.rsh_yds ?? 0) > 0;
+  return (p.rsh_att ?? 0) > 0 || (p.rsh_yds ?? 0) > 0 || (p.rsh_tds ?? 0) > 0;
 }
 function hasReceivingStats(p: GamePlayerStat): boolean {
-  return (p.rec_catches ?? 0) > 0 || (p.rec_tgts ?? 0) > 0;
+  return (p.rec_catches ?? 0) > 0 || (p.rec_tgts ?? 0) > 0 || (p.rec_yds ?? 0) > 0;
 }
 function hasDefenseStats(p: GamePlayerStat): boolean {
   return (
     (p.def_total_tackles ?? 0) > 0 ||
     (p.def_sacks ?? 0) > 0 ||
     (p.def_ints ?? 0) > 0 ||
-    (p.def_pd ?? 0) > 0
+    (p.def_pd ?? 0) > 0 ||
+    (p.def_ff ?? 0) > 0 ||
+    (p.def_tds ?? 0) > 0
   );
 }
 
@@ -154,7 +165,12 @@ interface TeamStatsTabProps {
 }
 
 function TeamStatsTab({ awayStats, homeStats, awayColor, homeColor, awayAbbr, homeAbbr, awayName, homeName }: TeamStatsTabProps) {
-  const noStats = awayStats.totalYds === 0 && homeStats.totalYds === 0;
+  const noStats =
+    awayStats.passAtt + homeStats.passAtt +
+    awayStats.passTds + homeStats.passTds +
+    awayStats.rushAtt + homeStats.rushAtt +
+    awayStats.rushTds + homeStats.rushTds +
+    awayStats.fgAtt + homeStats.fgAtt === 0;
 
   if (noStats) {
     return <p className="text-center text-white/25 text-xs py-12">No team stats recorded</p>;
@@ -307,43 +323,27 @@ interface SplitCol { label: string; key: keyof GamePlayerStat }
 interface HalfTableProps {
   players: GamePlayerStat[];
   teamColor: string;
-  teamAbbr: string;
   teamName: string;
   columns: SplitCol[];
   sortKey: keyof GamePlayerStat;
-  align: "left" | "right";
 }
 
-function HalfTable({ players, teamColor, teamAbbr, teamName, columns, sortKey, align }: HalfTableProps) {
+function HalfTable({ players, teamColor, teamName, columns, sortKey }: HalfTableProps) {
   const sorted = [...players].sort((a, b) => ((b[sortKey] as number) ?? 0) - ((a[sortKey] as number) ?? 0));
-  const isRight = align === "right";
 
   return (
     <div className="flex-1 min-w-0 overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
           <tr style={{ backgroundColor: teamColor }}>
-            {isRight && columns.map((col) => (
-              <th
-                key={col.key as string}
-                className={`px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider w-12 text-white`}
-              >
-                {col.label}
-              </th>
-            ))}
-            {isRight && (
-              <th className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-10">Pos</th>
-            )}
-            <th className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-white ${isRight ? "text-left" : "text-left"}`}>
+            <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-white">
               {teamName}
             </th>
-            {!isRight && (
-              <th className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-10">Pos</th>
-            )}
-            {!isRight && columns.map((col) => (
+            <th className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-10">Pos</th>
+            {columns.map((col) => (
               <th
                 key={col.key as string}
-                className={`px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider w-12 text-white`}
+                className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-12"
               >
                 {col.label}
               </th>
@@ -353,54 +353,22 @@ function HalfTable({ players, teamColor, teamAbbr, teamName, columns, sortKey, a
         <tbody>
           {sorted.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length + 2}
-                className="px-4 py-6 text-center text-white/25"
-              >
-                —
-              </td>
+              <td colSpan={columns.length + 2} className="px-4 py-6 text-center text-white/25">—</td>
             </tr>
           ) : (
             sorted.map((p, i) => (
-              <tr
-                key={`${p.player_id}-${i}`}
-                className="border-t border-white/5 hover:bg-white/3 transition-colors"
-              >
-                {isRight && columns.map((col) => {
-                  const val = p[col.key] as number | null | undefined;
-                  const isPrimary = col.key === sortKey;
-                  return (
-                    <td
-                      key={col.key as string}
-                      className={`px-2 py-2.5 text-center tabular-nums ${isPrimary ? "font-bold text-white" : "text-white/55"}`}
-                    >
-                      {val ?? "—"}
-                    </td>
-                  );
-                })}
-                {isRight && (
-                  <td className="px-2 py-2.5 text-center">
-                    <span className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/8 text-white/55">
-                      {p.position}
-                    </span>
-                  </td>
-                )}
+              <tr key={`${p.player_id}-${i}`} className="border-t border-white/5 hover:bg-white/3 transition-colors">
                 <td className="px-4 py-2.5 font-semibold text-white">
-                  <Link
-                    href={`/players/${p.player_id}`}
-                    className="hover:text-[#00C8FF] transition-colors whitespace-nowrap"
-                  >
+                  <Link href={`/players/${p.player_id}`} className="hover:text-[#00C8FF] transition-colors whitespace-nowrap">
                     {p.player_name}
                   </Link>
                 </td>
-                {!isRight && (
-                  <td className="px-2 py-2.5 text-center">
-                    <span className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/8 text-white/55">
-                      {p.position}
-                    </span>
-                  </td>
-                )}
-                {!isRight && columns.map((col) => {
+                <td className="px-2 py-2.5 text-center">
+                  <span className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/8 text-white/55">
+                    {p.position}
+                  </span>
+                </td>
+                {columns.map((col) => {
                   const val = p[col.key] as number | null | undefined;
                   const isPrimary = col.key === sortKey;
                   return (
@@ -454,21 +422,17 @@ function SplitStatTable({
       <HalfTable
         players={awayPlayers}
         teamColor={awayColor}
-        teamAbbr={awayAbbr}
         teamName={awayName}
         columns={columns}
         sortKey={sortKey}
-        align="left"
       />
       <div className="w-px bg-white/8 shrink-0" />
       <HalfTable
         players={homePlayers}
         teamColor={homeColor}
-        teamAbbr={homeAbbr}
         teamName={homeName}
         columns={columns}
         sortKey={sortKey}
-        align="right"
       />
     </div>
   );
@@ -579,7 +543,7 @@ export default function GameDetail() {
   const homeName = game?.home_team_name ?? homeAbbr;
   const awayName = game?.away_team_name ?? awayAbbr;
 
-  const isCompleted = game?.status === "COMPLETED";
+  const isCompleted = isGameCompleted(game?.status ?? "");
   const homeWon = isCompleted && (game?.home_score ?? 0) > (game?.away_score ?? 0);
   const awayWon = isCompleted && (game?.away_score ?? 0) > (game?.home_score ?? 0);
 
