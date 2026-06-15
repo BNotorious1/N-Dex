@@ -497,7 +497,15 @@ function getTopFour(players: GamePlayerStat[]): GamePlayerStat[] {
   const rb = getTopPerformer(players, (p) => (p.rsh_att ?? 0) > 0, (p) => p.rsh_yds ?? 0);
   const wr = getTopPerformer(players, (p) => (p.rec_catches ?? 0) > 0, (p) => p.rec_yds ?? 0);
   const def = getTopPerformer(players, hasDefenseStats, (p) =>
-    (p.def_total_tackles ?? 0) + (p.def_sacks ?? 0) * 3 + (p.def_ints ?? 0) * 4,
+    (p.def_total_tackles ?? 0) * 1 +
+    (p.def_tfl        ?? 0) * 1.5 +
+    (p.def_sacks      ?? 0) * 3 +
+    (p.def_ints       ?? 0) * 5 +
+    (p.def_ff         ?? 0) * 3 +
+    (p.def_pd         ?? 0) * 1.5 +
+    (p.def_tds        ?? 0) * 6 +
+    (p.def_fum_rec    ?? 0) * 3 +
+    (p.def_safeties   ?? 0) * 4,
   );
   if (qb) out.push(qb);
   if (rb) out.push(rb);
@@ -544,10 +552,17 @@ function buildStatLine(p: GamePlayerStat): [string, string | null] {
     return [parts.join(", "), null];
   }
   if (hasDefenseStats(p)) {
-    const parts = [`${p.def_total_tackles ?? 0} TKL`];
-    if (p.def_sacks) parts.push(`${p.def_sacks} SCK`);
-    if (p.def_pd) parts.push(`${p.def_pd} PD`);
-    return [parts.join(", "), null];
+    const parts: string[] = [];
+    if ((p.def_total_tackles ?? 0) > 0) parts.push(`${p.def_total_tackles} TKL`);
+    if ((p.def_tfl         ?? 0) > 0) parts.push(`${p.def_tfl} TFL`);
+    if ((p.def_sacks       ?? 0) > 0) parts.push(`${p.def_sacks} SCK`);
+    if ((p.def_ints        ?? 0) > 0) parts.push(`${p.def_ints} INT`);
+    if ((p.def_pd          ?? 0) > 0) parts.push(`${p.def_pd} PD`);
+    if ((p.def_ff          ?? 0) > 0) parts.push(`${p.def_ff} FF`);
+    if ((p.def_fum_rec     ?? 0) > 0) parts.push(`${p.def_fum_rec} FR`);
+    if ((p.def_tds         ?? 0) > 0) parts.push(`${p.def_tds} TD`);
+    if ((p.def_safeties    ?? 0) > 0) parts.push(`${p.def_safeties} SAF`);
+    return [parts.join(", ") || "—", null];
   }
   return ["—", null];
 }
