@@ -801,23 +801,35 @@ function RecapTab({
   async function handleDownload() {
     if (!cardRef.current) return;
     setDownloading(true);
+    let offscreen: HTMLElement | null = null;
     try {
       const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(cardRef.current, {
+
+      // Clone the card and place it off-screen with no transform so
+      // html2canvas captures the full 1200×630 layout without any
+      // scroll-offset or CSS-transform shift.
+      offscreen = cardRef.current.cloneNode(true) as HTMLElement;
+      offscreen.style.transform = "none";
+      offscreen.style.position = "fixed";
+      offscreen.style.top = "-99999px";
+      offscreen.style.left = "-99999px";
+      offscreen.style.width = `${CARD_W}px`;
+      offscreen.style.height = `${CARD_H}px`;
+      offscreen.style.borderRadius = "0";
+      document.body.appendChild(offscreen);
+
+      const canvas = await html2canvas(offscreen, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#070b14",
         logging: false,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        windowWidth: document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight,
-        onclone: (_doc, el) => {
-          el.style.transform = "none";
-          el.style.position = "relative";
-        },
+        width: CARD_W,
+        height: CARD_H,
+        x: 0,
+        y: 0,
       });
+
       const link = document.createElement("a");
       link.download = `${awayAbbr}-vs-${homeAbbr}-week${week}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -825,6 +837,7 @@ function RecapTab({
     } catch (err) {
       console.error("Recap export failed", err);
     } finally {
+      offscreen?.remove();
       setDownloading(false);
     }
   }
