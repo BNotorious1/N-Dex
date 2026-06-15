@@ -598,7 +598,7 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
       >
         {showPortrait ? (
           // No CSS transform — use absolute positioning + overflow:hidden for zoom effect
-          <img
+          (<img
             src={eaPortraitUrl(player.portrait_id!)}
             alt={player.player_name}
             onError={() => setPortraitErr(true)}
@@ -611,7 +611,7 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
               objectFit: "cover",
               objectPosition: "top center",
             }}
-          />
+          />)
         ) : (
           <>
             {/* Silhouette fallback — explicit top/left/right/bottom instead of inset */}
@@ -661,7 +661,6 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
           {pos}
         </div>
       </div>
-
       {/* Name + stat line — explicit 58px height so centering doesn't rely
           on alignItems:center (which html2canvas handles inconsistently) */}
       <div style={{
@@ -692,7 +691,6 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
             color: "rgba(255,255,255,0.55)",
             marginTop: 5,
             lineHeight: 1,
-            fontStyle: "italic",
             fontWeight: 500,
           }}
         >
@@ -867,7 +865,6 @@ function RecapTab({
           {downloading ? "Exporting…" : "Download PNG"}
         </button>
       </div>
-
       {/* Scaled card shell */}
       <div ref={containerRef} style={{ width: "100%", position: "relative", height: CARD_H * scale }}>
         <div
@@ -919,7 +916,7 @@ function RecapTab({
                 letterSpacing: "0.2em",
                 lineHeight: 1,
               }}
-            >
+              className="text-[24px]">
               {leagueName} · WEEK {week}
             </div>
           </div>
