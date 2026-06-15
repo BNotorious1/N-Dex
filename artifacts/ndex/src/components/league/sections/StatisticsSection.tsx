@@ -419,7 +419,7 @@ function LeaderRow({ rank, p, value, isLast }: {
     >
       <span className="w-4 shrink-0 text-center text-[11px] font-black text-white/20 tabular-nums">{rank}</span>
 
-      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/10">
+      <div className="w-[42px] h-[42px] rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/10">
         {hasPortrait ? (
           <img
             src={eaPortraitUrl(p.player.portrait_id!)}
@@ -429,7 +429,7 @@ function LeaderRow({ rank, p, value, isLast }: {
             onError={() => setPortraitErr(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[9px] font-black text-white/30">
+          <div className="w-full h-full flex items-center justify-center text-[11px] font-black text-white/30">
             {p.player.name.charAt(0)}
           </div>
         )}
