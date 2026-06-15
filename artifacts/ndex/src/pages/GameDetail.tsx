@@ -14,7 +14,7 @@ import TeamLogo from "@/components/TeamLogo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type StatTab = "recap" | "team" | "passing" | "rushing" | "receiving" | "defense" | "special";
+type StatTab = "recap" | "team" | "boxscore";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -546,11 +546,7 @@ export default function GameDetail() {
   const tabs: { key: StatTab; label: string }[] = [
     { key: "recap",     label: "Recap" },
     { key: "team",      label: "Team Stats" },
-    { key: "passing",   label: "Passing" },
-    { key: "rushing",   label: "Rushing" },
-    { key: "receiving", label: "Receiving" },
-    { key: "defense",   label: "Defense" },
-    { key: "special",   label: "Special Teams" },
+    { key: "boxscore",  label: "Box Score" },
   ];
 
   return (
@@ -702,70 +698,104 @@ export default function GameDetail() {
                   />
                 )}
 
-                {tab === "passing" && (
-                  <SplitStatTable
-                    {...splitProps}
-                    filter={hasPassingStats}
-                    sortKey="pss_yds"
-                    columns={[
-                      { label: "CMP/ATT", key: "pss_cmp", render: (p) => `${p.pss_cmp ?? 0}/${p.pss_att ?? 0}` },
-                      { label: "YDS", key: "pss_yds" },
-                      { label: "TD",  key: "pss_tds" },
-                      { label: "INT", key: "pss_ints" },
-                      { label: "RTG", key: "pss_rating" },
-                    ]}
-                  />
-                )}
+                {tab === "boxscore" && (
+                  <div className="space-y-8">
+                    {/* Passing */}
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-white/30 mb-3">Passing</p>
+                      <SplitStatTable
+                        {...splitProps}
+                        filter={hasPassingStats}
+                        sortKey="pss_yds"
+                        columns={[
+                          { label: "CMP/ATT", key: "pss_cmp", render: (p) => `${p.pss_cmp ?? 0}/${p.pss_att ?? 0}` },
+                          { label: "YDS",     key: "pss_yds" },
+                          { label: "CMP%",    key: "pss_cmp", render: (p) => {
+                            const att = p.pss_att ?? 0;
+                            return att > 0 ? `${Math.round(((p.pss_cmp ?? 0) / att) * 100)}%` : "—";
+                          }},
+                          { label: "AVG",     key: "pss_yds", render: (p) => {
+                            const att = p.pss_att ?? 0;
+                            return att > 0 ? ((p.pss_yds ?? 0) / att).toFixed(1) : "—";
+                          }},
+                          { label: "TD",      key: "pss_tds" },
+                          { label: "INT",     key: "pss_ints" },
+                          { label: "SCK",     key: "pss_sacks" },
+                          { label: "RTG",     key: "pss_rating" },
+                        ]}
+                      />
+                    </div>
 
-                {tab === "rushing" && (
-                  <SplitStatTable
-                    {...splitProps}
-                    filter={hasRushingStats}
-                    sortKey="rsh_yds"
-                    columns={[
-                      { label: "ATT", key: "rsh_att" },
-                      { label: "YDS", key: "rsh_yds" },
-                      { label: "TD",  key: "rsh_tds" },
-                      { label: "LNG", key: "rsh_lng" },
-                      { label: "FMB", key: "fmb" },
-                    ]}
-                  />
-                )}
+                    {/* Rushing */}
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-white/30 mb-3">Rushing</p>
+                      <SplitStatTable
+                        {...splitProps}
+                        filter={hasRushingStats}
+                        sortKey="rsh_yds"
+                        columns={[
+                          { label: "ATT", key: "rsh_att" },
+                          { label: "YDS", key: "rsh_yds" },
+                          { label: "AVG", key: "rsh_yds", render: (p) => {
+                            const att = p.rsh_att ?? 0;
+                            return att > 0 ? ((p.rsh_yds ?? 0) / att).toFixed(1) : "—";
+                          }},
+                          { label: "TD",  key: "rsh_tds" },
+                          { label: "BTK", key: "rsh_btk" },
+                          { label: "LNG", key: "rsh_lng" },
+                          { label: "FMB", key: "fmb" },
+                        ]}
+                      />
+                    </div>
 
-                {tab === "receiving" && (
-                  <SplitStatTable
-                    {...splitProps}
-                    filter={hasReceivingStats}
-                    sortKey="rec_yds"
-                    columns={[
-                      { label: "REC", key: "rec_catches" },
-                      { label: "TGT", key: "rec_tgts" },
-                      { label: "YDS", key: "rec_yds" },
-                      { label: "TD",  key: "rec_tds" },
-                      { label: "YAC", key: "rec_yac" },
-                      { label: "LNG", key: "rec_lng" },
-                    ]}
-                  />
-                )}
+                    {/* Receiving */}
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-white/30 mb-3">Receiving</p>
+                      <SplitStatTable
+                        {...splitProps}
+                        filter={hasReceivingStats}
+                        sortKey="rec_yds"
+                        columns={[
+                          { label: "REC", key: "rec_catches" },
+                          { label: "YDS", key: "rec_yds" },
+                          { label: "AVG", key: "rec_yds", render: (p) => {
+                            const rec = p.rec_catches ?? 0;
+                            return rec > 0 ? ((p.rec_yds ?? 0) / rec).toFixed(1) : "—";
+                          }},
+                          { label: "TD",  key: "rec_tds" },
+                          { label: "YAC", key: "rec_yac" },
+                          { label: "LNG", key: "rec_lng" },
+                        ]}
+                      />
+                    </div>
 
-                {tab === "defense" && (
-                  <SplitStatTable
-                    {...splitProps}
-                    filter={hasDefenseStats}
-                    sortKey="def_total_tackles"
-                    columns={[
-                      { label: "TKL", key: "def_total_tackles" },
-                      { label: "SCK", key: "def_sacks" },
-                      { label: "TFL", key: "def_tfl" },
-                      { label: "INT", key: "def_ints" },
-                      { label: "PD",  key: "def_pd" },
-                      { label: "FF",  key: "def_ff" },
-                    ]}
-                  />
-                )}
+                    {/* Defense */}
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-white/30 mb-3">Defense</p>
+                      <SplitStatTable
+                        {...splitProps}
+                        filter={hasDefenseStats}
+                        sortKey="def_total_tackles"
+                        columns={[
+                          { label: "TKL",  key: "def_total_tackles" },
+                          { label: "SCK",  key: "def_sacks" },
+                          { label: "INT",  key: "def_ints" },
+                          { label: "PD",   key: "def_pd" },
+                          { label: "FF",   key: "def_ff" },
+                          { label: "TD",   key: "def_tds" },
+                          { label: "CA",   key: "def_catches_allowed" },
+                          { label: "FR",   key: "def_fum_rec" },
+                          { label: "SFTY", key: "def_safeties" },
+                        ]}
+                      />
+                    </div>
 
-                {tab === "special" && (
-                  <SplitSpecialTeams {...splitProps} />
+                    {/* Special Teams */}
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-white/30 mb-3">Special Teams</p>
+                      <SplitSpecialTeams {...splitProps} />
+                    </div>
+                  </div>
                 )}
               </div>
             </>

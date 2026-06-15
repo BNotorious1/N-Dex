@@ -1652,6 +1652,8 @@ components:
           type: ["integer", "null"]
         rsh_lng:
           type: ["integer", "null"]
+        rsh_btk:
+          type: ["integer", "null"]
         fmb:
           type: ["integer", "null"]
         fmb_lost:
@@ -1685,6 +1687,10 @@ components:
         def_tds:
           type: ["integer", "null"]
         def_fum_rec:
+          type: ["integer", "null"]
+        def_catches_allowed:
+          type: ["integer", "null"]
+        def_safeties:
           type: ["integer", "null"]
         fg_att:
           type: ["integer", "null"]
@@ -1751,6 +1757,8 @@ components:
           type: ["integer", "null"]
         rsh_lng:
           type: ["integer", "null"]
+        rsh_btk:
+          type: ["integer", "null"]
         fmb:
           type: ["integer", "null"]
         fmb_lost:
@@ -1784,6 +1792,10 @@ components:
         def_tds:
           type: ["integer", "null"]
         def_fum_rec:
+          type: ["integer", "null"]
+        def_catches_allowed:
+          type: ["integer", "null"]
+        def_safeties:
           type: ["integer", "null"]
         fg_att:
           type: ["integer", "null"]

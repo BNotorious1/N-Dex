@@ -564,6 +564,7 @@ export function buildStatSet(
       rshYds:  num(s["rshYds"]  ?? s["rushYds"]),
       rshTds:  num(s["rshTDs"]  ?? s["rushTDs"]  ?? s["rshTds"]),
       rshLng:  num(s["rshLng"]  ?? s["rushLongest"] ?? s["rushLng"]),
+      rshBtk:  num(s["rshBrokenTackles"] ?? s["rushBrokenTackles"] ?? s["brokenTackles"] ?? s["rshBtk"]),
       fmb:     num(s["fmb"]     ?? s["rushFum"]   ?? s["fumbles"]),
       fmbLost: num(s["fmbLost"] ?? s["fumLost"]),
     };
@@ -589,6 +590,8 @@ export function buildStatSet(
       defPd:           num(s["defDeflections"]   ?? s["defPassDef"]     ?? s["defPD"]),
       defTds:          num(s["defTDs"]           ?? s["defTds"]),
       defFumRec:       num(s["defFumRec"]),
+      defCatchesAllowed: num(s["defCatchesAllowed"] ?? s["defCatchAllowed"] ?? s["defCatches"]),
+      defSafeties:       num(s["defSafeties"]       ?? s["defSafety"]),
     };
   }
   if (statType === "kicking") {

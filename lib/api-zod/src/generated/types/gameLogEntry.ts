@@ -51,6 +51,8 @@ export interface GameLogEntry {
   /** @nullable */
   rsh_lng?: number | null;
   /** @nullable */
+  rsh_btk?: number | null;
+  /** @nullable */
   fmb?: number | null;
   /** @nullable */
   fmb_lost?: number | null;
@@ -84,6 +86,10 @@ export interface GameLogEntry {
   def_tds?: number | null;
   /** @nullable */
   def_fum_rec?: number | null;
+  /** @nullable */
+  def_catches_allowed?: number | null;
+  /** @nullable */
+  def_safeties?: number | null;
   /** @nullable */
   fg_att?: number | null;
   /** @nullable */

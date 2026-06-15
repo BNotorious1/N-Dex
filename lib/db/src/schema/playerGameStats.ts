@@ -26,6 +26,7 @@ export const playerGameStatsTable = pgTable("player_game_stats", {
   rshYds: integer("rsh_yds"),
   rshTds: integer("rsh_tds"),
   rshLng: integer("rsh_lng"),
+  rshBtk: integer("rsh_btk"),
   fmb: integer("fmb"),
   fmbLost: integer("fmb_lost"),
   // Receiving
@@ -45,6 +46,8 @@ export const playerGameStatsTable = pgTable("player_game_stats", {
   defPd: integer("def_pd"),
   defTds: integer("def_tds"),
   defFumRec: integer("def_fum_rec"),
+  defCatchesAllowed: integer("def_catches_allowed"),
+  defSafeties: integer("def_safeties"),
   // Kicking
   fgAtt: integer("fg_att"),
   fgMade: integer("fg_made"),
