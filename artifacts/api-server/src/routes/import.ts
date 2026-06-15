@@ -620,6 +620,9 @@ export const STAT_KEY_MAP: Record<string, string> = {
   punting:   "playerPuntingStatInfoList",
 };
 
+// Tracks which statTypes we've already logged a sample for (resets on server restart)
+const _loggedSample = new Set<string>();
+
 export async function processStatBlob(
   leagueId: number,
   weekIndex: number,
@@ -634,6 +637,11 @@ export async function processStatBlob(
   if (stats.length === 0) {
     const bodyKeys = Object.keys(body);
     logger.warn({ statType, listKey, weekIndex, bodyKeys }, "processStatBlob: 0 stats — response keys logged for diagnosis");
+  }
+  // One-shot: log the first raw stat record for each stat type so we can see exact Blaze field names
+  if (stats.length > 0 && !_loggedSample.has(statType)) {
+    _loggedSample.add(statType);
+    logger.info({ statType, sample: stats[0] }, "processStatBlob: first raw stat record (field name diagnosis)");
   }
   return upsertPlayerStats(leagueId, weekIndex, stageIndex, season, stats, s => buildStatSet(statType, s));
 }
