@@ -1729,6 +1729,8 @@ components:
           type: string
         position:
           type: string
+        portrait_id:
+          type: ["integer", "null"]
         team_id:
           type: ["integer", "null"]
         is_home_team:

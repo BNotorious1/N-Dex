@@ -554,7 +554,12 @@ function espnLogoUrl(abbr: string): string {
   return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
 }
 
+function eaPortraitUrl(portraitId: number): string {
+  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
+}
+
 function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: string }) {
+  const [portraitErr, setPortraitErr] = useState(false);
   const initials = player.player_name
     .split(" ")
     .map((w) => w[0] ?? "")
@@ -562,9 +567,10 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
     .slice(0, 2)
     .toUpperCase();
   const pos = getPosLabel(player);
+  const showPortrait = !!player.portrait_id && !portraitErr;
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 13, marginBottom: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 13, marginBottom: 16 }}>
       {/* Portrait card */}
       <div
         style={{
@@ -579,57 +585,73 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
           boxShadow: `0 2px 10px ${color}30`,
         }}
       >
-        {/* Football player silhouette */}
-        <svg
-          viewBox="0 0 44 58"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-        >
-          <ellipse cx="22" cy="13" rx="9" ry="10" fill="white" fillOpacity="0.18" />
-          <path d="M8 32 L15 25 L22 27 L29 25 L36 32 L34 54 L10 54 Z" fill="white" fillOpacity="0.18" />
-          <path d="M8 32 L2 46 L9 47 L13 34 Z" fill="white" fillOpacity="0.18" />
-          <path d="M36 32 L42 46 L35 47 L31 34 Z" fill="white" fillOpacity="0.18" />
-        </svg>
+        {showPortrait ? (
+          <img
+            src={eaPortraitUrl(player.portrait_id!)}
+            alt={player.player_name}
+            onError={() => setPortraitErr(true)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+              transform: "scale(1.2)",
+              transformOrigin: "top center",
+            }}
+          />
+        ) : (
+          <>
+            {/* Football player silhouette fallback */}
+            <svg
+              viewBox="0 0 44 58"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+            >
+              <ellipse cx="22" cy="13" rx="9" ry="10" fill="white" fillOpacity="0.18" />
+              <path d="M8 32 L15 25 L22 27 L29 25 L36 32 L34 54 L10 54 Z" fill="white" fillOpacity="0.18" />
+              <path d="M8 32 L2 46 L9 47 L13 34 Z" fill="white" fillOpacity="0.18" />
+              <path d="M36 32 L42 46 L35 47 L31 34 Z" fill="white" fillOpacity="0.18" />
+            </svg>
+            {/* Initials — bottom center */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 5,
+                left: 0,
+                right: 0,
+                textAlign: "center",
+                fontSize: 14,
+                fontWeight: 900,
+                color: "white",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {initials}
+            </div>
+          </>
+        )}
 
-        {/* Position badge — top center */}
+        {/* Position badge — bottom strip */}
         <div
           style={{
             position: "absolute",
-            top: 3,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: color,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: `${color}dd`,
             color: "white",
             fontSize: 6,
             fontWeight: 900,
             letterSpacing: "0.07em",
-            padding: "1.5px 4px",
-            borderRadius: 2,
-            whiteSpace: "nowrap",
+            padding: "2px 0",
+            textAlign: "center",
           }}
         >
           {pos}
         </div>
-
-        {/* Initials — bottom center */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 5,
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            fontSize: 14,
-            fontWeight: 900,
-            color: "white",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {initials}
-        </div>
       </div>
 
       {/* Name + stat line */}
-      <div style={{ minWidth: 0, paddingTop: 3 }}>
+      <div style={{ minWidth: 0 }}>
         <div
           style={{
             fontSize: 12,
@@ -763,7 +785,7 @@ function RecapTab({
     { label: "TOTAL YARDS",  away: awayStats.totalYds,  home: homeStats.totalYds  },
     { label: "PASSING YDS",  away: awayStats.passYds,   home: homeStats.passYds   },
     { label: "RUSHING YDS",  away: awayStats.rushYds,   home: homeStats.rushYds   },
-    { label: "RECEIVING YDS",away: awayStats.recYds,    home: homeStats.recYds    },
+    { label: "REC. YDS",     away: awayStats.recYds,    home: homeStats.recYds    },
     { label: "TURNOVERS",    away: awayStats.turnovers, home: homeStats.turnovers, lowerBetter: true },
   ];
 

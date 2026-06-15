@@ -633,6 +633,8 @@ export interface GamePlayerStat {
   player_name: string;
   position: string;
   /** @nullable */
+  portrait_id?: number | null;
+  /** @nullable */
   team_id?: number | null;
   is_home_team: boolean;
   /** @nullable */

@@ -997,6 +997,7 @@ export const GetGameResponse = zod.object({
   "player_id": zod.number(),
   "player_name": zod.string(),
   "position": zod.string(),
+  "portrait_id": zod.number().nullish(),
   "team_id": zod.number().nullish(),
   "is_home_team": zod.boolean(),
   "pss_att": zod.number().nullish(),
