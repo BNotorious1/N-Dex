@@ -116,19 +116,33 @@ export async function upsertTeamRoster(
   eaTeamId: number,
   players: RawPlayer[],
 ): Promise<number> {
-  const dbTeam = await db
-    .select({ id: teamsTable.id })
-    .from(teamsTable)
-    .where(and(eq(teamsTable.leagueId, leagueId), eq(teamsTable.eaTeamId, eaTeamId)))
-    .limit(1);
+  const [dbTeam, dbLeague] = await Promise.all([
+    db.select({ id: teamsTable.id })
+      .from(teamsTable)
+      .where(and(eq(teamsTable.leagueId, leagueId), eq(teamsTable.eaTeamId, eaTeamId)))
+      .limit(1),
+    db.select({ season: leaguesTable.season })
+      .from(leaguesTable)
+      .where(eq(leaguesTable.id, leagueId))
+      .limit(1),
+  ]);
 
   if (dbTeam.length === 0) return 0;
   const teamId = dbTeam[0]!.id;
+  const franchiseSeason = dbLeague[0]?.season ?? new Date().getFullYear();
 
   await db.delete(playersTable).where(eq(playersTable.teamId, teamId));
 
   function ni(p: RawPlayer, key: string): number | null {
     return typeof p[key] === "number" ? (p[key] as number) : null;
+  }
+
+  function deriveYearsPro(p: RawPlayer): number | null {
+    const explicit = ni(p, "yearsPro");
+    if (explicit !== null) return explicit;
+    const by = ni(p, "birthYear");
+    if (by === null) return null;
+    return Math.max(0, franchiseSeason - by - 22);
   }
 
   const validPlayers = players
@@ -141,7 +155,7 @@ export async function upsertTeamRoster(
       overall: num(p["playerBestOvr"] ?? p["overall"], 70),
       age: num(p["age"], 25),
       devTrait: ni(p, "devTrait"),
-      yearsPro: ni(p, "yearsPro"),
+      yearsPro: deriveYearsPro(p),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
       presentationId: ni(p, "presentationId"),
       portraitId: ni(p, "portraitId"),
