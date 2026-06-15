@@ -530,43 +530,90 @@ function buildStatLine(p: GamePlayerStat): string {
   return "—";
 }
 
-function PlayerStatRow({ player }: { player: GamePlayerStat }) {
+function hexRgb(hex: string): string {
+  const c = hex.replace("#", "").slice(0, 6);
+  const r = parseInt(c.substring(0, 2), 16) || 0;
+  const g = parseInt(c.substring(2, 4), 16) || 0;
+  const b = parseInt(c.substring(4, 6), 16) || 0;
+  return `${r},${g},${b}`;
+}
+
+function getPosLabel(p: GamePlayerStat): string {
+  if ((p.pss_att ?? 0) > 0) return "QB";
+  if ((p.rsh_att ?? 0) > 0) return "RB";
+  if ((p.rec_catches ?? 0) > 0) return "WR";
+  if (hasDefenseStats(p)) return "DEF";
+  return p.position ?? "—";
+}
+
+const ESPN_SLUG_OVERRIDE: Record<string, string> = { WAS: "wsh" };
+function espnLogoUrl(abbr: string): string {
+  const slug = ESPN_SLUG_OVERRIDE[abbr.toUpperCase()] ?? abbr.toLowerCase();
+  return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
+}
+
+function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: string }) {
   const initials = player.player_name
     .split(" ")
     .map((w) => w[0] ?? "")
     .join("")
     .slice(0, 2)
     .toUpperCase();
+  const pos = getPosLabel(player);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, position: "relative" }}>
+      {/* Avatar with team-color ring + position badge */}
       <div
         style={{
-          width: 44,
-          height: 44,
+          width: 50,
+          height: 50,
           borderRadius: "50%",
-          background: "rgba(0,0,0,0.35)",
-          border: "2px solid rgba(255,255,255,0.25)",
+          flexShrink: 0,
+          position: "relative",
+          background: `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.45) 100%)`,
+          border: `2.5px solid ${color}`,
+          boxShadow: `0 0 14px ${color}55, inset 0 1px 0 rgba(255,255,255,0.12)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 900,
           color: "white",
-          flexShrink: 0,
-          letterSpacing: "-0.01em",
+          letterSpacing: "-0.02em",
         }}
       >
         {initials}
-      </div>
-      <div style={{ minWidth: 0 }}>
         <div
           style={{
-            fontSize: 13,
+            position: "absolute",
+            bottom: -9,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: color,
+            color: "white",
+            fontSize: 6.5,
+            fontWeight: 900,
+            letterSpacing: "0.09em",
+            padding: "2px 5px",
+            borderRadius: 3,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {pos}
+        </div>
+      </div>
+
+      {/* Name + stat line */}
+      <div style={{ minWidth: 0, paddingTop: 5 }}>
+        <div
+          style={{
+            fontSize: 12.5,
             fontWeight: 900,
             color: "white",
             textTransform: "uppercase",
-            letterSpacing: "0.04em",
-            lineHeight: 1.15,
+            letterSpacing: "0.055em",
+            lineHeight: 1,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -576,11 +623,13 @@ function PlayerStatRow({ player }: { player: GamePlayerStat }) {
         </div>
         <div
           style={{
-            fontSize: 10.5,
-            color: "rgba(255,255,255,0.72)",
-            marginTop: 2,
-            lineHeight: 1.3,
+            fontSize: 10,
+            color: "rgba(255,255,255,0.55)",
+            marginTop: 6,
+            lineHeight: 1,
+            fontStyle: "italic",
             fontWeight: 500,
+            letterSpacing: "0.01em",
           }}
         >
           {buildStatLine(player)}
@@ -625,12 +674,19 @@ function RecapTab({
 }: RecapTabProps) {
   const CARD_W = 1200;
   const CARD_H = 630;
+  const HEADER_H = 52;
+  const SCORE_H = 160;
+  const SEP_H = 3;
+  const STATS_H = CARD_H - HEADER_H - SCORE_H - SEP_H;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [downloading, setDownloading] = useState(false);
+  const [awayLogoSrc, setAwayLogoSrc] = useState<string | null>(null);
+  const [homeLogoSrc, setHomeLogoSrc] = useState<string | null>(null);
 
+  // Measure container width for CSS-transform scaling
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -641,17 +697,33 @@ function RecapTab({
     return () => obs.disconnect();
   }, []);
 
+  // Pre-fetch team logos via server proxy so html2canvas can capture them
+  useEffect(() => {
+    async function fetchLogo(abbr: string): Promise<string | null> {
+      try {
+        const url = espnLogoUrl(abbr);
+        const resp = await fetch(`/api/proxy/image?url=${encodeURIComponent(url)}`);
+        if (!resp.ok) return null;
+        const blob = await resp.blob();
+        return URL.createObjectURL(blob);
+      } catch {
+        return null;
+      }
+    }
+    fetchLogo(awayAbbr).then(setAwayLogoSrc);
+    fetchLogo(homeAbbr).then(setHomeLogoSrc);
+  }, [awayAbbr, homeAbbr]);
+
   const awayTop = getTopFour(awayPlayers);
   const homeTop = getTopFour(homePlayers);
   const awayWon = awayScore > homeScore;
   const homeWon = homeScore > awayScore;
-  const noStats =
-    awayPlayers.length === 0 && homePlayers.length === 0;
+  const noStats = awayPlayers.length === 0 && homePlayers.length === 0;
 
-  const teamStats = [
+  const teamStatRows = [
     { label: "TOTAL YARDS",   away: awayStats.totalYds,  home: homeStats.totalYds  },
-    { label: "PASSING YARDS", away: awayStats.passYds,   home: homeStats.passYds   },
-    { label: "RUSHING YARDS", away: awayStats.rushYds,   home: homeStats.rushYds   },
+    { label: "PASSING YDS",   away: awayStats.passYds,   home: homeStats.passYds   },
+    { label: "RUSHING YDS",   away: awayStats.rushYds,   home: homeStats.rushYds   },
     { label: "TURNOVERS",     away: awayStats.turnovers, home: homeStats.turnovers, lowerBetter: true },
   ];
 
@@ -663,8 +735,8 @@ function RecapTab({
       const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#0b1520",
+        allowTaint: false,
+        backgroundColor: "#070b14",
         logging: false,
       });
       const link = document.createElement("a");
@@ -678,9 +750,21 @@ function RecapTab({
     }
   }
 
+  // Shared section-header style used in both player stat columns
+  const sectionHeader = (color: string) => ({
+    fontSize: 9,
+    fontWeight: 900,
+    color: "rgba(255,255,255,0.5)",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.22em",
+    marginBottom: 18,
+    paddingBottom: 10,
+    borderBottom: `2px solid ${color}`,
+  });
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Download button */}
+      {/* Toolbar */}
       <div className="flex justify-end">
         <button
           onClick={handleDownload}
@@ -694,170 +778,243 @@ function RecapTab({
         </button>
       </div>
 
-      {/* Scaled card wrapper */}
-      <div ref={containerRef} className="w-full" style={{ position: "relative", height: CARD_H * scale }}>
+      {/* Scaled card shell */}
+      <div ref={containerRef} style={{ width: "100%", position: "relative", height: CARD_H * scale }}>
         <div
           ref={cardRef}
           style={{
             position: "absolute",
-            top: 0,
-            left: 0,
+            top: 0, left: 0,
             width: CARD_W,
             height: CARD_H,
             transformOrigin: "top left",
             transform: `scale(${scale})`,
-            backgroundColor: "#0b1520",
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
             fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
             overflow: "hidden",
-            borderRadius: 10,
+            borderRadius: 12,
+            // Dark charcoal base + diagonal hairline grit texture
+            backgroundColor: "#070b14",
+            backgroundImage: [
+              "repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(255,255,255,0.014) 5px, rgba(255,255,255,0.014) 6px)",
+              "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.03) 0%, transparent 70%)",
+            ].join(", "),
           }}
         >
-          {/* ── Header ── */}
+
+          {/* ──────────────────────────────────────── */}
+          {/* HEADER                                    */}
+          {/* ──────────────────────────────────────── */}
           <div
             style={{
-              textAlign: "center",
-              padding: "18px 40px 14px",
-              background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 100%)",
+              height: HEADER_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              borderBottom: "1px solid rgba(255,255,255,0.07)",
+              background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 100%)",
             }}
           >
+            {/* Left team color bar */}
+            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 5, background: awayColor }} />
+            {/* Right team color bar */}
+            <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 5, background: homeColor }} />
+
             <div
               style={{
-                fontSize: 34,
+                fontSize: 15,
                 fontWeight: 900,
                 color: "white",
                 textTransform: "uppercase",
-                letterSpacing: "0.06em",
+                letterSpacing: "0.2em",
                 lineHeight: 1,
               }}
             >
-              [{leagueName}] – WEEK {week}
+              {leagueName} · WEEK {week}
             </div>
           </div>
 
-          {/* ── Scoreboard ── */}
-          <div style={{ display: "flex", height: 126 }}>
-            {/* Away team panel */}
+          {/* ──────────────────────────────────────── */}
+          {/* SCOREBOARD                                */}
+          {/* ──────────────────────────────────────── */}
+          <div style={{ display: "flex", height: SCORE_H }}>
+
+            {/* Away panel */}
             <div
               style={{
                 flex: 1,
-                background: awayColor,
+                position: "relative",
+                overflow: "hidden",
+                background: `linear-gradient(108deg, ${awayColor} 0%, ${awayColor}bb 100%)`,
                 display: "flex",
                 alignItems: "center",
-                padding: "0 28px",
-                gap: 18,
+                padding: "0 22px 0 20px",
+                gap: 16,
               }}
             >
+              {/* Ghost watermark abbr */}
               <div
                 style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.25)",
-                  border: "2.5px solid rgba(255,255,255,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 16,
+                  position: "absolute",
+                  right: -10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 130,
                   fontWeight: 900,
-                  color: "white",
-                  flexShrink: 0,
-                  letterSpacing: "-0.02em",
+                  color: "rgba(0,0,0,0.18)",
+                  letterSpacing: "-0.06em",
+                  lineHeight: 1,
+                  pointerEvents: "none",
+                  userSelect: "none",
                 }}
               >
                 {awayAbbr}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 3 }}>AWAY</div>
-                <div style={{ fontSize: 26, fontWeight: 900, color: "white", lineHeight: 1, textTransform: "uppercase", letterSpacing: "0.02em" }}>
+
+              {/* Logo */}
+              {awayLogoSrc ? (
+                <img
+                  src={awayLogoSrc}
+                  style={{ width: 82, height: 82, objectFit: "contain", flexShrink: 0, filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.5))" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 82, height: 82, borderRadius: "50%", flexShrink: 0,
+                    background: "rgba(0,0,0,0.3)", border: "2px solid rgba(255,255,255,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 18, fontWeight: 900, color: "white",
+                  }}
+                >
+                  {awayAbbr}
+                </div>
+              )}
+
+              {/* Team info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>AWAY</div>
+                <div style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
                   {awayName}
                 </div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.13em", marginTop: 5 }}>
+                  {awayAbbr}
+                </div>
               </div>
+
+              {/* Score */}
               <div
                 style={{
-                  fontSize: 76,
+                  fontSize: 88,
                   fontWeight: 900,
-                  color: awayWon ? "white" : "rgba(255,255,255,0.5)",
                   lineHeight: 1,
+                  letterSpacing: "-0.04em",
                   fontVariantNumeric: "tabular-nums",
-                  letterSpacing: "-0.02em",
+                  color: awayWon ? "white" : "rgba(255,255,255,0.42)",
+                  flexShrink: 0,
+                  textShadow: awayWon ? `0 0 30px rgba(255,255,255,0.25)` : "none",
                 }}
               >
                 {awayScore}
               </div>
             </div>
 
-            {/* FINAL center box */}
+            {/* FINAL center column */}
             <div
               style={{
-                width: 110,
-                background: "#070d16",
+                width: 96,
+                flexShrink: 0,
+                background: "#03070f",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                flexShrink: 0,
+                gap: 6,
+                borderLeft: `3px solid ${awayColor}55`,
+                borderRight: `3px solid ${homeColor}55`,
               }}
             >
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 900,
-                  color: "white",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                }}
-              >
+              <div style={{ fontSize: 9, fontWeight: 900, color: "rgba(255,255,255,0.28)", textTransform: "uppercase", letterSpacing: "0.15em" }}>
                 FINAL
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: "rgba(255,255,255,0.15)", letterSpacing: "0.04em" }}>
+                —
               </div>
             </div>
 
-            {/* Home team panel */}
+            {/* Home panel */}
             <div
               style={{
                 flex: 1,
-                background: homeColor,
+                position: "relative",
+                overflow: "hidden",
+                background: `linear-gradient(252deg, ${homeColor} 0%, ${homeColor}bb 100%)`,
                 display: "flex",
                 alignItems: "center",
-                padding: "0 28px",
-                gap: 18,
+                padding: "0 20px 0 22px",
+                gap: 16,
                 flexDirection: "row-reverse",
               }}
             >
+              {/* Ghost watermark abbr */}
               <div
                 style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.25)",
-                  border: "2.5px solid rgba(255,255,255,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 16,
+                  position: "absolute",
+                  left: -10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 130,
                   fontWeight: 900,
-                  color: "white",
-                  flexShrink: 0,
-                  letterSpacing: "-0.02em",
+                  color: "rgba(0,0,0,0.18)",
+                  letterSpacing: "-0.06em",
+                  lineHeight: 1,
+                  pointerEvents: "none",
+                  userSelect: "none",
                 }}
               >
                 {homeAbbr}
               </div>
-              <div style={{ flex: 1, textAlign: "right" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 3 }}>HOME</div>
-                <div style={{ fontSize: 26, fontWeight: 900, color: "white", lineHeight: 1, textTransform: "uppercase", letterSpacing: "0.02em" }}>
+
+              {/* Logo */}
+              {homeLogoSrc ? (
+                <img
+                  src={homeLogoSrc}
+                  style={{ width: 82, height: 82, objectFit: "contain", flexShrink: 0, filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.5))" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 82, height: 82, borderRadius: "50%", flexShrink: 0,
+                    background: "rgba(0,0,0,0.3)", border: "2px solid rgba(255,255,255,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 18, fontWeight: 900, color: "white",
+                  }}
+                >
+                  {homeAbbr}
+                </div>
+              )}
+
+              {/* Team info */}
+              <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>HOME</div>
+                <div style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
                   {homeName}
                 </div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.13em", marginTop: 5 }}>
+                  {homeAbbr}
+                </div>
               </div>
+
+              {/* Score */}
               <div
                 style={{
-                  fontSize: 76,
+                  fontSize: 88,
                   fontWeight: 900,
-                  color: homeWon ? "white" : "rgba(255,255,255,0.5)",
                   lineHeight: 1,
+                  letterSpacing: "-0.04em",
                   fontVariantNumeric: "tabular-nums",
-                  letterSpacing: "-0.02em",
+                  color: homeWon ? "white" : "rgba(255,255,255,0.42)",
+                  flexShrink: 0,
+                  textShadow: homeWon ? `0 0 30px rgba(255,255,255,0.25)` : "none",
                 }}
               >
                 {homeScore}
@@ -865,90 +1022,82 @@ function RecapTab({
             </div>
           </div>
 
-          {/* ── Stats section ── */}
-          <div style={{ display: "flex", height: CARD_H - 66 - 126, overflow: "hidden" }}>
+          {/* ──────────────────────────────────────── */}
+          {/* COLOR SEPARATOR                           */}
+          {/* ──────────────────────────────────────── */}
+          <div style={{ height: SEP_H, display: "flex" }}>
+            <div style={{ flex: 1, background: awayColor }} />
+            <div style={{ width: 96, background: "#03070f" }} />
+            <div style={{ flex: 1, background: homeColor }} />
+          </div>
+
+          {/* ──────────────────────────────────────── */}
+          {/* STATS SECTION                             */}
+          {/* ──────────────────────────────────────── */}
+          <div style={{ display: "flex", height: STATS_H, overflow: "hidden" }}>
 
             {/* Away player stats */}
             <div
               style={{
                 flex: 1,
-                background: `linear-gradient(135deg, ${awayColor}e8 0%, ${awayColor}b8 100%)`,
-                padding: "20px 26px",
+                padding: "20px 24px 16px",
                 overflow: "hidden",
+                borderRight: "1px solid rgba(255,255,255,0.06)",
+                background: `linear-gradient(180deg, rgba(${hexRgb(awayColor)},0.18) 0%, rgba(${hexRgb(awayColor)},0.06) 100%)`,
               }}
             >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 900,
-                  color: "white",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                  marginBottom: 16,
-                  textAlign: "center",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                  paddingBottom: 10,
-                }}
-              >
-                PLAYER STATS
-              </div>
+              <div style={sectionHeader(awayColor)}>PLAYER STATS</div>
               {noStats ? (
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", textAlign: "center", marginTop: 40 }}>No stats recorded</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 32 }}>No stats recorded</div>
               ) : (
-                awayTop.map((p, i) => <PlayerStatRow key={i} player={p} />)
+                awayTop.map((p, i) => <PlayerStatRow key={i} player={p} color={awayColor} />)
               )}
             </div>
 
             {/* Team stats center */}
             <div
               style={{
-                width: 272,
-                background: "#070d16",
-                padding: "20px 0",
+                width: 226,
                 flexShrink: 0,
-                borderLeft: "1px solid rgba(255,255,255,0.06)",
+                background: "#03060e",
+                padding: "20px 0 16px",
                 borderRight: "1px solid rgba(255,255,255,0.06)",
               }}
             >
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 9,
                   fontWeight: 900,
-                  color: "white",
+                  color: "rgba(255,255,255,0.35)",
                   textTransform: "uppercase",
-                  letterSpacing: "0.18em",
+                  letterSpacing: "0.22em",
                   marginBottom: 14,
                   textAlign: "center",
-                  fontStyle: "italic",
-                  borderBottom: "1px solid rgba(255,255,255,0.08)",
                   paddingBottom: 10,
-                  margin: "0 20px 14px",
+                  borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  margin: "0 18px 14px",
                 }}
               >
                 TEAM STATS
               </div>
-              {teamStats.map(({ label, away, home, lowerBetter }) => {
+              {teamStatRows.map(({ label, away, home, lowerBetter }) => {
                 const awayW = lowerBetter ? away < home : away > home;
                 const homeW = lowerBetter ? home < away : home > away;
                 return (
                   <div
                     key={label}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "11px 16px",
-                      borderBottom: "1px solid rgba(255,255,255,0.05)",
-                    }}
+                    style={{ display: "flex", alignItems: "center", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
                   >
                     <div
                       style={{
-                        width: 60,
-                        fontSize: 26,
+                        width: 58,
+                        fontSize: 28,
                         fontWeight: 900,
-                        color: awayW ? "white" : "rgba(255,255,255,0.35)",
+                        color: awayW ? "white" : "rgba(255,255,255,0.3)",
                         textAlign: "center",
                         fontVariantNumeric: "tabular-nums",
-                        letterSpacing: "-0.01em",
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1,
                       }}
                     >
                       {away}
@@ -956,26 +1105,27 @@ function RecapTab({
                     <div
                       style={{
                         flex: 1,
-                        fontSize: 8.5,
+                        fontSize: 8,
                         fontWeight: 700,
-                        color: "rgba(255,255,255,0.38)",
+                        color: "rgba(255,255,255,0.32)",
                         textTransform: "uppercase",
-                        letterSpacing: "0.09em",
+                        letterSpacing: "0.1em",
                         textAlign: "center",
-                        lineHeight: 1.3,
+                        lineHeight: 1.4,
                       }}
                     >
                       {label}
                     </div>
                     <div
                       style={{
-                        width: 60,
-                        fontSize: 26,
+                        width: 58,
+                        fontSize: 28,
                         fontWeight: 900,
-                        color: homeW ? "white" : "rgba(255,255,255,0.35)",
+                        color: homeW ? "white" : "rgba(255,255,255,0.3)",
                         textAlign: "center",
                         fontVariantNumeric: "tabular-nums",
-                        letterSpacing: "-0.01em",
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1,
                       }}
                     >
                       {home}
@@ -989,45 +1139,31 @@ function RecapTab({
             <div
               style={{
                 flex: 1,
-                background: `linear-gradient(135deg, ${homeColor}b8 0%, ${homeColor}e8 100%)`,
-                padding: "20px 26px",
+                padding: "20px 24px 16px",
                 overflow: "hidden",
+                background: `linear-gradient(180deg, rgba(${hexRgb(homeColor)},0.18) 0%, rgba(${hexRgb(homeColor)},0.06) 100%)`,
               }}
             >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 900,
-                  color: "white",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                  marginBottom: 16,
-                  textAlign: "center",
-                  borderBottom: "1px solid rgba(255,255,255,0.2)",
-                  paddingBottom: 10,
-                }}
-              >
-                PLAYER STATS
-              </div>
+              <div style={sectionHeader(homeColor)}>PLAYER STATS</div>
               {noStats ? (
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", textAlign: "center", marginTop: 40 }}>No stats recorded</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 32 }}>No stats recorded</div>
               ) : (
-                homeTop.map((p, i) => <PlayerStatRow key={i} player={p} />)
+                homeTop.map((p, i) => <PlayerStatRow key={i} player={p} color={homeColor} />)
               )}
             </div>
           </div>
 
-          {/* ── Branding watermark ── */}
+          {/* N-DEX watermark */}
           <div
             style={{
               position: "absolute",
-              bottom: 9,
-              right: 16,
-              fontSize: 10,
+              bottom: 10,
+              right: 18,
+              fontSize: 9,
               fontWeight: 900,
-              color: "rgba(255,255,255,0.18)",
+              color: "rgba(255,255,255,0.15)",
               textTransform: "uppercase",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.2em",
             }}
           >
             N-DEX

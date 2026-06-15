@@ -6,6 +6,7 @@ import playersRouter from "./players";
 import gamesRouter from "./games";
 import importRouter from "./import";
 import eaRouter from "./ea";
+import proxyRouter from "./proxy";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/teams", teamsRouter);
 router.use("/players", playersRouter);
 router.use("/games", gamesRouter);
 router.use("/import", importRouter);
+router.use(proxyRouter);
 
 export default router;
