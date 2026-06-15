@@ -549,13 +549,13 @@ export function buildStatSet(
   if (statType === "passing") {
     return {
       pssAtt:    num(s["pssAtt"]    ?? s["passAtt"]),
-      pssCmp:    num(s["pssCmp"]    ?? s["passCmp"]),
+      pssCmp:    num(s["pssCmp"]    ?? s["passComp"]   ?? s["passCmp"]),
       pssYds:    num(s["pssYds"]    ?? s["passYds"]),
-      pssTds:    num(s["passTDs"]   ?? s["pssTDs"]   ?? s["passTds"]),
+      pssTds:    num(s["passTDs"]   ?? s["pssTDs"]     ?? s["passTds"]),
       pssInts:   num(s["pssInts"]   ?? s["passInts"]),
       pssSacks:  num(s["pssSacks"]  ?? s["passSacks"]),
-      pssLng:    num(s["pssLng"]    ?? s["passLng"]),
-      pssRating: num(s["pssRate"]   ?? s["pssRating"] ?? s["passRating"]),
+      pssLng:    num(s["pssLng"]    ?? s["passLongest"] ?? s["passLng"]),
+      pssRating: num(s["pssRate"]   ?? s["passerRating"] ?? s["passRating"] ?? s["pssRating"]),
     };
   }
   if (statType === "rushing") {
@@ -563,8 +563,8 @@ export function buildStatSet(
       rshAtt:  num(s["rshAtt"]  ?? s["rushAtt"]),
       rshYds:  num(s["rshYds"]  ?? s["rushYds"]),
       rshTds:  num(s["rshTDs"]  ?? s["rushTDs"]  ?? s["rshTds"]),
-      rshLng:  num(s["rshLng"]  ?? s["rushLng"]),
-      fmb:     num(s["fmb"]     ?? s["fumbles"]),
+      rshLng:  num(s["rshLng"]  ?? s["rushLongest"] ?? s["rushLng"]),
+      fmb:     num(s["fmb"]     ?? s["rushFum"]   ?? s["fumbles"]),
       fmbLost: num(s["fmbLost"] ?? s["fumLost"]),
     };
   }
@@ -573,41 +573,41 @@ export function buildStatSet(
       recCatches: num(s["recCatches"] ?? s["recReceptions"]),
       recTgts:    num(s["recTgts"]    ?? s["recTargets"]),
       recYds:     num(s["recYds"]     ?? s["recYards"]),
-      recTds:     num(s["recTDs"]     ?? s["recTds"]    ?? s["recTouchdowns"]),
+      recTds:     num(s["recTDs"]     ?? s["recTds"]      ?? s["recTouchdowns"]),
       recDrops:   num(s["recDrops"]),
-      recLng:     num(s["recLng"]     ?? s["recLong"]),
-      recYac:     num(s["recYac"]),
+      recLng:     num(s["recLng"]     ?? s["recLongest"]  ?? s["recLong"]),
+      recYac:     num(s["recYac"]     ?? s["recYdsAfterCatch"]),
     };
   }
   if (statType === "defense") {
     return {
       defTotalTackles: num(s["defTotalTackles"]),
-      defTfl:          num(s["defTackleForLoss"] ?? s["defTFL"]),
+      defTfl:          num(s["defTackleForLoss"] ?? s["defTFL"]         ?? s["defTfl"]),
       defSacks:        num(s["defSacks"]),
       defInts:         num(s["defInts"]),
-      defFf:           num(s["defForcedFum"] ?? s["defFF"]),
-      defPd:           num(s["defPassDef"] ?? s["defPD"]),
-      defTds:          num(s["defTDs"] ?? s["defTds"]),
+      defFf:           num(s["defForcedFum"]     ?? s["defFF"]          ?? s["defFf"]),
+      defPd:           num(s["defDeflections"]   ?? s["defPassDef"]     ?? s["defPD"]),
+      defTds:          num(s["defTDs"]           ?? s["defTds"]),
       defFumRec:       num(s["defFumRec"]),
     };
   }
   if (statType === "kicking") {
     return {
-      fgAtt:  num(s["fGAtt"] ?? s["fgAtt"]),
-      fgMade: num(s["fGMade"] ?? s["fgMade"]),
-      fgLng:  num(s["fGLng"] ?? s["fgLng"]),
-      xpAtt:  num(s["xPAtt"] ?? s["xpAtt"]),
-      xpMade: num(s["xPMade"] ?? s["xpMade"]),
+      fgAtt:  num(s["fGAtt"]      ?? s["fgAtt"]),
+      fgMade: num(s["fGMade"]     ?? s["fgMade"]),
+      fgLng:  num(s["fGLongest"]  ?? s["fGLng"]  ?? s["fgLng"]),
+      xpAtt:  num(s["xPAtt"]      ?? s["xpAtt"]),
+      xpMade: num(s["xPMade"]     ?? s["xpMade"]),
     };
   }
   // punting
   return {
     puntAtt:  num(s["puntAtt"]),
     puntYds:  num(s["puntYds"]),
-    puntAvg:  num(s["puntAvg"] ?? s["puntYdsPerAtt"]),
-    puntLng:  num(s["puntLng"]),
-    puntIn20: num(s["puntIn20"]),
-    puntTbs:  num(s["puntTBs"] ?? s["puntTbs"]),
+    puntAvg:  num(s["puntAvg"]    ?? s["puntYdsPerAtt"]),
+    puntLng:  num(s["puntLng"]    ?? s["puntLongest"]),
+    puntIn20: num(s["puntsIn20"]  ?? s["puntIn20"]),
+    puntTbs:  num(s["puntTBs"]    ?? s["puntTbs"]),
   };
 }
 
