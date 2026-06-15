@@ -508,38 +508,48 @@ function getTopFour(players: GamePlayerStat[]): GamePlayerStat[] {
 
 const RUSHER_POSITIONS = new Set(["HB", "RB", "FB"]);
 
-function buildStatLine(p: GamePlayerStat): string {
+function buildStatLine(p: GamePlayerStat): [string, string | null] {
   const pos = (p.position ?? "").toUpperCase();
   if ((p.pss_att ?? 0) > 0 && pos === "QB") {
     const parts = [`${p.pss_cmp ?? 0}/${p.pss_att ?? 0}`, `${p.pss_yds ?? 0} YDS`];
     if (p.pss_tds) parts.push(`${p.pss_tds} TD`);
     if (p.pss_ints) parts.push(`${p.pss_ints} INT`);
-    if ((p.rsh_att ?? 0) > 0) parts.push(`${p.rsh_att} CAR, ${p.rsh_yds ?? 0} RSH`);
-    return parts.join(", ");
+    let secondary: string | null = null;
+    if ((p.rsh_att ?? 0) > 0) {
+      const rsh = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} RSH`];
+      if (p.rsh_tds) rsh.push(`${p.rsh_tds} TD`);
+      secondary = rsh.join(", ");
+    }
+    return [parts.join(", "), secondary];
   }
   if (RUSHER_POSITIONS.has(pos) && (p.rsh_att ?? 0) > 0) {
     const parts = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} YDS`];
     if (p.rsh_tds) parts.push(`${p.rsh_tds} TD`);
-    if ((p.rec_catches ?? 0) > 0) parts.push(`${p.rec_catches} REC, ${p.rec_yds ?? 0} REC YDS`);
-    return parts.join(", ");
+    let secondary: string | null = null;
+    if ((p.rec_catches ?? 0) > 0) {
+      const rec = [`${p.rec_catches} REC`, `${p.rec_yds ?? 0} YDS`];
+      if (p.rec_tds) rec.push(`${p.rec_tds} TD`);
+      secondary = rec.join(", ");
+    }
+    return [parts.join(", "), secondary];
   }
   if ((p.rec_catches ?? 0) > 0) {
     const parts = [`${p.rec_catches} REC`, `${p.rec_yds ?? 0} YDS`];
     if (p.rec_tds) parts.push(`${p.rec_tds} TD`);
-    return parts.join(", ");
+    return [parts.join(", "), null];
   }
   if ((p.rsh_att ?? 0) > 0) {
     const parts = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} YDS`];
     if (p.rsh_tds) parts.push(`${p.rsh_tds} TD`);
-    return parts.join(", ");
+    return [parts.join(", "), null];
   }
   if (hasDefenseStats(p)) {
     const parts = [`${p.def_total_tackles ?? 0} TKL`];
     if (p.def_sacks) parts.push(`${p.def_sacks} SCK`);
     if (p.def_pd) parts.push(`${p.def_pd} PD`);
-    return parts.join(", ");
+    return [parts.join(", "), null];
   }
-  return "—";
+  return ["—", null];
 }
 
 function hexRgb(hex: string): string {
@@ -687,17 +697,20 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
         >
           {player.player_name}
         </div>
-        <div
-          style={{
-            fontSize: 10,
-            color: "rgba(255,255,255,0.55)",
-            marginTop: 5,
-            lineHeight: 1,
-            fontWeight: 500,
-          }}
-        >
-          {buildStatLine(player)}
-        </div>
+        {buildStatLine(player).map((line, i) => line && (
+          <div
+            key={i}
+            style={{
+              fontSize: 10,
+              color: "rgba(255,255,255,0.55)",
+              marginTop: 5,
+              lineHeight: 1,
+              fontWeight: 500,
+            }}
+          >
+            {line}
+          </div>
+        ))}
       </div>
     </div>
   );
