@@ -580,13 +580,13 @@ function RushingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "pos",     label: "Pos",   align: "center",  sortVal: p => p.player.position, render: p => <PosBadge pos={p.player.position} /> },
     { key: "gp",      label: "GP",    title: "Games Played", align: "center", sortVal: p => p.gp,         render: p => p.gp },
     { key: "rsh_att", label: "CAR",   title: "Carries",     align: "center", sortVal: p => n(p.rsh_att), render: p => d(n(p.rsh_att)) },
-    { key: "rsh_yds", label: "YDS",   title: "Rush Yards",  align: "center", bold: true, sortVal: p => n(p.rsh_yds), render: p => <span className="font-black text-[#ffffffb3] border-t-[#ffffffb3] border-r-[#ffffffb3] border-b-[#ffffffb3] border-l-[#ffffffb3]">{d(n(p.rsh_yds))}</span> },
+    { key: "rsh_yds", label: "YDS",   title: "Rush Yards",  align: "center", bold: true, sortVal: p => n(p.rsh_yds), render: p => <span className="font-black text-[#ffffffb3]">{d(n(p.rsh_yds))}</span> },
     { key: "ypg",     label: "YDS/G", title: "Yards per Game", align: "center", sortVal: p => n(p.rsh_yds) / Math.max(p.gp, 1), render: p => perG(n(p.rsh_yds), p.gp) },
     { key: "ypc",     label: "AVG",   title: "Yards per Carry", align: "center", sortVal: p => n(p.rsh_yds) / Math.max(n(p.rsh_att), 1), render: p => per(n(p.rsh_yds), n(p.rsh_att)) },
-    { key: "rsh_tds", label: "TD",    title: "Rush TDs",    align: "center", sortVal: p => n(p.rsh_tds), render: p => n(p.rsh_tds) > 0 ? <span className="font-bold text-[#ffffffb3] border-t-[#ffffffb3] border-r-[#ffffffb3] border-b-[#ffffffb3] border-l-[#ffffffb3]">{p.rsh_tds}</span> : "—" },
+    { key: "rsh_tds", label: "TD",    title: "Rush TDs",    align: "center", sortVal: p => n(p.rsh_tds), render: p => n(p.rsh_tds) > 0 ? <span className="font-bold text-[#ffffffb3]">{p.rsh_tds}</span> : "—" },
     { key: "rsh_lng", label: "LNG",   title: "Long Rush",   align: "center", sortVal: p => n(p.rsh_lng), render: p => d(n(p.rsh_lng)) },
     { key: "rsh_btk", label: "BTK",   title: "Broken Tackles", align: "center", sortVal: p => n(p.rsh_btk), render: p => d(n(p.rsh_btk)) },
-    { key: "fmb",     label: "FMB",   title: "Fumbles",     align: "center", sortVal: p => n(p.fmb),     render: p => n(p.fmb) > 0 ? <span className="text-[#ffffffb3] border-t-[#ffffffb3] border-r-[#ffffffb3] border-b-[#ffffffb3] border-l-[#ffffffb3]">{p.fmb}</span> : "—" },
+    { key: "fmb",     label: "FMB",   title: "Fumbles",     align: "center", sortVal: p => n(p.fmb),     render: p => n(p.fmb) > 0 ? <span className="text-[#ffffffb3]">{p.fmb}</span> : "—" },
   ];
   return (
     <SortableTable
