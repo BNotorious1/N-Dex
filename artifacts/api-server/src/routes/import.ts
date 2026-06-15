@@ -27,6 +27,10 @@ function num(v: unknown, def = 0): number {
   return Math.round(n);
 }
 
+function numDec(v: unknown, def = 0): number {
+  return typeof v === "number" ? v : def;
+}
+
 function str(v: unknown, def = ""): string {
   return typeof v === "string" ? v : String(def);
 }
@@ -555,7 +559,7 @@ export function buildStatSet(
       pssInts:   num(s["pssInts"]   ?? s["passInts"]),
       pssSacks:  num(s["pssSacks"]  ?? s["passSacks"]),
       pssLng:    num(s["pssLng"]    ?? s["passLongest"] ?? s["passLng"]),
-      pssRating: num(s["pssRate"]   ?? s["passerRating"] ?? s["passRating"] ?? s["pssRating"]),
+      pssRating: numDec(s["pssRate"]   ?? s["passerRating"] ?? s["passRating"] ?? s["pssRating"]),
     };
   }
   if (statType === "rushing") {
@@ -583,8 +587,8 @@ export function buildStatSet(
   if (statType === "defense") {
     return {
       defTotalTackles: num(s["defTotalTackles"]),
-      defTfl:          num(s["defTackleForLoss"] ?? s["defTFL"]         ?? s["defTfl"]),
-      defSacks:        num(s["defSacks"]),
+      defTfl:          numDec(s["defTackleForLoss"] ?? s["defTFL"]         ?? s["defTfl"]),
+      defSacks:        numDec(s["defSacks"]),
       defInts:         num(s["defInts"]),
       defFf:           num(s["defForcedFum"]     ?? s["defFF"]          ?? s["defFf"]),
       defPd:           num(s["defDeflections"]   ?? s["defPassDef"]     ?? s["defPD"]),

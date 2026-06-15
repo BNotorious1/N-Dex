@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, unique } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, real, unique } from "drizzle-orm/pg-core";
 import { playersTable } from "./players";
 import { leaguesTable } from "./leagues";
 import { gamesTable } from "./games";
@@ -20,7 +20,7 @@ export const playerGameStatsTable = pgTable("player_game_stats", {
   pssInts: integer("pss_ints"),
   pssSacks: integer("pss_sacks"),
   pssLng: integer("pss_lng"),
-  pssRating: integer("pss_rating"),
+  pssRating: real("pss_rating"),
   // Rushing
   rshAtt: integer("rsh_att"),
   rshYds: integer("rsh_yds"),
@@ -39,8 +39,8 @@ export const playerGameStatsTable = pgTable("player_game_stats", {
   recYac: integer("rec_yac"),
   // Defense
   defTotalTackles: integer("def_total_tackles"),
-  defTfl: integer("def_tfl"),
-  defSacks: integer("def_sacks"),
+  defTfl: real("def_tfl"),
+  defSacks: real("def_sacks"),
   defInts: integer("def_ints"),
   defFf: integer("def_ff"),
   defPd: integer("def_pd"),

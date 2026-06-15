@@ -23,7 +23,13 @@ const SUB_TABS: { key: SubTab; label: string }[] = [
   { key: "team",      label: "Team" },
 ];
 
-const POSITIONS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
+const POSITIONS = [
+  "QB", "HB", "WR", "TE",
+  "LT", "LG", "C", "RG", "RT",
+  "DL", "MIKE", "SAM", "WILL",
+  "CB", "FS", "SS",
+  "K", "P",
+];
 
 const C = {
   passing:  "#00C8FF",
@@ -34,7 +40,7 @@ const C = {
   team:     "#64748b",
 };
 
-function n(v?: number): number { return v ?? 0; }
+function n(v?: number | null): number { return v ?? 0; }
 function pct(made: number, att: number): string {
   return att > 0 ? ((made / att) * 100).toFixed(1) : "—";
 }
@@ -45,10 +51,19 @@ function per(yds: number, att: number): string {
   return att > 0 ? (yds / att).toFixed(1) : "—";
 }
 function d(v: number): string { return v > 0 ? String(v) : "—"; }
+function rtg(v: number): string { return v > 0 ? v.toFixed(2) : "—"; }
+function half(v: number): string { return v > 0 ? v.toFixed(1) : "—"; }
 
 function eaPortraitUrl(portraitId: number): string {
   const direct = `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
   return `/api/proxy/image?url=${encodeURIComponent(direct)}`;
+}
+
+function rowGradient(color: string | null | undefined): React.CSSProperties {
+  if (!color) return {};
+  return {
+    background: `linear-gradient(90deg, ${color}22 0%, ${color}0d 45%, transparent 100%)`,
+  };
 }
 
 export default function StatisticsSection({ leagueId }: { leagueId: number }) {
@@ -259,7 +274,7 @@ const LEADER_DEFS: LeaderDef[] = [
   { label: "Pass Yards",   color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_yds),   display: p => String(n(p.pss_yds)),  unit: "YDS" },
   { label: "Pass TDs",     color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_tds),   display: p => String(n(p.pss_tds)),  unit: "TD" },
   { label: "Comp %",       color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_cmp) / Math.max(n(p.pss_att), 1), display: p => pct(n(p.pss_cmp), n(p.pss_att)), unit: "PCT" },
-  { label: "QB Rating",    color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_rating), display: p => String(n(p.pss_rating)), unit: "RTG" },
+  { label: "QB Rating",    color: C.passing,   pool: d => d.passing,   scoreOf: p => n(p.pss_rating), display: p => rtg(n(p.pss_rating)), unit: "RTG" },
   { label: "Rush Yards",   color: C.rushing,   pool: d => d.rushing,   scoreOf: p => n(p.rsh_yds),   display: p => String(n(p.rsh_yds)),  unit: "YDS" },
   { label: "Rush TDs",     color: C.rushing,   pool: d => d.rushing,   scoreOf: p => n(p.rsh_tds),   display: p => String(n(p.rsh_tds)),  unit: "TD" },
   { label: "Rush YPC",     color: C.rushing,   pool: d => d.rushing,   scoreOf: p => n(p.rsh_yds) / Math.max(n(p.rsh_att), 1), display: p => per(n(p.rsh_yds), n(p.rsh_att)), unit: "YPC" },
@@ -267,7 +282,7 @@ const LEADER_DEFS: LeaderDef[] = [
   { label: "Rec TDs",      color: C.receiving, pool: d => d.receiving, scoreOf: p => n(p.rec_tds),   display: p => String(n(p.rec_tds)),  unit: "TD" },
   { label: "Receptions",   color: C.receiving, pool: d => d.receiving, scoreOf: p => n(p.rec_catches), display: p => String(n(p.rec_catches)), unit: "REC" },
   { label: "Tackles",      color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_total_tackles), display: p => String(n(p.def_total_tackles)), unit: "TKL" },
-  { label: "Sacks",        color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_sacks), display: p => String(n(p.def_sacks)), unit: "SCK" },
+  { label: "Sacks",        color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_sacks), display: p => half(n(p.def_sacks)), unit: "SCK" },
   { label: "Interceptions",color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_ints),  display: p => String(n(p.def_ints)),  unit: "INT" },
   { label: "Pass Deflect", color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_pd),    display: p => String(n(p.def_pd)),    unit: "PD" },
   { label: "Forced Fmb",   color: C.defense,   pool: d => d.defense,   scoreOf: p => n(p.def_ff),    display: p => String(n(p.def_ff)),    unit: "FF" },
@@ -341,12 +356,14 @@ function SortableTable<T>({
   defaultKey,
   defaultDir = "desc",
   emptyMsg = "No data",
+  getRowStyle,
 }: {
   rows: T[];
   cols: ColDef<T>[];
   defaultKey: string;
   defaultDir?: "asc" | "desc";
   emptyMsg?: string;
+  getRowStyle?: (row: T) => React.CSSProperties;
 }) {
   const [sortKey, setSortKey] = useState(defaultKey);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(defaultDir);
@@ -403,13 +420,17 @@ function SortableTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody style={{ fontFamily: "'Lora', Georgia, serif" }}>
           {sorted.length === 0 ? (
             <tr>
               <td colSpan={cols.length + 1} className="py-10 text-center text-white/25 text-[11px]">{emptyMsg}</td>
             </tr>
           ) : pageRows.map((row, i) => (
-            <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors last:border-0">
+            <tr
+              key={i}
+              className="border-b border-white/5 transition-colors last:border-0"
+              style={getRowStyle ? getRowStyle(row) : undefined}
+            >
               <td className="px-3 py-2 text-white/20 text-[11px]">{firstRank + i + 1}</td>
               {cols.map(col => (
                 <td
@@ -483,17 +504,17 @@ function PlayerCell({ p }: { p: PlayerSeasonStats }) {
 
   return (
     <div className="flex items-center gap-2.5">
-      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/8">
+      <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/10">
         {hasPortrait ? (
           <img
             src={eaPortraitUrl(p.player.portrait_id!)}
             alt={p.player.name}
-            className="w-full h-full object-cover object-top"
+            className="w-full h-full object-cover object-[center_10%] scale-125 translate-y-0.5"
             loading="lazy"
             onError={() => setPortraitErr(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/25">
+          <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-white/30">
             {p.player.name.charAt(0)}
           </div>
         )}
@@ -528,21 +549,28 @@ function PosBadge({ pos }: { pos: string }) {
 
 function PassingTab({ players }: { players: PlayerSeasonStats[] }) {
   const cols: ColDef<PlayerSeasonStats>[] = [
-    { key: "player",     label: "Player",  align: "left", bold: true, sortVal: p => p.player.name,  render: p => <PlayerCell p={p} /> },
-    { key: "pos",        label: "Pos",     align: "center", sortVal: p => p.player.position, render: p => <PosBadge pos={p.player.position} /> },
-    { key: "gp",         label: "GP",      title: "Games Played",  align: "center", sortVal: p => p.gp,          render: p => p.gp },
-    { key: "pss_att",    label: "ATT",     title: "Attempts",      align: "center", sortVal: p => n(p.pss_att),  render: p => d(n(p.pss_att)) },
-    { key: "pss_cmp",    label: "CMP",     title: "Completions",   align: "center", sortVal: p => n(p.pss_cmp),  render: p => d(n(p.pss_cmp)) },
-    { key: "cmp_pct",    label: "PCT",     title: "Completion %",  align: "center", sortVal: p => n(p.pss_cmp) / Math.max(n(p.pss_att), 1), render: p => pct(n(p.pss_cmp), n(p.pss_att)) },
-    { key: "pss_yds",    label: "YDS",     title: "Pass Yards",    align: "center", bold: true, sortVal: p => n(p.pss_yds),  render: p => <span className="font-black text-[#00C8FF]">{d(n(p.pss_yds))}</span> },
-    { key: "ypg",        label: "YDS/G",   title: "Yards per Game", align: "center", sortVal: p => n(p.pss_yds) / Math.max(p.gp, 1), render: p => perG(n(p.pss_yds), p.gp) },
-    { key: "pss_tds",    label: "TD",      title: "Passing TDs",   align: "center", sortVal: p => n(p.pss_tds),  render: p => n(p.pss_tds) > 0 ? <span className="text-green-400 font-bold">{p.pss_tds}</span> : "—" },
-    { key: "pss_ints",   label: "INT",     title: "Interceptions", align: "center", sortVal: p => n(p.pss_ints), render: p => n(p.pss_ints) > 0 ? <span className="text-red-400">{p.pss_ints}</span> : "—" },
-    { key: "pss_sacks",  label: "SCK",     title: "Times Sacked",  align: "center", sortVal: p => n(p.pss_sacks), render: p => d(n(p.pss_sacks)) },
-    { key: "pss_lng",    label: "LNG",     title: "Long Pass",     align: "center", sortVal: p => n(p.pss_lng),  render: p => d(n(p.pss_lng)) },
-    { key: "pss_rating", label: "RTG",     title: "QB Rating",     align: "center", sortVal: p => n(p.pss_rating), render: p => d(n(p.pss_rating)) },
+    { key: "player",    label: "Player",  align: "left",   bold: true, sortVal: p => p.player.name,  render: p => <PlayerCell p={p} /> },
+    { key: "pos",       label: "Pos",     align: "center", sortVal: p => p.player.position, render: p => <PosBadge pos={p.player.position} /> },
+    { key: "gp",        label: "GP",      title: "Games Played",    align: "center", sortVal: p => p.gp,          render: p => p.gp },
+    { key: "cmp_att",   label: "CMP/ATT", title: "Completions/Attempts", align: "center", sortVal: p => n(p.pss_att), render: p => <span>{d(n(p.pss_cmp))}<span className="text-white/30">/</span>{d(n(p.pss_att))}</span> },
+    { key: "cmp_pct",   label: "PCT",     title: "Completion %",    align: "center", sortVal: p => n(p.pss_cmp) / Math.max(n(p.pss_att), 1), render: p => pct(n(p.pss_cmp), n(p.pss_att)) },
+    { key: "pss_yds",   label: "YDS",     title: "Pass Yards",      align: "center", bold: true, sortVal: p => n(p.pss_yds),  render: p => <span className="font-black text-[#00C8FF]">{d(n(p.pss_yds))}</span> },
+    { key: "ypg",       label: "YDS/G",   title: "Yards per Game",  align: "center", sortVal: p => n(p.pss_yds) / Math.max(p.gp, 1), render: p => perG(n(p.pss_yds), p.gp) },
+    { key: "pss_tds",   label: "TD",      title: "Passing TDs",     align: "center", sortVal: p => n(p.pss_tds),  render: p => n(p.pss_tds) > 0 ? <span className="text-green-400 font-bold">{p.pss_tds}</span> : "—" },
+    { key: "pss_ints",  label: "INT",     title: "Interceptions",   align: "center", sortVal: p => n(p.pss_ints), render: p => n(p.pss_ints) > 0 ? <span className="text-red-400">{p.pss_ints}</span> : "—" },
+    { key: "pss_sacks", label: "SCK",     title: "Times Sacked",    align: "center", sortVal: p => n(p.pss_sacks), render: p => d(n(p.pss_sacks)) },
+    { key: "pss_lng",   label: "LNG",     title: "Long Pass",       align: "center", sortVal: p => n(p.pss_lng),  render: p => d(n(p.pss_lng)) },
+    { key: "pss_rating",label: "RTG",     title: "QB Rating",       align: "center", sortVal: p => n(p.pss_rating), render: p => <span className="font-bold">{rtg(n(p.pss_rating))}</span> },
   ];
-  return <SortableTable rows={players} cols={cols} defaultKey="pss_yds" emptyMsg="No passing stats yet" />;
+  return (
+    <SortableTable
+      rows={players}
+      cols={cols}
+      defaultKey="pss_yds"
+      emptyMsg="No passing stats yet"
+      getRowStyle={p => rowGradient(p.team_color)}
+    />
+  );
 }
 
 // ─── Rushing Tab ──────────────────────────────────────────────────────────────
@@ -561,7 +589,15 @@ function RushingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "rsh_btk", label: "BTK",   title: "Broken Tackles", align: "center", sortVal: p => n(p.rsh_btk), render: p => d(n(p.rsh_btk)) },
     { key: "fmb",     label: "FMB",   title: "Fumbles",     align: "center", sortVal: p => n(p.fmb),     render: p => n(p.fmb) > 0 ? <span className="text-red-400">{p.fmb}</span> : "—" },
   ];
-  return <SortableTable rows={players} cols={cols} defaultKey="rsh_yds" emptyMsg="No rushing stats yet" />;
+  return (
+    <SortableTable
+      rows={players}
+      cols={cols}
+      defaultKey="rsh_yds"
+      emptyMsg="No rushing stats yet"
+      getRowStyle={p => rowGradient(p.team_color)}
+    />
+  );
 }
 
 // ─── Receiving Tab ────────────────────────────────────────────────────────────
@@ -572,7 +608,6 @@ function ReceivingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "pos",        label: "Pos",   align: "center",  sortVal: p => p.player.position, render: p => <PosBadge pos={p.player.position} /> },
     { key: "gp",         label: "GP",    title: "Games Played",  align: "center", sortVal: p => p.gp,            render: p => p.gp },
     { key: "rec_catches",label: "REC",   title: "Receptions",    align: "center", sortVal: p => n(p.rec_catches), render: p => d(n(p.rec_catches)) },
-    { key: "rec_tgts",   label: "TGTS",  title: "Targets",       align: "center", sortVal: p => n(p.rec_tgts),   render: p => d(n(p.rec_tgts)) },
     { key: "rec_yds",    label: "YDS",   title: "Rec Yards",     align: "center", bold: true, sortVal: p => n(p.rec_yds), render: p => <span className="font-black text-[#f59e0b]">{d(n(p.rec_yds))}</span> },
     { key: "ypg",        label: "YDS/G", title: "Yards per Game", align: "center", sortVal: p => n(p.rec_yds) / Math.max(p.gp, 1), render: p => perG(n(p.rec_yds), p.gp) },
     { key: "ypr",        label: "AVG",   title: "Yards per Rec", align: "center", sortVal: p => n(p.rec_yds) / Math.max(n(p.rec_catches), 1), render: p => per(n(p.rec_yds), n(p.rec_catches)) },
@@ -581,7 +616,15 @@ function ReceivingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "rec_drops",  label: "DRP",   title: "Drops",         align: "center", sortVal: p => n(p.rec_drops),  render: p => n(p.rec_drops) > 0 ? <span className="text-red-400">{p.rec_drops}</span> : "—" },
     { key: "rec_yac",    label: "YAC",   title: "Yards After Catch", align: "center", sortVal: p => n(p.rec_yac), render: p => d(n(p.rec_yac)) },
   ];
-  return <SortableTable rows={players} cols={cols} defaultKey="rec_yds" emptyMsg="No receiving stats yet" />;
+  return (
+    <SortableTable
+      rows={players}
+      cols={cols}
+      defaultKey="rec_yds"
+      emptyMsg="No receiving stats yet"
+      getRowStyle={p => rowGradient(p.team_color)}
+    />
+  );
 }
 
 // ─── Defense Tab ──────────────────────────────────────────────────────────────
@@ -590,18 +633,26 @@ function DefenseTab({ players }: { players: PlayerSeasonStats[] }) {
   const cols: ColDef<PlayerSeasonStats>[] = [
     { key: "player",           label: "Player", align: "left",   bold: true, sortVal: p => p.player.name,          render: p => <PlayerCell p={p} /> },
     { key: "pos",              label: "Pos",   align: "center",  sortVal: p => p.player.position, render: p => <PosBadge pos={p.player.position} /> },
-    { key: "gp",               label: "GP",    title: "Games Played",   align: "center", sortVal: p => p.gp,                   render: p => p.gp },
-    { key: "def_total_tackles",label: "TKL",   title: "Tackles",         align: "center", bold: true, sortVal: p => n(p.def_total_tackles), render: p => <span className="font-black text-[#F44336]">{d(n(p.def_total_tackles))}</span> },
-    { key: "def_tfl",          label: "TFL",   title: "Tackles for Loss",align: "center", sortVal: p => n(p.def_tfl),          render: p => d(n(p.def_tfl)) },
-    { key: "def_sacks",        label: "SCK",   title: "Sacks",           align: "center", sortVal: p => n(p.def_sacks),        render: p => d(n(p.def_sacks)) },
-    { key: "def_ints",         label: "INT",   title: "Interceptions",   align: "center", sortVal: p => n(p.def_ints),         render: p => d(n(p.def_ints)) },
-    { key: "def_pd",           label: "PD",    title: "Pass Deflections",align: "center", sortVal: p => n(p.def_pd),           render: p => d(n(p.def_pd)) },
-    { key: "def_ff",           label: "FF",    title: "Forced Fumbles",  align: "center", sortVal: p => n(p.def_ff),           render: p => d(n(p.def_ff)) },
+    { key: "gp",               label: "GP",    title: "Games Played",    align: "center", sortVal: p => p.gp,                   render: p => p.gp },
+    { key: "def_total_tackles",label: "TKL",   title: "Tackles",          align: "center", bold: true, sortVal: p => n(p.def_total_tackles), render: p => <span className="font-black text-[#F44336]">{d(n(p.def_total_tackles))}</span> },
+    { key: "def_tfl",          label: "TFL",   title: "Tackles for Loss", align: "center", sortVal: p => n(p.def_tfl),          render: p => half(n(p.def_tfl)) },
+    { key: "def_sacks",        label: "SCK",   title: "Sacks",            align: "center", sortVal: p => n(p.def_sacks),        render: p => <span className="font-bold">{half(n(p.def_sacks))}</span> },
+    { key: "def_ints",         label: "INT",   title: "Interceptions",    align: "center", sortVal: p => n(p.def_ints),         render: p => d(n(p.def_ints)) },
+    { key: "def_pd",           label: "PD",    title: "Pass Deflections", align: "center", sortVal: p => n(p.def_pd),           render: p => d(n(p.def_pd)) },
+    { key: "def_ff",           label: "FF",    title: "Forced Fumbles",   align: "center", sortVal: p => n(p.def_ff),           render: p => d(n(p.def_ff)) },
     { key: "def_fum_rec",      label: "FR",    title: "Fumble Recoveries",align: "center", sortVal: p => n(p.def_fum_rec),    render: p => d(n(p.def_fum_rec)) },
-    { key: "def_tds",          label: "TD",    title: "Defensive TDs",   align: "center", sortVal: p => n(p.def_tds),          render: p => n(p.def_tds) > 0 ? <span className="text-green-400 font-bold">{p.def_tds}</span> : "—" },
-    { key: "def_safeties",     label: "SAF",   title: "Safeties",        align: "center", sortVal: p => n(p.def_safeties),     render: p => d(n(p.def_safeties)) },
+    { key: "def_tds",          label: "TD",    title: "Defensive TDs",    align: "center", sortVal: p => n(p.def_tds),          render: p => n(p.def_tds) > 0 ? <span className="text-green-400 font-bold">{p.def_tds}</span> : "—" },
+    { key: "def_safeties",     label: "SAF",   title: "Safeties",         align: "center", sortVal: p => n(p.def_safeties),     render: p => d(n(p.def_safeties)) },
   ];
-  return <SortableTable rows={players} cols={cols} defaultKey="def_total_tackles" emptyMsg="No defensive stats yet" />;
+  return (
+    <SortableTable
+      rows={players}
+      cols={cols}
+      defaultKey="def_total_tackles"
+      emptyMsg="No defensive stats yet"
+      getRowStyle={p => rowGradient(p.team_color)}
+    />
+  );
 }
 
 // ─── Kicking/Punting Tab ──────────────────────────────────────────────────────
@@ -635,11 +686,23 @@ function KickingPuntingTab({ kicking, punting }: { kicking: PlayerSeasonStats[];
     <div className="space-y-6">
       <div>
         <SectionHeader color={C.kicking} label="Kicking" />
-        <SortableTable rows={kicking} cols={kickCols} defaultKey="fg_made" emptyMsg="No kicking stats yet" />
+        <SortableTable
+          rows={kicking}
+          cols={kickCols}
+          defaultKey="fg_made"
+          emptyMsg="No kicking stats yet"
+          getRowStyle={p => rowGradient(p.team_color)}
+        />
       </div>
       <div>
         <SectionHeader color={C.kicking} label="Punting" />
-        <SortableTable rows={punting} cols={puntCols} defaultKey="punt_avg" emptyMsg="No punting stats yet" />
+        <SortableTable
+          rows={punting}
+          cols={puntCols}
+          defaultKey="punt_avg"
+          emptyMsg="No punting stats yet"
+          getRowStyle={p => rowGradient(p.team_color)}
+        />
       </div>
     </div>
   );
@@ -736,7 +799,7 @@ function TeamTab({ data, standings }: { data: LeaguePlayerStats; standings: Stan
     { key: "pass_yds",  label: "PASS", title: "Passing Yards",  align: "center", sortVal: r => r.pass_yds,  render: r => d(r.pass_yds) },
     { key: "rush_yds",  label: "RUSH", title: "Rushing Yards",  align: "center", sortVal: r => r.rush_yds,  render: r => d(r.rush_yds) },
     { key: "off_tds",   label: "TD",   title: "Offensive TDs",  align: "center", sortVal: r => r.pass_tds + r.rush_tds, render: r => d(r.pass_tds + r.rush_tds) },
-    { key: "def_sacks", label: "SCK",  title: "Defensive Sacks",align: "center", sortVal: r => r.def_sacks, render: r => d(r.def_sacks) },
+    { key: "def_sacks", label: "SCK",  title: "Defensive Sacks",align: "center", sortVal: r => r.def_sacks, render: r => half(r.def_sacks) },
     { key: "def_ints",  label: "INT",  title: "Def Interceptions",align:"center", sortVal: r => r.def_ints,  render: r => d(r.def_ints) },
     { key: "def_pd",    label: "PD",   title: "Pass Deflections",align:"center", sortVal: r => r.def_pd,    render: r => d(r.def_pd) },
   ];
@@ -752,7 +815,13 @@ function TeamTab({ data, standings }: { data: LeaguePlayerStats; standings: Stan
   return (
     <div>
       <SectionHeader color={C.team} label="Team Statistics" />
-      <SortableTable rows={rows} cols={cols} defaultKey="pf" emptyMsg="No team data yet" />
+      <SortableTable
+        rows={rows}
+        cols={cols}
+        defaultKey="pf"
+        emptyMsg="No team data yet"
+        getRowStyle={r => rowGradient(r.team_color)}
+      />
     </div>
   );
 }
