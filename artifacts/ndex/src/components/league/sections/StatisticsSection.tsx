@@ -62,7 +62,7 @@ function eaPortraitUrl(portraitId: number): string {
 function rowGradient(color: string | null | undefined): React.CSSProperties {
   if (!color) return {};
   return {
-    background: `linear-gradient(90deg, ${color}22 0%, ${color}0d 45%, transparent 100%)`,
+    background: `linear-gradient(90deg, ${color}66 0%, ${color}28 50%, transparent 100%)`,
   };
 }
 
