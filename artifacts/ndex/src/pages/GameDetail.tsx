@@ -598,7 +598,7 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
               transform: "scale(1.2)",
               transformOrigin: "top center",
             }}
-          />
+            className="mt-[-10px] mb-[-10px]" />
         ) : (
           <>
             {/* Football player silhouette fallback */}
@@ -649,7 +649,6 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
           {pos}
         </div>
       </div>
-
       {/* Name + stat line */}
       <div style={{ minWidth: 0 }}>
         <div
