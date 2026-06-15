@@ -408,7 +408,7 @@ function SortableTable<T>({
                   sortKey === col.key ? "text-[#00C8FF]" : "text-white/30 hover:text-white/60"
                 } ${col.align === "left" ? "text-left" : col.align === "right" ? "text-right" : "text-center"}`}
               >
-                <span className="inline-flex items-center gap-0.5">
+                <span className="inline-flex items-center gap-0.5 text-[#ffffff99] border-t-[#ffffff99] border-r-[#ffffff99] border-b-[#ffffff99] border-l-[#ffffff99]">
                   {col.label}
                   {sortKey === col.key
                     ? sortDir === "desc"
@@ -431,7 +431,7 @@ function SortableTable<T>({
               className="border-b border-white/5 transition-colors last:border-0"
               style={getRowStyle ? getRowStyle(row) : undefined}
             >
-              <td className="px-3 py-2 text-white/20 text-[11px]">{firstRank + i + 1}</td>
+              <td className="px-3 py-2 text-[11px] text-[#ffffff99]">{firstRank + i + 1}</td>
               {cols.map(col => (
                 <td
                   key={col.key}
@@ -447,7 +447,6 @@ function SortableTable<T>({
         </tbody>
       </table>
       </div>
-
       {sorted.length > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/8 bg-[#0f0f0f]">
           <div className="flex items-center gap-2">
@@ -554,9 +553,9 @@ function PassingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "gp",        label: "GP",      title: "Games Played",    align: "center", sortVal: p => p.gp,          render: p => p.gp },
     { key: "cmp_att",   label: "CMP/ATT", title: "Completions/Attempts", align: "center", sortVal: p => n(p.pss_att), render: p => <span>{d(n(p.pss_cmp))}<span className="text-white/30">/</span>{d(n(p.pss_att))}</span> },
     { key: "cmp_pct",   label: "PCT",     title: "Completion %",    align: "center", sortVal: p => n(p.pss_cmp) / Math.max(n(p.pss_att), 1), render: p => pct(n(p.pss_cmp), n(p.pss_att)) },
-    { key: "pss_yds",   label: "YDS",     title: "Pass Yards",      align: "center", bold: true, sortVal: p => n(p.pss_yds),  render: p => <span className="font-black text-[#00C8FF]">{d(n(p.pss_yds))}</span> },
+    { key: "pss_yds",   label: "YDS",     title: "Pass Yards",      align: "center", bold: true, sortVal: p => n(p.pss_yds),  render: p => <span className="font-black text-[#ffffffb3]">{d(n(p.pss_yds))}</span> },
     { key: "ypg",       label: "YDS/G",   title: "Yards per Game",  align: "center", sortVal: p => n(p.pss_yds) / Math.max(p.gp, 1), render: p => perG(n(p.pss_yds), p.gp) },
-    { key: "pss_tds",   label: "TD",      title: "Passing TDs",     align: "center", sortVal: p => n(p.pss_tds),  render: p => n(p.pss_tds) > 0 ? <span className="text-green-400 font-bold">{p.pss_tds}</span> : "—" },
+    { key: "pss_tds",   label: "TD",      title: "Passing TDs",     align: "center", sortVal: p => n(p.pss_tds),  render: p => n(p.pss_tds) > 0 ? <span className="font-bold text-[#ffffffb3]">{p.pss_tds}</span> : "—" },
     { key: "pss_ints",  label: "INT",     title: "Interceptions",   align: "center", sortVal: p => n(p.pss_ints), render: p => n(p.pss_ints) > 0 ? <span className="text-red-400">{p.pss_ints}</span> : "—" },
     { key: "pss_sacks", label: "SCK",     title: "Times Sacked",    align: "center", sortVal: p => n(p.pss_sacks), render: p => d(n(p.pss_sacks)) },
     { key: "pss_lng",   label: "LNG",     title: "Long Pass",       align: "center", sortVal: p => n(p.pss_lng),  render: p => d(n(p.pss_lng)) },
