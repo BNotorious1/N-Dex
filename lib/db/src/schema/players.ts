@@ -11,6 +11,7 @@ export const playersTable = pgTable("players", {
   overall: integer("overall").notNull().default(75),
   age: integer("age").notNull().default(25),
   devTrait: integer("dev_trait"),
+  yearsPro: integer("years_pro"),
   eaPlayerId: text("ea_player_id"),
   presentationId: integer("presentation_id"),
   portraitId: integer("portrait_id"),

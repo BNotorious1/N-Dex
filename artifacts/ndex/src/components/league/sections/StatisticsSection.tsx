@@ -69,10 +69,12 @@ function rowGradient(color: string | null | undefined): React.CSSProperties {
 export default function StatisticsSection({ leagueId }: { leagueId: number }) {
   const [subTab, setSubTab] = useState<SubTab>("leaders");
 
-  const [filterSeason, setFilterSeason] = useState<number | null>(null);
-  const [filterWeek, setFilterWeek]   = useState<number | null>(null);
-  const [filterTeam, setFilterTeam]   = useState<string>("");
-  const [filterPos,  setFilterPos]    = useState<string>("");
+  const [filterSeason,        setFilterSeason]        = useState<number | null>(null);
+  const [filterWeek,          setFilterWeek]          = useState<number | null>(null);
+  const [filterTeam,          setFilterTeam]          = useState<string>("");
+  const [filterPos,           setFilterPos]           = useState<string>("");
+  const [filterRegularSeason, setFilterRegularSeason] = useState<boolean>(true);
+  const [filterRookiesOnly,   setFilterRookiesOnly]   = useState<boolean>(false);
 
   const { data: statsMeta } = useGetLeagueStatsMeta(leagueId, {
     query: { queryKey: getGetLeagueStatsMetaQueryKey(leagueId) },
@@ -82,11 +84,12 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
   });
 
   const { data: playerStats, isLoading } = useQuery<LeaguePlayerStats>({
-    queryKey: ["league-player-stats", leagueId, filterSeason, filterWeek],
+    queryKey: ["league-player-stats", leagueId, filterSeason, filterWeek, filterRegularSeason],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filterSeason !== null) params.set("season", String(filterSeason));
       if (filterWeek   !== null) params.set("week",   String(filterWeek));
+      if (!filterRegularSeason)  params.set("regularSeason", "false");
       const qs = params.toString();
       const res = await fetch(`/api/leagues/${leagueId}/stats/players${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error("Failed to fetch player stats");
@@ -117,10 +120,24 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
 
   function filterRows(rows: PlayerSeasonStats[]): PlayerSeasonStats[] {
     return rows.filter(p => {
-      if (filterTeam && p.team_name !== filterTeam) return false;
-      if (filterPos  && p.player.position !== filterPos) return false;
+      if (filterTeam      && p.team_name !== filterTeam)       return false;
+      if (filterPos       && p.player.position !== filterPos)  return false;
+      if (filterRookiesOnly && (p.player.years_pro ?? 1) !== 0) return false;
       return true;
     });
+  }
+
+  function filterAll(data: LeaguePlayerStats): LeaguePlayerStats {
+    if (!filterRookiesOnly) return data;
+    const f = (rows: PlayerSeasonStats[]) => filterRows(rows);
+    return {
+      passing:   f(data.passing),
+      rushing:   f(data.rushing),
+      receiving: f(data.receiving),
+      defense:   f(data.defense),
+      kicking:   f(data.kicking),
+      punting:   f(data.punting),
+    };
   }
 
   const showPlayerFilters = subTab !== "leaders" && subTab !== "team";
@@ -202,6 +219,18 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
             Clear
           </button>
         )}
+
+        <div className="h-4 w-px bg-white/10 mx-1" />
+
+        <FilterToggle active={filterRegularSeason} onClick={() => setFilterRegularSeason(v => !v)}>
+          Regular Season
+        </FilterToggle>
+        <FilterToggle active={filterRookiesOnly} onClick={() => setFilterRookiesOnly(v => !v)}>
+          Rookies Only
+        </FilterToggle>
+        <FilterToggle active={false} onClick={() => {}} disabled title="Coming soon">
+          Excl. Simmed
+        </FilterToggle>
       </div>
 
       {isLoading && (
@@ -212,7 +241,7 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
 
       {!isLoading && playerStats && (
         <>
-          {subTab === "leaders"   && <LeagueLeadersTab data={playerStats} />}
+          {subTab === "leaders"   && <LeagueLeadersTab data={filterAll(playerStats)} />}
           {subTab === "passing"   && <PassingTab    players={filterRows(playerStats.passing)} />}
           {subTab === "rushing"   && <RushingTab    players={filterRows(playerStats.rushing)} />}
           {subTab === "receiving" && <ReceivingTab  players={filterRows(playerStats.receiving)} />}
@@ -228,6 +257,44 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Filter Toggle ────────────────────────────────────────────────────────────
+
+function FilterToggle({
+  active,
+  onClick,
+  disabled,
+  title,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold border transition-colors select-none ${
+        disabled
+          ? "border-white/8 text-white/20 cursor-not-allowed"
+          : active
+            ? "border-[#00C8FF]/50 bg-[#00C8FF]/10 text-[#00C8FF]"
+            : "border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+      }`}
+    >
+      <span className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center shrink-0 ${
+        disabled ? "border-white/15" : active ? "border-[#00C8FF] bg-[#00C8FF]" : "border-white/30"
+      }`}>
+        {active && !disabled && <span className="block w-1 h-1 rounded-full bg-black" />}
+      </span>
+      {children}
+    </button>
   );
 }
 

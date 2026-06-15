@@ -141,6 +141,7 @@ export async function upsertTeamRoster(
       overall: num(p["playerBestOvr"] ?? p["overall"], 70),
       age: num(p["age"], 25),
       devTrait: ni(p, "devTrait"),
+      yearsPro: ni(p, "yearsPro"),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
       presentationId: ni(p, "presentationId"),
       portraitId: ni(p, "portraitId"),

@@ -157,6 +157,11 @@ export interface Player {
      * @nullable
      */
   portrait_id?: number | null;
+  /**
+     * Years in the league (0 = rookie)
+     * @nullable
+     */
+  years_pro?: number | null;
 }
 
 export interface PlayerSeasonStats {

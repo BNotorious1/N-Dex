@@ -133,6 +133,7 @@ function formatPlayer(player: typeof playersTable.$inferSelect) {
     catching: player.catching,
     tackling: player.tackling,
     portrait_id: player.portraitId ?? null,
+    years_pro: player.yearsPro ?? null,
   };
 }
 
@@ -433,8 +434,11 @@ router.get("/:id/stats/players", async (req, res) => {
 
   const season = req.query.season !== undefined ? Number(req.query.season) : null;
   const week = req.query.week !== undefined ? Number(req.query.week) : null;
+  const regularSeasonOnly = req.query.regularSeason !== "false";
 
-  const baseWhere = eq(playerGameStatsTable.leagueId, id);
+  const baseWhere = regularSeasonOnly
+    ? and(eq(playerGameStatsTable.leagueId, id), eq(playerGameStatsTable.stageIndex, 1))
+    : eq(playerGameStatsTable.leagueId, id);
   const withSeason = season !== null && !isNaN(season)
     ? and(baseWhere, eq(playerGameStatsTable.season, season))
     : baseWhere;

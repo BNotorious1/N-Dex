@@ -297,7 +297,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -317,7 +318,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -337,7 +339,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -357,7 +360,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -388,7 +392,8 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "team_id": zod.number(),
@@ -451,7 +456,8 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "team_id": zod.number(),
@@ -514,7 +520,8 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "team_id": zod.number(),
@@ -577,7 +584,8 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "team_id": zod.number(),
@@ -640,7 +648,8 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "team_id": zod.number(),
@@ -703,7 +712,8 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
   "team_id": zod.number(),
@@ -1002,7 +1012,8 @@ export const GetTeamPlayersResponseItem = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 })
 export const GetTeamPlayersResponse = zod.array(GetTeamPlayersResponseItem)
 
@@ -1209,7 +1220,8 @@ export const UpdatePlayerResponse = zod.object({
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
   "tackling": zod.number().nullish(),
-  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 })
 
 
