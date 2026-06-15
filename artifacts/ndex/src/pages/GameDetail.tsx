@@ -514,11 +514,13 @@ function buildStatLine(p: GamePlayerStat): string {
     const parts = [`${p.pss_cmp ?? 0}/${p.pss_att ?? 0}`, `${p.pss_yds ?? 0} YDS`];
     if (p.pss_tds) parts.push(`${p.pss_tds} TD`);
     if (p.pss_ints) parts.push(`${p.pss_ints} INT`);
+    if ((p.rsh_att ?? 0) > 0) parts.push(`${p.rsh_att} CAR, ${p.rsh_yds ?? 0} RSH`);
     return parts.join(", ");
   }
   if (RUSHER_POSITIONS.has(pos) && (p.rsh_att ?? 0) > 0) {
     const parts = [`${p.rsh_att} CAR`, `${p.rsh_yds ?? 0} YDS`];
     if (p.rsh_tds) parts.push(`${p.rsh_tds} TD`);
+    if ((p.rec_catches ?? 0) > 0) parts.push(`${p.rec_catches} REC, ${p.rec_yds ?? 0} REC YDS`);
     return parts.join(", ");
   }
   if ((p.rec_catches ?? 0) > 0) {
