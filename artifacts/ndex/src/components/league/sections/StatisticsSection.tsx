@@ -183,6 +183,9 @@ type ColDef<T> = {
   bold?: boolean;
 };
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+type PageSize = typeof PAGE_SIZE_OPTIONS[number];
+
 function SortableTable<T>({
   rows,
   cols,
@@ -198,10 +201,13 @@ function SortableTable<T>({
 }) {
   const [sortKey, setSortKey] = useState(defaultKey);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(defaultDir);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<PageSize>(10);
 
   function toggleSort(key: string) {
     if (sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
     else { setSortKey(key); setSortDir("desc"); }
+    setPage(0);
   }
 
   const sorted = useMemo(() => {
@@ -215,8 +221,14 @@ function SortableTable<T>({
     });
   }, [rows, cols, sortKey, sortDir]);
 
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageRows = sorted.slice(safePage * pageSize, safePage * pageSize + pageSize);
+  const firstRank = safePage * pageSize;
+
   return (
-    <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden overflow-x-auto">
+    <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+      <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-white/8" style={{ backgroundColor: "#0f0f0f" }}>
@@ -247,9 +259,9 @@ function SortableTable<T>({
             <tr>
               <td colSpan={cols.length + 1} className="py-10 text-center text-white/25 text-[11px]">{emptyMsg}</td>
             </tr>
-          ) : sorted.map((row, i) => (
+          ) : pageRows.map((row, i) => (
             <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors last:border-0">
-              <td className="px-3 py-2.5 text-white/20 text-[11px]">{i + 1}</td>
+              <td className="px-3 py-2.5 text-white/20 text-[11px]">{firstRank + i + 1}</td>
               {cols.map(col => (
                 <td
                   key={col.key}
@@ -264,6 +276,51 @@ function SortableTable<T>({
           ))}
         </tbody>
       </table>
+      </div>
+      {sorted.length > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/8 bg-[#0f0f0f]">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/30 whitespace-nowrap">Rows per page:</span>
+            <div className="flex gap-1">
+              {PAGE_SIZE_OPTIONS.map(sz => (
+                <button
+                  key={sz}
+                  onClick={() => { setPageSize(sz); setPage(0); }}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                    pageSize === sz
+                      ? "bg-[#00C8FF] text-black"
+                      : "text-white/40 hover:text-white hover:bg-white/8"
+                  }`}
+                >
+                  {sz}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-white/30 whitespace-nowrap">
+              {firstRank + 1}–{Math.min(firstRank + pageSize, sorted.length)} of {sorted.length}
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={safePage === 0}
+                className="px-2.5 py-1 rounded text-[10px] font-bold text-white/40 hover:text-white hover:bg-white/8 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+              >
+                ‹ Prev
+              </button>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={safePage >= totalPages - 1}
+                className="px-2.5 py-1 rounded text-[10px] font-bold text-white/40 hover:text-white hover:bg-white/8 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+              >
+                Next ›
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
