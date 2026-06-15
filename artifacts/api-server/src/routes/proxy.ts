@@ -3,6 +3,7 @@ import { Router } from "express";
 const ALLOWED_PREFIXES = [
   "https://a.espncdn.com/i/teamlogos/",
   "https://a.espncdn.com/combiner/",
+  "https://ratings-images-prod.pulse.ea.com/",
 ];
 
 const router = Router();
