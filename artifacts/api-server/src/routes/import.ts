@@ -548,34 +548,34 @@ export function buildStatSet(
 ): Partial<typeof playerGameStatsTable.$inferInsert> {
   if (statType === "passing") {
     return {
-      pssAtt:    num(s["pssAtt"]),
-      pssCmp:    num(s["pssCmp"]),
-      pssYds:    num(s["pssYds"]),
-      pssTds:    num(s["passTDs"] ?? s["pssTDs"]),
-      pssInts:   num(s["pssInts"]),
-      pssSacks:  num(s["pssSacks"]),
-      pssLng:    num(s["pssLng"]),
-      pssRating: num(s["pssRate"] ?? s["pssRating"]),
+      pssAtt:    num(s["pssAtt"]    ?? s["passAtt"]),
+      pssCmp:    num(s["pssCmp"]    ?? s["passCmp"]),
+      pssYds:    num(s["pssYds"]    ?? s["passYds"]),
+      pssTds:    num(s["passTDs"]   ?? s["pssTDs"]   ?? s["passTds"]),
+      pssInts:   num(s["pssInts"]   ?? s["passInts"]),
+      pssSacks:  num(s["pssSacks"]  ?? s["passSacks"]),
+      pssLng:    num(s["pssLng"]    ?? s["passLng"]),
+      pssRating: num(s["pssRate"]   ?? s["pssRating"] ?? s["passRating"]),
     };
   }
   if (statType === "rushing") {
     return {
-      rshAtt:  num(s["rshAtt"]),
-      rshYds:  num(s["rshYds"]),
-      rshTds:  num(s["rshTDs"] ?? s["rushTDs"]),
-      rshLng:  num(s["rshLng"]),
-      fmb:     num(s["fmb"]),
-      fmbLost: num(s["fmbLost"]),
+      rshAtt:  num(s["rshAtt"]  ?? s["rushAtt"]),
+      rshYds:  num(s["rshYds"]  ?? s["rushYds"]),
+      rshTds:  num(s["rshTDs"]  ?? s["rushTDs"]  ?? s["rshTds"]),
+      rshLng:  num(s["rshLng"]  ?? s["rushLng"]),
+      fmb:     num(s["fmb"]     ?? s["fumbles"]),
+      fmbLost: num(s["fmbLost"] ?? s["fumLost"]),
     };
   }
   if (statType === "receiving") {
     return {
-      recCatches: num(s["recCatches"]),
-      recTgts:    num(s["recTgts"]),
-      recYds:     num(s["recYds"]),
-      recTds:     num(s["recTDs"] ?? s["recTds"]),
+      recCatches: num(s["recCatches"] ?? s["recReceptions"]),
+      recTgts:    num(s["recTgts"]    ?? s["recTargets"]),
+      recYds:     num(s["recYds"]     ?? s["recYards"]),
+      recTds:     num(s["recTDs"]     ?? s["recTds"]    ?? s["recTouchdowns"]),
       recDrops:   num(s["recDrops"]),
-      recLng:     num(s["recLng"]),
+      recLng:     num(s["recLng"]     ?? s["recLong"]),
       recYac:     num(s["recYac"]),
     };
   }

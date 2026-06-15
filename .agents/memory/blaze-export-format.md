@@ -31,6 +31,11 @@ All Blaze CareerMode_Get*Export endpoints return **flat arrays**, NOT nested obj
 ### Stats (player/team stat exports)
 - Pattern: `player{Type}StatInfoList` → flat array
   - e.g. `playerPassingStatInfoList`, `playerRushingStatInfoList`, `teamStatInfoList`
+- **Blaze uses `pass*`/`rush*` field names, NOT `pss*`/`rsh*` abbreviations**
+  - Passing: `passAtt`, `passCmp`, `passYds`, `passTDs`, `passInts`, `passSacks`, `passLng`, `passRating`
+  - Rushing: `rushAtt`, `rushYds`, `rushTDs`, `rushLng`
+  - TDs use capital letters: `passTDs`, `rushTDs`, `recTDs`
+  - `buildStatSet` in import.ts now has `pss*`-first fallbacks to `pass*` for Blaze compatibility
 
 **Why:** Blaze API uses flat array keyed under a single property (e.g. `gameScheduleInfoList`) 
 rather than the Companion App's nested `scheduleInfoList.scheduleInfo` pattern. Code must 

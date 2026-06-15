@@ -615,13 +615,16 @@ export default function GameDetail() {
                     {/* ── Away (left) ── */}
                     <div className="flex-1 flex items-center gap-5">
                       <div style={{ filter: `drop-shadow(0 0 14px ${awayColor}60)` }}>
-                        <TeamLogo abbreviation={awayAbbr} className="h-[80px] w-[80px]" shape="rounded" />
+                        <TeamLogo abbreviation={awayAbbr} className="h-[80px] w-[80px]" noBg />
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">Away</p>
-                        <p className={`text-3xl font-black tracking-tight leading-none ${awayWon ? "text-white" : "text-white/50"}`}>
+                        <Link
+                          href={`/teams/${game.away_team_id}`}
+                          className={`text-3xl font-black tracking-tight leading-none hover:opacity-80 transition-opacity ${awayWon ? "text-white" : "text-white/50"}`}
+                        >
                           {awayName}
-                        </p>
+                        </Link>
                         <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wider">{awayAbbr}</p>
                       </div>
                     </div>
@@ -656,13 +659,16 @@ export default function GameDetail() {
                     <div className="flex-1 flex items-center gap-5 justify-end">
                       <div className="text-right">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">Home</p>
-                        <p className={`text-3xl font-black tracking-tight leading-none ${homeWon ? "text-[#00C8FF]" : "text-white/50"}`}>
+                        <Link
+                          href={`/teams/${game.home_team_id}`}
+                          className={`text-3xl font-black tracking-tight leading-none hover:opacity-80 transition-opacity ${homeWon ? "text-[#00C8FF]" : "text-white/50"}`}
+                        >
                           {homeName}
-                        </p>
+                        </Link>
                         <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wider">{homeAbbr}</p>
                       </div>
                       <div style={{ filter: `drop-shadow(0 0 14px ${homeColor}60)` }}>
-                        <TeamLogo abbreviation={homeAbbr} className="h-[80px] w-[80px]" shape="rounded" />
+                        <TeamLogo abbreviation={homeAbbr} className="h-[80px] w-[80px]" noBg />
                       </div>
                     </div>
 
