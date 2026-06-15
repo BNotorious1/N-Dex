@@ -225,6 +225,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatLeaders"
 
+  /leagues/{id}/stats/players:
+    get:
+      operationId: getLeaguePlayerStats
+      tags: [leagues]
+      summary: Get aggregated season stats for all players in a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Aggregated player season stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaguePlayerStats"
+
   /leagues/{id}/teams:
     get:
       operationId: getLeagueTeams
@@ -933,6 +952,130 @@ components:
           type: string
         division:
           type: string
+
+    LeaguePlayerStats:
+      type: object
+      required: [passing, rushing, receiving, defense, kicking, punting]
+      properties:
+        passing:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSeasonStats"
+        rushing:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSeasonStats"
+        receiving:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSeasonStats"
+        defense:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSeasonStats"
+        kicking:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSeasonStats"
+        punting:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerSeasonStats"
+
+    PlayerSeasonStats:
+      type: object
+      required: [player, team_name, gp]
+      properties:
+        player:
+          $ref: "#/components/schemas/Player"
+        team_name:
+          type: string
+        team_color:
+          type: ["string", "null"]
+        gp:
+          type: integer
+        pss_att:
+          type: integer
+        pss_cmp:
+          type: integer
+        pss_yds:
+          type: integer
+        pss_tds:
+          type: integer
+        pss_ints:
+          type: integer
+        pss_sacks:
+          type: integer
+        pss_lng:
+          type: integer
+        pss_rating:
+          type: integer
+        rsh_att:
+          type: integer
+        rsh_yds:
+          type: integer
+        rsh_tds:
+          type: integer
+        rsh_lng:
+          type: integer
+        rsh_btk:
+          type: integer
+        fmb:
+          type: integer
+        fmb_lost:
+          type: integer
+        rec_catches:
+          type: integer
+        rec_tgts:
+          type: integer
+        rec_yds:
+          type: integer
+        rec_tds:
+          type: integer
+        rec_drops:
+          type: integer
+        rec_lng:
+          type: integer
+        rec_yac:
+          type: integer
+        def_total_tackles:
+          type: integer
+        def_tfl:
+          type: integer
+        def_sacks:
+          type: integer
+        def_ints:
+          type: integer
+        def_ff:
+          type: integer
+        def_pd:
+          type: integer
+        def_tds:
+          type: integer
+        def_fum_rec:
+          type: integer
+        def_safeties:
+          type: integer
+        fg_att:
+          type: integer
+        fg_made:
+          type: integer
+        fg_lng:
+          type: integer
+        xp_att:
+          type: integer
+        xp_made:
+          type: integer
+        punt_att:
+          type: integer
+        punt_yds:
+          type: integer
+        punt_avg:
+          type: integer
+        punt_lng:
+          type: integer
+        punt_in20:
+          type: integer
 
     StatLeaders:
       type: object

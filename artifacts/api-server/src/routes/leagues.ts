@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable } from "@workspace/db";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable } from "@workspace/db";
 import { eq, like, and, sql } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
@@ -391,6 +391,126 @@ router.get("/:id/stats/leaders", async (req, res) => {
     rushing: rushers.map(p => makeStatLine(p, "Speed", p.speed)),
     receiving: receivers.map(p => makeStatLine(p, "Catching", p.catching ?? 0)),
     defense: defenders.map(p => makeStatLine(p, "Tackling", p.tackling ?? 0)),
+  });
+});
+
+// GET /leagues/:id/stats/players
+router.get("/:id/stats/players", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const rows = await db
+    .select({
+      player: playersTable,
+      team: teamsTable,
+      gp: sql<number>`COUNT(DISTINCT ${playerGameStatsTable.gameId})`.as("gp"),
+      pss_att:    sql<number>`COALESCE(SUM(${playerGameStatsTable.pssAtt}), 0)`.as("pss_att"),
+      pss_cmp:    sql<number>`COALESCE(SUM(${playerGameStatsTable.pssCmp}), 0)`.as("pss_cmp"),
+      pss_yds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.pssYds}), 0)`.as("pss_yds"),
+      pss_tds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.pssTds}), 0)`.as("pss_tds"),
+      pss_ints:   sql<number>`COALESCE(SUM(${playerGameStatsTable.pssInts}), 0)`.as("pss_ints"),
+      pss_sacks:  sql<number>`COALESCE(SUM(${playerGameStatsTable.pssSacks}), 0)`.as("pss_sacks"),
+      pss_lng:    sql<number>`COALESCE(MAX(${playerGameStatsTable.pssLng}), 0)`.as("pss_lng"),
+      pss_rating: sql<number>`COALESCE(AVG(NULLIF(${playerGameStatsTable.pssRating}, 0)), 0)`.as("pss_rating"),
+      rsh_att:    sql<number>`COALESCE(SUM(${playerGameStatsTable.rshAtt}), 0)`.as("rsh_att"),
+      rsh_yds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.rshYds}), 0)`.as("rsh_yds"),
+      rsh_tds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.rshTds}), 0)`.as("rsh_tds"),
+      rsh_lng:    sql<number>`COALESCE(MAX(${playerGameStatsTable.rshLng}), 0)`.as("rsh_lng"),
+      rsh_btk:    sql<number>`COALESCE(SUM(${playerGameStatsTable.rshBtk}), 0)`.as("rsh_btk"),
+      fmb:        sql<number>`COALESCE(SUM(${playerGameStatsTable.fmb}), 0)`.as("fmb"),
+      fmb_lost:   sql<number>`COALESCE(SUM(${playerGameStatsTable.fmbLost}), 0)`.as("fmb_lost"),
+      rec_catches: sql<number>`COALESCE(SUM(${playerGameStatsTable.recCatches}), 0)`.as("rec_catches"),
+      rec_tgts:   sql<number>`COALESCE(SUM(${playerGameStatsTable.recTgts}), 0)`.as("rec_tgts"),
+      rec_yds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.recYds}), 0)`.as("rec_yds"),
+      rec_tds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.recTds}), 0)`.as("rec_tds"),
+      rec_drops:  sql<number>`COALESCE(SUM(${playerGameStatsTable.recDrops}), 0)`.as("rec_drops"),
+      rec_lng:    sql<number>`COALESCE(MAX(${playerGameStatsTable.recLng}), 0)`.as("rec_lng"),
+      rec_yac:    sql<number>`COALESCE(SUM(${playerGameStatsTable.recYac}), 0)`.as("rec_yac"),
+      def_total_tackles: sql<number>`COALESCE(SUM(${playerGameStatsTable.defTotalTackles}), 0)`.as("def_total_tackles"),
+      def_tfl:    sql<number>`COALESCE(SUM(${playerGameStatsTable.defTfl}), 0)`.as("def_tfl"),
+      def_sacks:  sql<number>`COALESCE(SUM(${playerGameStatsTable.defSacks}), 0)`.as("def_sacks"),
+      def_ints:   sql<number>`COALESCE(SUM(${playerGameStatsTable.defInts}), 0)`.as("def_ints"),
+      def_ff:     sql<number>`COALESCE(SUM(${playerGameStatsTable.defFf}), 0)`.as("def_ff"),
+      def_pd:     sql<number>`COALESCE(SUM(${playerGameStatsTable.defPd}), 0)`.as("def_pd"),
+      def_tds:    sql<number>`COALESCE(SUM(${playerGameStatsTable.defTds}), 0)`.as("def_tds"),
+      def_fum_rec: sql<number>`COALESCE(SUM(${playerGameStatsTable.defFumRec}), 0)`.as("def_fum_rec"),
+      def_safeties: sql<number>`COALESCE(SUM(${playerGameStatsTable.defSafeties}), 0)`.as("def_safeties"),
+      fg_att:     sql<number>`COALESCE(SUM(${playerGameStatsTable.fgAtt}), 0)`.as("fg_att"),
+      fg_made:    sql<number>`COALESCE(SUM(${playerGameStatsTable.fgMade}), 0)`.as("fg_made"),
+      fg_lng:     sql<number>`COALESCE(MAX(${playerGameStatsTable.fgLng}), 0)`.as("fg_lng"),
+      xp_att:     sql<number>`COALESCE(SUM(${playerGameStatsTable.xpAtt}), 0)`.as("xp_att"),
+      xp_made:    sql<number>`COALESCE(SUM(${playerGameStatsTable.xpMade}), 0)`.as("xp_made"),
+      punt_att:   sql<number>`COALESCE(SUM(${playerGameStatsTable.puntAtt}), 0)`.as("punt_att"),
+      punt_yds:   sql<number>`COALESCE(SUM(${playerGameStatsTable.puntYds}), 0)`.as("punt_yds"),
+      punt_avg:   sql<number>`COALESCE(AVG(NULLIF(${playerGameStatsTable.puntAvg}, 0)), 0)`.as("punt_avg"),
+      punt_lng:   sql<number>`COALESCE(MAX(${playerGameStatsTable.puntLng}), 0)`.as("punt_lng"),
+      punt_in20:  sql<number>`COALESCE(SUM(${playerGameStatsTable.puntIn20}), 0)`.as("punt_in20"),
+    })
+    .from(playerGameStatsTable)
+    .innerJoin(playersTable, eq(playerGameStatsTable.playerId, playersTable.id))
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(eq(playerGameStatsTable.leagueId, id))
+    .groupBy(playerGameStatsTable.playerId, playersTable.id, teamsTable.id);
+
+  const fmt = (row: typeof rows[0]) => ({
+    player: formatPlayer(row.player),
+    team_name: row.team.name,
+    team_color: row.team.primaryColor ?? null,
+    gp: Number(row.gp),
+    pss_att:    Number(row.pss_att),
+    pss_cmp:    Number(row.pss_cmp),
+    pss_yds:    Number(row.pss_yds),
+    pss_tds:    Number(row.pss_tds),
+    pss_ints:   Number(row.pss_ints),
+    pss_sacks:  Number(row.pss_sacks),
+    pss_lng:    Number(row.pss_lng),
+    pss_rating: Math.round(Number(row.pss_rating)),
+    rsh_att:    Number(row.rsh_att),
+    rsh_yds:    Number(row.rsh_yds),
+    rsh_tds:    Number(row.rsh_tds),
+    rsh_lng:    Number(row.rsh_lng),
+    rsh_btk:    Number(row.rsh_btk),
+    fmb:        Number(row.fmb),
+    fmb_lost:   Number(row.fmb_lost),
+    rec_catches: Number(row.rec_catches),
+    rec_tgts:   Number(row.rec_tgts),
+    rec_yds:    Number(row.rec_yds),
+    rec_tds:    Number(row.rec_tds),
+    rec_drops:  Number(row.rec_drops),
+    rec_lng:    Number(row.rec_lng),
+    rec_yac:    Number(row.rec_yac),
+    def_total_tackles: Number(row.def_total_tackles),
+    def_tfl:    Number(row.def_tfl),
+    def_sacks:  Number(row.def_sacks),
+    def_ints:   Number(row.def_ints),
+    def_ff:     Number(row.def_ff),
+    def_pd:     Number(row.def_pd),
+    def_tds:    Number(row.def_tds),
+    def_fum_rec: Number(row.def_fum_rec),
+    def_safeties: Number(row.def_safeties),
+    fg_att:     Number(row.fg_att),
+    fg_made:    Number(row.fg_made),
+    fg_lng:     Number(row.fg_lng),
+    xp_att:     Number(row.xp_att),
+    xp_made:    Number(row.xp_made),
+    punt_att:   Number(row.punt_att),
+    punt_yds:   Number(row.punt_yds),
+    punt_avg:   Math.round(Number(row.punt_avg)),
+    punt_lng:   Number(row.punt_lng),
+    punt_in20:  Number(row.punt_in20),
+  });
+
+  const all = rows.map(fmt);
+  res.json({
+    passing:   all.filter(p => p.pss_att > 0),
+    rushing:   all.filter(p => p.rsh_att > 0),
+    receiving: all.filter(p => p.rec_catches > 0 || p.rec_tgts > 0),
+    defense:   all.filter(p => p.def_total_tackles > 0 || p.def_sacks > 0 || p.def_ints > 0 || p.def_pd > 0 || p.def_ff > 0),
+    kicking:   all.filter(p => p.fg_att > 0 || p.xp_att > 0),
+    punting:   all.filter(p => p.punt_att > 0),
   });
 });
 

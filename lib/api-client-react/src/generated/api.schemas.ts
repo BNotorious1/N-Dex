@@ -147,6 +147,64 @@ export interface Player {
   tackling?: number | null;
 }
 
+export interface PlayerSeasonStats {
+  player: Player;
+  team_name: string;
+  /** @nullable */
+  team_color?: string | null;
+  gp: number;
+  pss_att?: number;
+  pss_cmp?: number;
+  pss_yds?: number;
+  pss_tds?: number;
+  pss_ints?: number;
+  pss_sacks?: number;
+  pss_lng?: number;
+  pss_rating?: number;
+  rsh_att?: number;
+  rsh_yds?: number;
+  rsh_tds?: number;
+  rsh_lng?: number;
+  rsh_btk?: number;
+  fmb?: number;
+  fmb_lost?: number;
+  rec_catches?: number;
+  rec_tgts?: number;
+  rec_yds?: number;
+  rec_tds?: number;
+  rec_drops?: number;
+  rec_lng?: number;
+  rec_yac?: number;
+  def_total_tackles?: number;
+  def_tfl?: number;
+  def_sacks?: number;
+  def_ints?: number;
+  def_ff?: number;
+  def_pd?: number;
+  def_tds?: number;
+  def_fum_rec?: number;
+  def_safeties?: number;
+  fg_att?: number;
+  fg_made?: number;
+  fg_lng?: number;
+  xp_att?: number;
+  xp_made?: number;
+  punt_att?: number;
+  punt_yds?: number;
+  punt_avg?: number;
+  punt_lng?: number;
+  punt_in20?: number;
+}
+
+export interface LeaguePlayerStats {
+  passing: PlayerSeasonStats[];
+  rushing: PlayerSeasonStats[];
+  receiving: PlayerSeasonStats[];
+  defense: PlayerSeasonStats[];
+  kicking: PlayerSeasonStats[];
+  punting: PlayerSeasonStats[];
+}
+
 export interface PlayerStatLine {
   player: Player;
   team_name: string;

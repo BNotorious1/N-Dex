@@ -112,7 +112,7 @@ export default function LeagueDetail() {
             {(section === "players" || section === "players-search") && <PlayersSection leagueId={leagueId} />}
             {section === "standings" && <StandingsSection standings={standings ?? []} />}
             {section === "games" && <GamesSection games={games ?? []} />}
-            {section === "statistics" && <StatisticsSection statLeaders={statLeaders} />}
+            {section === "statistics" && <StatisticsSection leagueId={leagueId} />}
             {section === "rankings" && <RankingsSection standings={standings ?? []} />}
             {section === "rules" && (
               <PlaceholderSection icon="FileText" title="League Rules" description="No rules have been posted for this league yet. The commissioner can add rules here." />

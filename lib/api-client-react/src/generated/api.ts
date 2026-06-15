@@ -28,6 +28,7 @@ import type {
   HealthStatus,
   League,
   LeagueInput,
+  LeaguePlayerStats,
   LeagueSummary,
   LeagueUpdate,
   ListLeaguesParams,
@@ -810,6 +811,83 @@ export function useGetLeagueStatLeaders<TData = Awaited<ReturnType<typeof getLea
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetLeagueStatLeadersQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetLeaguePlayerStatsUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/stats/players`
+}
+
+/**
+ * @summary Get aggregated season stats for all players in a league
+ */
+export const getLeaguePlayerStats = async (id: number, options?: RequestInit): Promise<LeaguePlayerStats> => {
+
+  return customFetch<LeaguePlayerStats>(getGetLeaguePlayerStatsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeaguePlayerStatsQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/stats/players`
+    ] as const;
+    }
+
+
+export const getGetLeaguePlayerStatsQueryOptions = <TData = Awaited<ReturnType<typeof getLeaguePlayerStats>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeaguePlayerStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeaguePlayerStatsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaguePlayerStats>>> = ({ signal }) => getLeaguePlayerStats(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeaguePlayerStats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeaguePlayerStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaguePlayerStats>>>
+export type GetLeaguePlayerStatsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get aggregated season stats for all players in a league
+ */
+
+export function useGetLeaguePlayerStats<TData = Awaited<ReturnType<typeof getLeaguePlayerStats>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeaguePlayerStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeaguePlayerStatsQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
