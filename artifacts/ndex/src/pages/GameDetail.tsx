@@ -565,7 +565,8 @@ function espnLogoUrl(abbr: string): string {
 }
 
 function eaPortraitUrl(portraitId: number): string {
-  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
+  const direct = `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
+  return `/api/proxy/image?url=${encodeURIComponent(direct)}`;
 }
 
 function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: string }) {
@@ -810,54 +811,31 @@ function RecapTab({
   async function handleDownload() {
     if (!cardRef.current) return;
     setDownloading(true);
-    let offscreen: HTMLElement | null = null;
     try {
-      const { default: html2canvas } = await import("html2canvas");
+      const { toPng } = await import("html-to-image");
 
-      // Place clone at the viewport origin (top:0,left:0) with no transform.
-      // html2canvas uses getBoundingClientRect() to locate the element — extreme
-      // negative coords break its math, so (0,0) is the only reliable anchor.
-      // z-index:99999 ensures it's on top; it disappears as soon as capture ends.
-      offscreen = cardRef.current.cloneNode(true) as HTMLElement;
-      // Set props individually — assigning cssText would wipe all existing
-      // inline styles (background, flexbox layout, colours, etc.) from the clone.
-      offscreen.style.transform = "none";
-      offscreen.style.position = "fixed";
-      offscreen.style.top = "0";
-      offscreen.style.left = "0";
-      offscreen.style.width = `${CARD_W}px`;
-      offscreen.style.height = `${CARD_H}px`;
-      offscreen.style.borderRadius = "0";
-      offscreen.style.zIndex = "99999";
-      offscreen.style.pointerEvents = "none";
-      document.body.appendChild(offscreen);
-
-      // One rAF so the browser has committed the element to layout
-      await new Promise<void>((r) => requestAnimationFrame(() => r()));
-
-      const canvas = await html2canvas(offscreen, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#070b14",
-        logging: false,
+      // html-to-image uses the browser's own SVG renderer (foreignObject) so
+      // flexbox, modern CSS, and all computed styles match the preview exactly.
+      // The style override removes the CSS scale transform so the output is the
+      // full 1200×630 rather than the scaled-down preview size.
+      const dataUrl = await toPng(cardRef.current, {
         width: CARD_W,
         height: CARD_H,
-        // fixed-position element sits at viewport (0,0) — no scroll correction needed
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
+        pixelRatio: 2,
+        backgroundColor: "#070b14",
+        style: {
+          transform: "none",
+          borderRadius: "0",
+        },
       });
 
       const link = document.createElement("a");
       link.download = `${awayAbbr}-vs-${homeAbbr}-week${week}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.click();
     } catch (err) {
       console.error("Recap export failed", err);
     } finally {
-      offscreen?.remove();
       setDownloading(false);
     }
   }
