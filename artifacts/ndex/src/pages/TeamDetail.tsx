@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { Link, useParams } from "wouter";
 import {
   useGetTeam,
   useGetTeamPlayers,
   useGetTeamGames,
+  useGetLeagueSummary,
   getGetTeamQueryKey,
   getGetTeamPlayersQueryKey,
   getGetTeamGamesQueryKey,
+  getGetLeagueSummaryQueryKey,
 } from "@workspace/api-client-react";
 import Navbar from "@/components/Navbar";
+import LeagueSidebar from "@/components/league/LeagueSidebar";
 import TeamLogo from "@/components/TeamLogo";
 import type { TeamGame } from "@workspace/api-client-react";
 
@@ -101,6 +105,14 @@ export default function TeamDetail() {
     query: { enabled: !!teamId, queryKey: getGetTeamGamesQueryKey(teamId) },
   });
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { data: leagueSummary } = useGetLeagueSummary(team?.league_id ?? 0, {
+    query: {
+      enabled: !!team?.league_id,
+      queryKey: getGetLeagueSummaryQueryKey(team?.league_id ?? 0),
+    },
+  });
+
   if (teamLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -136,9 +148,27 @@ export default function TeamDetail() {
 
   const sortedGames = games ? [...games].sort((a, b) => a.week - b.week) : [];
 
+  const leagueSidebarLeague = leagueSummary?.league ?? {
+    id: team.league_id,
+    name: "…",
+    platform: "—",
+    season: 0,
+    week: 0,
+    phase: "—",
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="h-screen flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
       <Navbar />
+      <div className="flex flex-1 overflow-hidden">
+        <LeagueSidebar
+          league={leagueSidebarLeague}
+          section="teams"
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(v => !v)}
+          navLeagueId={team.league_id}
+        />
+        <main className="flex-1 overflow-y-auto">
 
       {/* ─── Hero Banner ─── */}
       <div
@@ -156,13 +186,7 @@ export default function TeamDetail() {
         />
 
         <div className="relative mx-auto max-w-6xl px-4 py-8">
-          <Link
-            href={`/leagues/${team.league_id}`}
-            className="text-[11px] text-white/30 hover:text-[#00C8FF] transition-colors mb-5 inline-flex items-center gap-1"
-          >
-            <span>←</span>
-            <span className="uppercase tracking-wider font-bold">Back to League</span>
-          </Link>
+
 
           <div className="flex items-center gap-6">
             {/* Team logo */}
@@ -431,6 +455,8 @@ export default function TeamDetail() {
           )}
         </div>
 
+      </div>
+        </main>
       </div>
     </div>
   );

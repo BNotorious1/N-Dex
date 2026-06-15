@@ -6,14 +6,17 @@ import {
   PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import type { LeagueSection } from "@/pages/LeagueDetail";
 
 interface Props {
   league: { id: number; name: string; platform: string; season: number; week: number; phase: string };
   section: LeagueSection;
-  onSelect: (s: LeagueSection) => void;
+  onSelect?: (s: LeagueSection) => void;
   collapsed: boolean;
   onToggle: () => void;
+  /** When provided the sidebar renders navigation links instead of local section callbacks */
+  navLeagueId?: number;
 }
 
 interface NavItem {
@@ -61,10 +64,11 @@ const ADMIN_KEYS: LeagueSection[] = [
   "admin-members", "admin-invite", "admin-advance",
 ];
 
-export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle }: Props) {
+export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle, navLeagueId }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(
     new Set(["players", "admin"])
   );
+  const [, navigate] = useLocation();
 
   const toggle = (key: string) => {
     setExpanded((prev) => {
@@ -129,18 +133,23 @@ export default function LeagueSidebar({ league, section, onSelect, collapsed, on
             <div key={item.key}>
               <button
                 onClick={() => {
+                  const targetKey = item.sub ? item.sub[0].key : item.key;
+                  if (navLeagueId) {
+                    navigate(`/leagues/${navLeagueId}?section=${targetKey}`);
+                    return;
+                  }
                   if (collapsed) {
-                    onSelect(item.sub ? item.sub[0].key : item.key);
+                    onSelect?.(targetKey);
                     return;
                   }
                   if (item.sub) {
                     const wasExpanded = expanded.has(item.key);
                     toggle(item.key);
                     if (!wasExpanded && item.sub.length > 0) {
-                      onSelect(item.sub[0].key);
+                      onSelect?.(item.sub[0].key);
                     }
                   } else {
-                    onSelect(item.key);
+                    onSelect?.(item.key);
                   }
                 }}
                 title={collapsed ? item.label : undefined}
@@ -177,7 +186,7 @@ export default function LeagueSidebar({ league, section, onSelect, collapsed, on
                     return (
                       <button
                         key={sub.key}
-                        onClick={() => onSelect(sub.key)}
+                        onClick={() => navLeagueId ? navigate(`/leagues/${navLeagueId}?section=${sub.key}`) : onSelect?.(sub.key)}
                         className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-[11px] transition-colors rounded-sm ${
                           subActive
                             ? isAdmin

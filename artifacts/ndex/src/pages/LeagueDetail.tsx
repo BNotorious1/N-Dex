@@ -37,7 +37,10 @@ export type LeagueSection =
 export default function LeagueDetail() {
   const params = useParams<{ id: string }>();
   const leagueId = Number(params.id);
-  const [section, setSection] = useState<LeagueSection>("home");
+  const [section, setSection] = useState<LeagueSection>(() => {
+    const s = new URLSearchParams(window.location.search).get("section");
+    return (s as LeagueSection) ?? "home";
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { data: summary, isLoading } = useGetLeagueSummary(leagueId, {

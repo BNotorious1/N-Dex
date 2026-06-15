@@ -3,9 +3,10 @@ import { Link, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
-import { useGetPlayerGameLog, useGetPlayerAwards, useAddPlayerAward, useDeletePlayerAward, getGetPlayerAwardsQueryKey, useGetPlayerTransactions, useAddPlayerTransaction, useDeletePlayerTransaction, getGetPlayerTransactionsQueryKey } from "@workspace/api-client-react";
+import { useGetPlayerGameLog, useGetPlayerAwards, useAddPlayerAward, useDeletePlayerAward, getGetPlayerAwardsQueryKey, useGetPlayerTransactions, useAddPlayerTransaction, useDeletePlayerTransaction, getGetPlayerTransactionsQueryKey, useGetLeagueSummary, getGetLeagueSummaryQueryKey } from "@workspace/api-client-react";
+import LeagueSidebar from "@/components/league/LeagueSidebar";
 import type { GameLogEntry } from "@workspace/api-client-react";
-import { ArrowLeft, ArrowRight, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus } from "lucide-react";
+import { ArrowRight, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus } from "lucide-react";
 import devTraitNormal from "@assets/Normal_1781202579092.png";
 import devTraitStar from "@assets/Star_1781202579092.png";
 import devTraitSuperstar from "@assets/Superstar_1781202579092.png";
@@ -1759,6 +1760,14 @@ export default function PlayerDetail() {
   });
 
   const [portraitError, setPortraitError] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const { data: leagueSummary } = useGetLeagueSummary(player?.league_id ?? 0, {
+    query: {
+      enabled: !!player?.league_id,
+      queryKey: getGetLeagueSummaryQueryKey(player?.league_id ?? 0),
+    },
+  });
 
   const teamColor = player?.team_primary_color ?? "#00C8FF";
   const [firstName, lastName] = player ? splitName(player.name) : ["", ""];
@@ -1777,9 +1786,27 @@ export default function PlayerDetail() {
     return parts.join(" ");
   })();
 
+  const leagueSidebarLeague = leagueSummary?.league ?? {
+    id: player?.league_id ?? 0,
+    name: "…",
+    platform: "—",
+    season: 0,
+    week: 0,
+    phase: "—",
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="h-screen flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
       <Navbar />
+      <div className="flex flex-1 overflow-hidden">
+        <LeagueSidebar
+          league={leagueSidebarLeague}
+          section="players-search"
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(v => !v)}
+          navLeagueId={player?.league_id ?? 0}
+        />
+        <main className="flex-1 overflow-y-auto">
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="h-8 w-8 rounded-full border-2 border-[#00C8FF]/30 border-t-[#00C8FF] animate-spin" />
@@ -1806,12 +1833,8 @@ export default function PlayerDetail() {
             <div className="absolute inset-0 opacity-[0.07]" style={{ background: `radial-gradient(ellipse at 70% 50%, ${teamColor} 0%, transparent 60%)` }} />
 
             <div className="relative px-8 py-8 pl-10 mt-[0px] mb-[0px]">
-              {/* Back nav row */}
-              <div className="flex items-center justify-between mb-6">
-                <Link href={`/leagues/${player.league_id}`} className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors">
-                  <ArrowLeft className="h-3 w-3" />
-                  Back to League
-                </Link>
+              {/* OVR badge row */}
+              <div className="flex justify-end mb-6">
                 <span
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-black tracking-wider border"
                   style={{ color: ovrColor(player.overall), backgroundColor: `${ovrColor(player.overall)}18`, borderColor: `${ovrColor(player.overall)}30` }}
@@ -1926,6 +1949,8 @@ export default function PlayerDetail() {
           </div>
         </>
       )}
+        </main>
+      </div>
     </div>
   );
 }
