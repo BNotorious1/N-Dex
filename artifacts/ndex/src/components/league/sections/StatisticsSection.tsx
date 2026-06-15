@@ -556,7 +556,7 @@ function PassingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "pss_yds",   label: "YDS",     title: "Pass Yards",      align: "center", bold: true, sortVal: p => n(p.pss_yds),  render: p => <span className="font-black text-[#ffffffb3]">{d(n(p.pss_yds))}</span> },
     { key: "ypg",       label: "YDS/G",   title: "Yards per Game",  align: "center", sortVal: p => n(p.pss_yds) / Math.max(p.gp, 1), render: p => perG(n(p.pss_yds), p.gp) },
     { key: "pss_tds",   label: "TD",      title: "Passing TDs",     align: "center", sortVal: p => n(p.pss_tds),  render: p => n(p.pss_tds) > 0 ? <span className="font-bold text-[#ffffffb3]">{p.pss_tds}</span> : "—" },
-    { key: "pss_ints",  label: "INT",     title: "Interceptions",   align: "center", sortVal: p => n(p.pss_ints), render: p => n(p.pss_ints) > 0 ? <span className="text-red-400">{p.pss_ints}</span> : "—" },
+    { key: "pss_ints",  label: "INT",     title: "Interceptions",   align: "center", sortVal: p => n(p.pss_ints), render: p => n(p.pss_ints) > 0 ? <span className="font-bold text-[#ffffffb3]">{p.pss_ints}</span> : "—" },
     { key: "pss_sacks", label: "SCK",     title: "Times Sacked",    align: "center", sortVal: p => n(p.pss_sacks), render: p => d(n(p.pss_sacks)) },
     { key: "pss_lng",   label: "LNG",     title: "Long Pass",       align: "center", sortVal: p => n(p.pss_lng),  render: p => d(n(p.pss_lng)) },
     { key: "pss_rating",label: "RTG",     title: "QB Rating",       align: "center", sortVal: p => n(p.pss_rating), render: p => <span className="font-bold">{rtg(n(p.pss_rating))}</span> },
