@@ -819,17 +819,17 @@ function RecapTab({
       // negative coords break its math, so (0,0) is the only reliable anchor.
       // z-index:99999 ensures it's on top; it disappears as soon as capture ends.
       offscreen = cardRef.current.cloneNode(true) as HTMLElement;
-      offscreen.style.cssText = [
-        "position:fixed",
-        "top:0",
-        "left:0",
-        `width:${CARD_W}px`,
-        `height:${CARD_H}px`,
-        "transform:none",
-        "border-radius:0",
-        "z-index:99999",
-        "pointer-events:none",
-      ].join(";");
+      // Set props individually — assigning cssText would wipe all existing
+      // inline styles (background, flexbox layout, colours, etc.) from the clone.
+      offscreen.style.transform = "none";
+      offscreen.style.position = "fixed";
+      offscreen.style.top = "0";
+      offscreen.style.left = "0";
+      offscreen.style.width = `${CARD_W}px`;
+      offscreen.style.height = `${CARD_H}px`;
+      offscreen.style.borderRadius = "0";
+      offscreen.style.zIndex = "99999";
+      offscreen.style.pointerEvents = "none";
       document.body.appendChild(offscreen);
 
       // One rAF so the browser has committed the element to layout
