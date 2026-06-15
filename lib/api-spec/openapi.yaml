@@ -244,6 +244,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/LeaguePlayerStats"
 
+  /leagues/{id}/stats/seasons:
+    get:
+      operationId: getLeagueStatsMeta
+      tags: [leagues]
+      summary: Get available seasons and weeks for a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Available seasons and weeks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeagueStatsMeta"
+
   /leagues/{id}/teams:
     get:
       operationId: getLeagueTeams
@@ -953,6 +972,21 @@ components:
         division:
           type: string
 
+    LeagueStatsMeta:
+      type: object
+      required: [seasons, weeks_by_season]
+      properties:
+        seasons:
+          type: array
+          items:
+            type: integer
+        weeks_by_season:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: integer
+
     LeaguePlayerStats:
       type: object
       required: [passing, rushing, receiving, defense, kicking, punting]
@@ -984,11 +1018,15 @@ components:
 
     PlayerSeasonStats:
       type: object
-      required: [player, team_name, gp]
+      required: [player, team_name, team_id, team_abbreviation, gp]
       properties:
         player:
           $ref: "#/components/schemas/Player"
         team_name:
+          type: string
+        team_id:
+          type: integer
+        team_abbreviation:
           type: string
         team_color:
           type: ["string", "null"]
@@ -1256,6 +1294,9 @@ components:
           type: ["integer", "null"]
         tackling:
           type: ["integer", "null"]
+        portrait_id:
+          type: ["integer", "null"]
+          description: "EA portrait CDN ID (used in portrait image URLs)"
 
     PlayerDetail:
       type: object

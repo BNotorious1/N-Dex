@@ -16,6 +16,8 @@ export * from './healthStatus';
 export * from './league';
 export * from './leagueInput';
 export * from './leaguePlayerStats';
+export * from './leagueStatsMeta';
+export * from './leagueStatsMetaWeeksBySeason';
 export * from './leagueSummary';
 export * from './leagueUpdate';
 export * from './listLeaguesParams';

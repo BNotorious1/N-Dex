@@ -132,6 +132,7 @@ function formatPlayer(player: typeof playersTable.$inferSelect) {
     throwing_power: player.throwingPower,
     catching: player.catching,
     tackling: player.tackling,
+    portrait_id: player.portraitId ?? null,
   };
 }
 
@@ -394,6 +395,34 @@ router.get("/:id/stats/leaders", async (req, res) => {
   });
 });
 
+// GET /leagues/:id/stats/seasons
+router.get("/:id/stats/seasons", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const rows = await db
+    .selectDistinct({
+      season: playerGameStatsTable.season,
+      week: playerGameStatsTable.week,
+    })
+    .from(playerGameStatsTable)
+    .where(eq(playerGameStatsTable.leagueId, id))
+    .orderBy(playerGameStatsTable.season, playerGameStatsTable.week);
+
+  const seasons = [...new Set(rows.map(r => r.season))].sort((a, b) => a - b);
+  const weeksBySeason: Record<string, number[]> = {};
+  for (const row of rows) {
+    const key = String(row.season);
+    if (!weeksBySeason[key]) weeksBySeason[key] = [];
+    if (!weeksBySeason[key].includes(row.week)) weeksBySeason[key].push(row.week);
+  }
+
+  res.json({ seasons, weeks_by_season: weeksBySeason });
+});
+
 // GET /leagues/:id/stats/players
 router.get("/:id/stats/players", async (req, res) => {
   const id = Number(req.params.id);
@@ -401,6 +430,17 @@ router.get("/:id/stats/players", async (req, res) => {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
+
+  const season = req.query.season !== undefined ? Number(req.query.season) : null;
+  const week = req.query.week !== undefined ? Number(req.query.week) : null;
+
+  const baseWhere = eq(playerGameStatsTable.leagueId, id);
+  const withSeason = season !== null && !isNaN(season)
+    ? and(baseWhere, eq(playerGameStatsTable.season, season))
+    : baseWhere;
+  const whereClause = week !== null && !isNaN(week)
+    ? and(withSeason, eq(playerGameStatsTable.week, week))
+    : withSeason;
 
   const rows = await db
     .select({
@@ -452,12 +492,14 @@ router.get("/:id/stats/players", async (req, res) => {
     .from(playerGameStatsTable)
     .innerJoin(playersTable, eq(playerGameStatsTable.playerId, playersTable.id))
     .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
-    .where(eq(playerGameStatsTable.leagueId, id))
+    .where(whereClause)
     .groupBy(playerGameStatsTable.playerId, playersTable.id, teamsTable.id);
 
   const fmt = (row: typeof rows[0]) => ({
     player: formatPlayer(row.player),
     team_name: row.team.name,
+    team_id: row.team.id,
+    team_abbreviation: row.team.abbreviation,
     team_color: row.team.primaryColor ?? null,
     gp: Number(row.gp),
     pss_att:    Number(row.pss_att),

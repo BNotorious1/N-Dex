@@ -10,6 +10,8 @@ import type { Player } from './player';
 export interface PlayerSeasonStats {
   player: Player;
   team_name: string;
+  team_id: number;
+  team_abbreviation: string;
   /** @nullable */
   team_color?: string | null;
   gp: number;

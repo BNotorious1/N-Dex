@@ -296,7 +296,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -315,7 +316,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -334,7 +336,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -353,7 +356,8 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
   "stat_label": zod.string(),
@@ -383,9 +387,12 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number(),
+  "team_abbreviation": zod.string(),
   "team_color": zod.string().nullish(),
   "gp": zod.number(),
   "pss_att": zod.number().optional(),
@@ -443,9 +450,12 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number(),
+  "team_abbreviation": zod.string(),
   "team_color": zod.string().nullish(),
   "gp": zod.number(),
   "pss_att": zod.number().optional(),
@@ -503,9 +513,12 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number(),
+  "team_abbreviation": zod.string(),
   "team_color": zod.string().nullish(),
   "gp": zod.number(),
   "pss_att": zod.number().optional(),
@@ -563,9 +576,12 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number(),
+  "team_abbreviation": zod.string(),
   "team_color": zod.string().nullish(),
   "gp": zod.number(),
   "pss_att": zod.number().optional(),
@@ -623,9 +639,12 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number(),
+  "team_abbreviation": zod.string(),
   "team_color": zod.string().nullish(),
   "gp": zod.number(),
   "pss_att": zod.number().optional(),
@@ -683,9 +702,12 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number(),
+  "team_abbreviation": zod.string(),
   "team_color": zod.string().nullish(),
   "gp": zod.number(),
   "pss_att": zod.number().optional(),
@@ -730,6 +752,19 @@ export const GetLeaguePlayerStatsResponse = zod.object({
   "punt_lng": zod.number().optional(),
   "punt_in20": zod.number().optional()
 }))
+})
+
+
+/**
+ * @summary Get available seasons and weeks for a league
+ */
+export const GetLeagueStatsMetaParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueStatsMetaResponse = zod.object({
+  "seasons": zod.array(zod.number()),
+  "weeks_by_season": zod.record(zod.string(), zod.array(zod.number()))
 })
 
 
@@ -966,7 +1001,8 @@ export const GetTeamPlayersResponseItem = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 })
 export const GetTeamPlayersResponse = zod.array(GetTeamPlayersResponseItem)
 
@@ -1172,7 +1208,8 @@ export const UpdatePlayerResponse = zod.object({
   "awareness": zod.number(),
   "throwing_power": zod.number().nullish(),
   "catching": zod.number().nullish(),
-  "tackling": zod.number().nullish()
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)')
 })
 
 

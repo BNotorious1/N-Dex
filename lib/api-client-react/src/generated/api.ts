@@ -29,6 +29,7 @@ import type {
   League,
   LeagueInput,
   LeaguePlayerStats,
+  LeagueStatsMeta,
   LeagueSummary,
   LeagueUpdate,
   ListLeaguesParams,
@@ -888,6 +889,83 @@ export function useGetLeaguePlayerStats<TData = Awaited<ReturnType<typeof getLea
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetLeaguePlayerStatsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetLeagueStatsMetaUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/stats/seasons`
+}
+
+/**
+ * @summary Get available seasons and weeks for a league
+ */
+export const getLeagueStatsMeta = async (id: number, options?: RequestInit): Promise<LeagueStatsMeta> => {
+
+  return customFetch<LeagueStatsMeta>(getGetLeagueStatsMetaUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueStatsMetaQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/stats/seasons`
+    ] as const;
+    }
+
+
+export const getGetLeagueStatsMetaQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueStatsMeta>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueStatsMeta>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueStatsMetaQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueStatsMeta>>> = ({ signal }) => getLeagueStatsMeta(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueStatsMeta>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueStatsMetaQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueStatsMeta>>>
+export type GetLeagueStatsMetaQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get available seasons and weeks for a league
+ */
+
+export function useGetLeagueStatsMeta<TData = Awaited<ReturnType<typeof getLeagueStatsMeta>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueStatsMeta>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueStatsMetaQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

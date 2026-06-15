@@ -23,4 +23,9 @@ export interface Player {
   catching?: number | null;
   /** @nullable */
   tackling?: number | null;
+  /**
+     * EA portrait CDN ID (used in portrait image URLs)
+     * @nullable
+     */
+  portrait_id?: number | null;
 }

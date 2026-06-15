@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import {
-  useGetLeaguePlayerStats,
+  useGetLeagueStatsMeta,
   useGetLeagueStandings,
-  getGetLeaguePlayerStatsQueryKey,
+  getGetLeagueStatsMetaQueryKey,
   getGetLeagueStandingsQueryKey,
 } from "@workspace/api-client-react";
 import type { PlayerSeasonStats, LeaguePlayerStats, StandingEntry } from "@workspace/api-client-react";
+import TeamLogo from "../../TeamLogo";
 
 type SubTab = "leaders" | "passing" | "rushing" | "receiving" | "defense" | "kicking" | "team";
 
@@ -20,6 +22,8 @@ const SUB_TABS: { key: SubTab; label: string }[] = [
   { key: "kicking",   label: "Kicking/Punting" },
   { key: "team",      label: "Team" },
 ];
+
+const POSITIONS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
 
 const C = {
   passing:  "#00C8FF",
@@ -42,15 +46,69 @@ function per(yds: number, att: number): string {
 }
 function d(v: number): string { return v > 0 ? String(v) : "—"; }
 
+function eaPortraitUrl(portraitId: number): string {
+  const direct = `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
+  return `/api/proxy/image?url=${encodeURIComponent(direct)}`;
+}
+
 export default function StatisticsSection({ leagueId }: { leagueId: number }) {
   const [subTab, setSubTab] = useState<SubTab>("leaders");
 
-  const { data: playerStats, isLoading } = useGetLeaguePlayerStats(leagueId, {
-    query: { queryKey: getGetLeaguePlayerStatsQueryKey(leagueId) },
+  const [filterSeason, setFilterSeason] = useState<number | null>(null);
+  const [filterWeek, setFilterWeek]   = useState<number | null>(null);
+  const [filterTeam, setFilterTeam]   = useState<string>("");
+  const [filterPos,  setFilterPos]    = useState<string>("");
+
+  const { data: statsMeta } = useGetLeagueStatsMeta(leagueId, {
+    query: { queryKey: getGetLeagueStatsMetaQueryKey(leagueId) },
   });
   const { data: standings } = useGetLeagueStandings(leagueId, {
     query: { queryKey: getGetLeagueStandingsQueryKey(leagueId) },
   });
+
+  const { data: playerStats, isLoading } = useQuery<LeaguePlayerStats>({
+    queryKey: ["league-player-stats", leagueId, filterSeason, filterWeek],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filterSeason !== null) params.set("season", String(filterSeason));
+      if (filterWeek   !== null) params.set("week",   String(filterWeek));
+      const qs = params.toString();
+      const res = await fetch(`/api/leagues/${leagueId}/stats/players${qs ? `?${qs}` : ""}`);
+      if (!res.ok) throw new Error("Failed to fetch player stats");
+      return res.json() as Promise<LeaguePlayerStats>;
+    },
+    enabled: true,
+  });
+
+  const availableWeeks = useMemo(() => {
+    if (!statsMeta || filterSeason === null) return [];
+    return statsMeta.weeks_by_season[String(filterSeason)] ?? [];
+  }, [statsMeta, filterSeason]);
+
+  const allTeams = useMemo(() => {
+    if (!playerStats) return [];
+    const seen = new Set<string>();
+    const teams: { id: number; name: string }[] = [];
+    for (const arr of [playerStats.passing, playerStats.rushing, playerStats.receiving, playerStats.defense, playerStats.kicking, playerStats.punting]) {
+      for (const p of arr) {
+        if (!seen.has(p.team_name)) {
+          seen.add(p.team_name);
+          teams.push({ id: p.team_id, name: p.team_name });
+        }
+      }
+    }
+    return teams.sort((a, b) => a.name.localeCompare(b.name));
+  }, [playerStats]);
+
+  function filterRows(rows: PlayerSeasonStats[]): PlayerSeasonStats[] {
+    return rows.filter(p => {
+      if (filterTeam && p.team_name !== filterTeam) return false;
+      if (filterPos  && p.player.position !== filterPos) return false;
+      return true;
+    });
+  }
+
+  const showPlayerFilters = subTab !== "leaders" && subTab !== "team";
 
   return (
     <div className="space-y-4">
@@ -70,6 +128,67 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
         ))}
       </div>
 
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterSelect
+          value={filterSeason === null ? "" : String(filterSeason)}
+          onChange={v => {
+            const s = v === "" ? null : Number(v);
+            setFilterSeason(s);
+            setFilterWeek(null);
+          }}
+          placeholder="All Time"
+        >
+          {(statsMeta?.seasons ?? []).map(s => (
+            <option key={s} value={s}>Season {s}</option>
+          ))}
+        </FilterSelect>
+
+        <FilterSelect
+          value={filterWeek === null ? "" : String(filterWeek)}
+          onChange={v => setFilterWeek(v === "" ? null : Number(v))}
+          placeholder="All Weeks"
+          disabled={filterSeason === null || availableWeeks.length === 0}
+        >
+          {availableWeeks.map(w => (
+            <option key={w} value={w}>Week {w}</option>
+          ))}
+        </FilterSelect>
+
+        {showPlayerFilters && (
+          <>
+            <FilterSelect
+              value={filterTeam}
+              onChange={setFilterTeam}
+              placeholder="All Teams"
+            >
+              {allTeams.map(t => (
+                <option key={t.id} value={t.name}>{t.name}</option>
+              ))}
+            </FilterSelect>
+
+            <FilterSelect
+              value={filterPos}
+              onChange={setFilterPos}
+              placeholder="All Positions"
+            >
+              {POSITIONS.map(pos => (
+                <option key={pos} value={pos}>{pos}</option>
+              ))}
+            </FilterSelect>
+          </>
+        )}
+
+        {(filterSeason !== null || filterWeek !== null || filterTeam || filterPos) && (
+          <button
+            onClick={() => { setFilterSeason(null); setFilterWeek(null); setFilterTeam(""); setFilterPos(""); }}
+            className="text-[10px] text-white/35 hover:text-[#F44336] transition-colors font-bold px-1"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       {isLoading && (
         <div className="flex items-center justify-center py-20">
           <p className="text-white/30 text-xs">Loading statistics…</p>
@@ -79,11 +198,11 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
       {!isLoading && playerStats && (
         <>
           {subTab === "leaders"   && <LeagueLeadersTab data={playerStats} />}
-          {subTab === "passing"   && <PassingTab    players={playerStats.passing} />}
-          {subTab === "rushing"   && <RushingTab    players={playerStats.rushing} />}
-          {subTab === "receiving" && <ReceivingTab  players={playerStats.receiving} />}
-          {subTab === "defense"   && <DefenseTab    players={playerStats.defense} />}
-          {subTab === "kicking"   && <KickingPuntingTab kicking={playerStats.kicking} punting={playerStats.punting} />}
+          {subTab === "passing"   && <PassingTab    players={filterRows(playerStats.passing)} />}
+          {subTab === "rushing"   && <RushingTab    players={filterRows(playerStats.rushing)} />}
+          {subTab === "receiving" && <ReceivingTab  players={filterRows(playerStats.receiving)} />}
+          {subTab === "defense"   && <DefenseTab    players={filterRows(playerStats.defense)} />}
+          {subTab === "kicking"   && <KickingPuntingTab kicking={filterRows(playerStats.kicking)} punting={filterRows(playerStats.punting)} />}
           {subTab === "team"      && <TeamTab data={playerStats} standings={standings ?? []} />}
         </>
       )}
@@ -94,6 +213,34 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Filter Select ────────────────────────────────────────────────────────────
+
+function FilterSelect({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  children,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      disabled={disabled}
+      className="bg-[#1a1a1a] border border-white/10 text-white/70 text-[11px] rounded px-2.5 py-1.5 focus:outline-none focus:border-[#00C8FF]/50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+    >
+      <option value="">{placeholder}</option>
+      {children}
+    </select>
   );
 }
 
@@ -146,7 +293,9 @@ function LeaderCard({ def, data }: { def: LeaderDef; data: LeaguePlayerStats }) 
             </Link>
             <div className="flex items-center gap-1.5">
               <span className="text-[9px] px-1.5 py-0.5 rounded border border-white/12 bg-white/5 font-bold text-white/60">{top.player.position}</span>
-              <span className="text-[10px] text-white/40 truncate">{top.team_name}</span>
+              <Link href={`/teams/${top.team_id}`} className="text-[10px] text-white/40 truncate hover:text-[#00C8FF] transition-colors">
+                {top.team_name}
+              </Link>
             </div>
             <div className="mt-auto pt-1 flex items-baseline gap-1">
               <span className="text-2xl font-black" style={{ color: def.color }}>{def.display(top)}</span>
@@ -261,11 +410,11 @@ function SortableTable<T>({
             </tr>
           ) : pageRows.map((row, i) => (
             <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors last:border-0">
-              <td className="px-3 py-2.5 text-white/20 text-[11px]">{firstRank + i + 1}</td>
+              <td className="px-3 py-2 text-white/20 text-[11px]">{firstRank + i + 1}</td>
               {cols.map(col => (
                 <td
                   key={col.key}
-                  className={`px-3 py-2.5 whitespace-nowrap ${col.bold ? "font-bold text-white" : "text-white/70"} ${
+                  className={`px-3 py-2 whitespace-nowrap ${col.bold ? "font-bold text-white" : "text-white/70"} ${
                     col.align === "left" ? "text-left" : col.align === "right" ? "text-right" : "text-center"
                   }`}
                 >
@@ -277,6 +426,7 @@ function SortableTable<T>({
         </tbody>
       </table>
       </div>
+
       {sorted.length > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/8 bg-[#0f0f0f]">
           <div className="flex items-center gap-2">
@@ -325,13 +475,43 @@ function SortableTable<T>({
   );
 }
 
+// ─── Player Cell ─────────────────────────────────────────────────────────────
+
 function PlayerCell({ p }: { p: PlayerSeasonStats }) {
+  const [portraitErr, setPortraitErr] = useState(false);
+  const hasPortrait = !!p.player.portrait_id && !portraitErr;
+
   return (
-    <div className="flex flex-col gap-0.5">
-      <Link href={`/players/${p.player.id}`} className="font-bold text-white hover:text-[#00C8FF] transition-colors">
-        {p.player.name}
-      </Link>
-      <span className="text-[9px] text-white/35">{p.team_name}</span>
+    <div className="flex items-center gap-2.5">
+      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/8">
+        {hasPortrait ? (
+          <img
+            src={eaPortraitUrl(p.player.portrait_id!)}
+            alt={p.player.name}
+            className="w-full h-full object-cover object-top"
+            loading="lazy"
+            onError={() => setPortraitErr(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/25">
+            {p.player.name.charAt(0)}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <Link
+          href={`/players/${p.player.id}`}
+          className="font-bold text-white hover:text-[#00C8FF] transition-colors leading-tight"
+        >
+          {p.player.name}
+        </Link>
+        <Link
+          href={`/teams/${p.team_id}`}
+          className="text-[9px] text-white/35 hover:text-[#00C8FF] transition-colors leading-tight"
+        >
+          {p.team_name}
+        </Link>
+      </div>
     </div>
   );
 }
@@ -468,7 +648,9 @@ function KickingPuntingTab({ kicking, punting }: { kicking: PlayerSeasonStats[];
 // ─── Team Tab ─────────────────────────────────────────────────────────────────
 
 type TeamAgg = {
+  team_id: number;
   team_name: string;
+  team_abbreviation: string;
   team_color: string | null;
   gp: number;
   pf: number;
@@ -499,7 +681,10 @@ function TeamTab({ data, standings }: { data: LeaguePlayerStats; standings: Stan
     for (const p of all) {
       const key = p.team_name;
       const e = map.get(key) ?? {
-        team_name: p.team_name, team_color: p.team_color ?? null,
+        team_id: p.team_id,
+        team_name: p.team_name,
+        team_abbreviation: p.team_abbreviation,
+        team_color: p.team_color ?? null,
         gp: 0, pf: 0, pa: 0,
         pass_yds: 0, pass_tds: 0,
         rush_yds: 0, rush_tds: 0,
@@ -534,22 +719,26 @@ function TeamTab({ data, standings }: { data: LeaguePlayerStats; standings: Stan
   const rows = Array.from(teamMap.values());
 
   const cols: ColDef<TeamAgg>[] = [
-    { key: "team",      label: "Team",    align: "left",  bold: true, sortVal: r => r.team_name,  render: r => (
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: r.team_color ?? "#888" }} />
-        <span className="font-bold text-white">{r.team_name}</span>
-      </div>
+    { key: "team", label: "Team", align: "left", bold: true, sortVal: r => r.team_name, render: r => (
+      <Link href={`/teams/${r.team_id}`} className="flex items-center gap-2 group w-fit">
+        <TeamLogo
+          size="sm"
+          abbreviation={r.team_abbreviation}
+          primaryColor={r.team_color}
+        />
+        <span className="font-bold text-white group-hover:text-[#00C8FF] transition-colors">{r.team_name}</span>
+      </Link>
     )},
-    { key: "gp",        label: "GP",      title: "Games Played",   align: "center", sortVal: r => r.gp,        render: r => r.gp || "—" },
-    { key: "pf",        label: "PF",      title: "Points For",     align: "center", sortVal: r => r.pf,        render: r => <span className="font-bold text-green-400">{d(r.pf)}</span> },
-    { key: "ppg",       label: "PPG",     title: "Points per Game",align: "center", sortVal: r => r.gp > 0 ? r.pf / r.gp : 0, render: r => perG(r.pf, r.gp) },
-    { key: "pa",        label: "PA",      title: "Points Against", align: "center", sortVal: r => r.pa,        render: r => <span className="font-bold text-red-400">{d(r.pa)}</span> },
-    { key: "pass_yds",  label: "PASS",    title: "Passing Yards",  align: "center", sortVal: r => r.pass_yds,  render: r => d(r.pass_yds) },
-    { key: "rush_yds",  label: "RUSH",    title: "Rushing Yards",  align: "center", sortVal: r => r.rush_yds,  render: r => d(r.rush_yds) },
-    { key: "off_tds",   label: "TD",      title: "Offensive TDs",  align: "center", sortVal: r => r.pass_tds + r.rush_tds, render: r => d(r.pass_tds + r.rush_tds) },
-    { key: "def_sacks", label: "SCK",     title: "Defensive Sacks",align: "center", sortVal: r => r.def_sacks, render: r => d(r.def_sacks) },
-    { key: "def_ints",  label: "INT",     title: "Def Interceptions",align:"center", sortVal: r => r.def_ints,  render: r => d(r.def_ints) },
-    { key: "def_pd",    label: "PD",      title: "Pass Deflections",align:"center", sortVal: r => r.def_pd,    render: r => d(r.def_pd) },
+    { key: "gp",        label: "GP",   title: "Games Played",   align: "center", sortVal: r => r.gp,        render: r => r.gp || "—" },
+    { key: "pf",        label: "PF",   title: "Points For",     align: "center", sortVal: r => r.pf,        render: r => <span className="font-bold text-green-400">{d(r.pf)}</span> },
+    { key: "ppg",       label: "PPG",  title: "Points per Game",align: "center", sortVal: r => r.gp > 0 ? r.pf / r.gp : 0, render: r => perG(r.pf, r.gp) },
+    { key: "pa",        label: "PA",   title: "Points Against", align: "center", sortVal: r => r.pa,        render: r => <span className="font-bold text-red-400">{d(r.pa)}</span> },
+    { key: "pass_yds",  label: "PASS", title: "Passing Yards",  align: "center", sortVal: r => r.pass_yds,  render: r => d(r.pass_yds) },
+    { key: "rush_yds",  label: "RUSH", title: "Rushing Yards",  align: "center", sortVal: r => r.rush_yds,  render: r => d(r.rush_yds) },
+    { key: "off_tds",   label: "TD",   title: "Offensive TDs",  align: "center", sortVal: r => r.pass_tds + r.rush_tds, render: r => d(r.pass_tds + r.rush_tds) },
+    { key: "def_sacks", label: "SCK",  title: "Defensive Sacks",align: "center", sortVal: r => r.def_sacks, render: r => d(r.def_sacks) },
+    { key: "def_ints",  label: "INT",  title: "Def Interceptions",align:"center", sortVal: r => r.def_ints,  render: r => d(r.def_ints) },
+    { key: "def_pd",    label: "PD",   title: "Pass Deflections",align:"center", sortVal: r => r.def_pd,    render: r => d(r.def_pd) },
   ];
 
   if (rows.length === 0) {

@@ -128,6 +128,13 @@ export interface StandingEntry {
   division: string;
 }
 
+export type LeagueStatsMetaWeeksBySeason = {[key: string]: number[]};
+
+export interface LeagueStatsMeta {
+  seasons: number[];
+  weeks_by_season: LeagueStatsMetaWeeksBySeason;
+}
+
 export interface Player {
   id: number;
   team_id: number;
@@ -145,11 +152,18 @@ export interface Player {
   catching?: number | null;
   /** @nullable */
   tackling?: number | null;
+  /**
+     * EA portrait CDN ID (used in portrait image URLs)
+     * @nullable
+     */
+  portrait_id?: number | null;
 }
 
 export interface PlayerSeasonStats {
   player: Player;
   team_name: string;
+  team_id: number;
+  team_abbreviation: string;
   /** @nullable */
   team_color?: string | null;
   gp: number;
