@@ -11,22 +11,17 @@ import Navbar from "@/components/Navbar";
 import LeagueSidebar from "@/components/league/LeagueSidebar";
 import TeamLogo from "@/components/TeamLogo";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-function espnLogoUrl(abbr: string | null | undefined): string {
-  if (!abbr) return "";
-  return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${abbr.toLowerCase()}.png&w=96&h=96&scale=crop&cquality=40`;
-}
+type StatTab = "recap" | "team" | "passing" | "rushing" | "receiving" | "defense" | "special";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Final",
   IN_PROGRESS: "Live",
   SCHEDULED: "Scheduled",
 };
-
-type StatTab = "passing" | "rushing" | "receiving" | "defense" | "special";
-
-// ─── Stat Filters ────────────────────────────────────────────────────────────
 
 function hasPassingStats(p: GamePlayerStat): boolean {
   return (p.pss_att ?? 0) > 0 || (p.pss_yds ?? 0) > 0;
@@ -45,53 +40,310 @@ function hasDefenseStats(p: GamePlayerStat): boolean {
     (p.def_pd ?? 0) > 0
   );
 }
-function hasSpecialStats(p: GamePlayerStat): boolean {
-  return (p.fg_att ?? 0) > 0 || (p.punt_att ?? 0) > 0 || (p.xp_att ?? 0) > 0;
+
+interface TeamStats {
+  passYds: number;
+  passCmp: number;
+  passAtt: number;
+  passTds: number;
+  passInts: number;
+  sacks: number;
+  rushYds: number;
+  rushAtt: number;
+  rushTds: number;
+  totalYds: number;
+  turnovers: number;
+  fmbLost: number;
+  defSacks: number;
+  defInts: number;
+  fgMade: number;
+  fgAtt: number;
 }
 
-// ─── Sub-components ─────────────────────────────────────────────────────────
+function computeTeamStats(players: GamePlayerStat[]): TeamStats {
+  return {
+    passYds:   players.reduce((s, p) => s + (p.pss_yds ?? 0), 0),
+    passCmp:   players.reduce((s, p) => s + (p.pss_cmp ?? 0), 0),
+    passAtt:   players.reduce((s, p) => s + (p.pss_att ?? 0), 0),
+    passTds:   players.reduce((s, p) => s + (p.pss_tds ?? 0), 0),
+    passInts:  players.reduce((s, p) => s + (p.pss_ints ?? 0), 0),
+    sacks:     players.reduce((s, p) => s + (p.pss_sacks ?? 0), 0),
+    rushYds:   players.reduce((s, p) => s + (p.rsh_yds ?? 0), 0),
+    rushAtt:   players.reduce((s, p) => s + (p.rsh_att ?? 0), 0),
+    rushTds:   players.reduce((s, p) => s + (p.rsh_tds ?? 0), 0),
+    totalYds:  players.reduce((s, p) => s + (p.pss_yds ?? 0) + (p.rsh_yds ?? 0), 0),
+    fmbLost:   players.reduce((s, p) => s + (p.fmb_lost ?? 0), 0),
+    turnovers: players.reduce((s, p) => s + (p.pss_ints ?? 0) + (p.fmb_lost ?? 0), 0),
+    defSacks:  players.reduce((s, p) => s + (p.def_sacks ?? 0), 0),
+    defInts:   players.reduce((s, p) => s + (p.def_ints ?? 0), 0),
+    fgMade:    players.reduce((s, p) => s + (p.fg_made ?? 0), 0),
+    fgAtt:     players.reduce((s, p) => s + (p.fg_att ?? 0), 0),
+  };
+}
 
-function TeamIndicator({ color, abbr }: { color: string; abbr: string }) {
+// ─── Team Stats Tab ──────────────────────────────────────────────────────────
+
+interface CompareRowProps {
+  label: string;
+  awayVal: string;
+  homeVal: string;
+  awayRaw: number;
+  homeRaw: number;
+  awayColor: string;
+  homeColor: string;
+  lowerIsBetter?: boolean;
+}
+
+function CompareRow({ label, awayVal, homeVal, awayRaw, homeRaw, awayColor, homeColor, lowerIsBetter }: CompareRowProps) {
+  const awayWins = lowerIsBetter ? awayRaw < homeRaw : awayRaw > homeRaw;
+  const homeWins = lowerIsBetter ? homeRaw < awayRaw : homeRaw > awayRaw;
+  const max = Math.max(awayRaw, homeRaw, 1);
+
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="w-1.5 h-4 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-      <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">{abbr}</span>
+    <div className="py-3 border-b border-white/5 last:border-0">
+      <p className="text-center text-[10px] font-black uppercase tracking-wider text-white/35 mb-2">{label}</p>
+      <div className="flex items-center gap-4">
+        {/* Away bar + value */}
+        <div className="flex-1 flex items-center gap-3 justify-end">
+          <span className={`text-base font-black tabular-nums ${awayWins ? "text-white" : "text-white/45"}`}>
+            {awayVal}
+          </span>
+          <div className="flex-1 max-w-[120px]">
+            <div
+              className="h-2 rounded-full ml-auto transition-all"
+              style={{
+                width: `${(awayRaw / max) * 100}%`,
+                backgroundColor: awayWins ? awayColor : `${awayColor}55`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Center divider */}
+        <div className="w-px h-5 bg-white/10 shrink-0" />
+
+        {/* Home bar + value */}
+        <div className="flex-1 flex items-center gap-3">
+          <div className="flex-1 max-w-[120px]">
+            <div
+              className="h-2 rounded-full transition-all"
+              style={{
+                width: `${(homeRaw / max) * 100}%`,
+                backgroundColor: homeWins ? homeColor : `${homeColor}55`,
+              }}
+            />
+          </div>
+          <span className={`text-base font-black tabular-nums ${homeWins ? "text-white" : "text-white/45"}`}>
+            {homeVal}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
-interface StatTableProps {
-  players: GamePlayerStat[];
-  homeColor: string;
+interface TeamStatsTabProps {
+  awayStats: TeamStats;
+  homeStats: TeamStats;
   awayColor: string;
-  homeAbbr: string;
+  homeColor: string;
   awayAbbr: string;
-  columns: { label: string; key: keyof GamePlayerStat; primary?: boolean }[];
-  sortKey: keyof GamePlayerStat;
+  homeAbbr: string;
+  awayName: string;
+  homeName: string;
 }
 
-function StatTable({ players, homeColor, awayColor, homeAbbr, awayAbbr, columns, sortKey }: StatTableProps) {
-  const sorted = [...players].sort((a, b) => ((b[sortKey] as number) ?? 0) - ((a[sortKey] as number) ?? 0));
-  if (sorted.length === 0) {
-    return <p className="text-center text-white/25 text-xs py-8">No stats recorded</p>;
+function TeamStatsTab({ awayStats, homeStats, awayColor, homeColor, awayAbbr, homeAbbr, awayName, homeName }: TeamStatsTabProps) {
+  const noStats = awayStats.totalYds === 0 && homeStats.totalYds === 0;
+
+  if (noStats) {
+    return <p className="text-center text-white/25 text-xs py-12">No team stats recorded</p>;
   }
 
-  const headerColor = "#1a1a1a";
+  return (
+    <div className="rounded-xl border border-white/8 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center border-b border-white/8">
+        <div
+          className="flex-1 flex items-center gap-2 px-5 py-3 justify-end"
+          style={{ backgroundColor: `${awayColor}18` }}
+        >
+          <span className="text-[11px] font-black uppercase tracking-wider text-white/70">{awayName}</span>
+          <TeamLogo abbreviation={awayAbbr} size="sm" shape="rounded" />
+        </div>
+        <div className="w-px h-full bg-white/8 self-stretch" />
+        <div
+          className="flex-1 flex items-center gap-2 px-5 py-3"
+          style={{ backgroundColor: `${homeColor}18` }}
+        >
+          <TeamLogo abbreviation={homeAbbr} size="sm" shape="rounded" />
+          <span className="text-[11px] font-black uppercase tracking-wider text-white/70">{homeName}</span>
+        </div>
+      </div>
+
+      {/* Rows */}
+      <div className="px-6 py-2">
+        <CompareRow
+          label="Total Yards"
+          awayVal={awayStats.totalYds.toString()}
+          homeVal={homeStats.totalYds.toString()}
+          awayRaw={awayStats.totalYds}
+          homeRaw={homeStats.totalYds}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Passing Yards"
+          awayVal={awayStats.passYds.toString()}
+          homeVal={homeStats.passYds.toString()}
+          awayRaw={awayStats.passYds}
+          homeRaw={homeStats.passYds}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Comp / Att"
+          awayVal={`${awayStats.passCmp}/${awayStats.passAtt}`}
+          homeVal={`${homeStats.passCmp}/${homeStats.passAtt}`}
+          awayRaw={awayStats.passCmp}
+          homeRaw={homeStats.passCmp}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Rushing Yards"
+          awayVal={awayStats.rushYds.toString()}
+          homeVal={homeStats.rushYds.toString()}
+          awayRaw={awayStats.rushYds}
+          homeRaw={homeStats.rushYds}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Rush Attempts"
+          awayVal={awayStats.rushAtt.toString()}
+          homeVal={homeStats.rushAtt.toString()}
+          awayRaw={awayStats.rushAtt}
+          homeRaw={homeStats.rushAtt}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Passing TDs"
+          awayVal={awayStats.passTds.toString()}
+          homeVal={homeStats.passTds.toString()}
+          awayRaw={awayStats.passTds}
+          homeRaw={homeStats.passTds}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Rushing TDs"
+          awayVal={awayStats.rushTds.toString()}
+          homeVal={homeStats.rushTds.toString()}
+          awayRaw={awayStats.rushTds}
+          homeRaw={homeStats.rushTds}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Turnovers"
+          awayVal={awayStats.turnovers.toString()}
+          homeVal={homeStats.turnovers.toString()}
+          awayRaw={awayStats.turnovers}
+          homeRaw={homeStats.turnovers}
+          awayColor={awayColor}
+          homeColor={homeColor}
+          lowerIsBetter
+        />
+        <CompareRow
+          label="Interceptions"
+          awayVal={awayStats.passInts.toString()}
+          homeVal={homeStats.passInts.toString()}
+          awayRaw={awayStats.passInts}
+          homeRaw={homeStats.passInts}
+          awayColor={awayColor}
+          homeColor={homeColor}
+          lowerIsBetter
+        />
+        <CompareRow
+          label="Fumbles Lost"
+          awayVal={awayStats.fmbLost.toString()}
+          homeVal={homeStats.fmbLost.toString()}
+          awayRaw={awayStats.fmbLost}
+          homeRaw={homeStats.fmbLost}
+          awayColor={awayColor}
+          homeColor={homeColor}
+          lowerIsBetter
+        />
+        <CompareRow
+          label="Sacks Allowed"
+          awayVal={awayStats.sacks.toString()}
+          homeVal={homeStats.sacks.toString()}
+          awayRaw={awayStats.sacks}
+          homeRaw={homeStats.sacks}
+          awayColor={awayColor}
+          homeColor={homeColor}
+          lowerIsBetter
+        />
+        <CompareRow
+          label="FG Made / Att"
+          awayVal={`${awayStats.fgMade}/${awayStats.fgAtt}`}
+          homeVal={`${homeStats.fgMade}/${homeStats.fgAtt}`}
+          awayRaw={awayStats.fgMade}
+          homeRaw={homeStats.fgMade}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Split Stat Table ─────────────────────────────────────────────────────────
+
+interface SplitCol { label: string; key: keyof GamePlayerStat }
+
+interface HalfTableProps {
+  players: GamePlayerStat[];
+  teamColor: string;
+  teamAbbr: string;
+  teamName: string;
+  columns: SplitCol[];
+  sortKey: keyof GamePlayerStat;
+  align: "left" | "right";
+}
+
+function HalfTable({ players, teamColor, teamAbbr, teamName, columns, sortKey, align }: HalfTableProps) {
+  const sorted = [...players].sort((a, b) => ((b[sortKey] as number) ?? 0) - ((a[sortKey] as number) ?? 0));
+  const isRight = align === "right";
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/8">
+    <div className="flex-1 min-w-0 overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr style={{ backgroundColor: headerColor }}>
-            <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-white/50 w-[90px]">Team</th>
-            <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-wider text-white/50">Player</th>
-            <th className="px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white/50 w-12">Pos</th>
-            {columns.map((col) => (
+          <tr style={{ backgroundColor: teamColor }}>
+            {isRight && columns.map((col) => (
               <th
                 key={col.key as string}
-                className={`px-3 py-2.5 text-center text-[10px] font-black uppercase tracking-wider w-14 ${
-                  col.key === sortKey ? "text-[#00C8FF]" : "text-white/50"
-                }`}
+                className={`px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider w-12 text-white`}
+              >
+                {col.label}
+              </th>
+            ))}
+            {isRight && (
+              <th className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-10">Pos</th>
+            )}
+            <th className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-white ${isRight ? "text-left" : "text-left"}`}>
+              {teamName}
+            </th>
+            {!isRight && (
+              <th className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-10">Pos</th>
+            )}
+            {!isRight && columns.map((col) => (
+              <th
+                key={col.key as string}
+                className={`px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider w-12 text-white`}
               >
                 {col.label}
               </th>
@@ -99,60 +351,205 @@ function StatTable({ players, homeColor, awayColor, homeAbbr, awayAbbr, columns,
           </tr>
         </thead>
         <tbody>
-          {sorted.map((p, i) => {
-            const teamColor = p.is_home_team ? homeColor : awayColor;
-            const teamAbbr = p.is_home_team ? homeAbbr : awayAbbr;
-            return (
+          {sorted.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + 2}
+                className="px-4 py-6 text-center text-white/25"
+              >
+                —
+              </td>
+            </tr>
+          ) : (
+            sorted.map((p, i) => (
               <tr
                 key={`${p.player_id}-${i}`}
                 className="border-t border-white/5 hover:bg-white/3 transition-colors"
               >
-                <td className="px-4 py-2.5">
-                  <TeamIndicator color={teamColor} abbr={teamAbbr} />
-                </td>
-                <td className="px-4 py-2.5 font-semibold text-white">
-                  <Link
-                    href={`/players/${p.player_id}`}
-                    className="hover:text-[#00C8FF] transition-colors"
-                  >
-                    {p.player_name}
-                  </Link>
-                </td>
-                <td className="px-3 py-2.5 text-center">
-                  <span className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-white/8 text-white/60">
-                    {p.position}
-                  </span>
-                </td>
-                {columns.map((col) => {
+                {isRight && columns.map((col) => {
                   const val = p[col.key] as number | null | undefined;
                   const isPrimary = col.key === sortKey;
                   return (
                     <td
                       key={col.key as string}
-                      className={`px-3 py-2.5 text-center tabular-nums ${
-                        isPrimary ? "font-bold text-white" : "text-white/55"
-                      }`}
+                      className={`px-2 py-2.5 text-center tabular-nums ${isPrimary ? "font-bold text-white" : "text-white/55"}`}
+                    >
+                      {val ?? "—"}
+                    </td>
+                  );
+                })}
+                {isRight && (
+                  <td className="px-2 py-2.5 text-center">
+                    <span className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/8 text-white/55">
+                      {p.position}
+                    </span>
+                  </td>
+                )}
+                <td className="px-4 py-2.5 font-semibold text-white">
+                  <Link
+                    href={`/players/${p.player_id}`}
+                    className="hover:text-[#00C8FF] transition-colors whitespace-nowrap"
+                  >
+                    {p.player_name}
+                  </Link>
+                </td>
+                {!isRight && (
+                  <td className="px-2 py-2.5 text-center">
+                    <span className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/8 text-white/55">
+                      {p.position}
+                    </span>
+                  </td>
+                )}
+                {!isRight && columns.map((col) => {
+                  const val = p[col.key] as number | null | undefined;
+                  const isPrimary = col.key === sortKey;
+                  return (
+                    <td
+                      key={col.key as string}
+                      className={`px-2 py-2.5 text-center tabular-nums ${isPrimary ? "font-bold text-white" : "text-white/55"}`}
                     >
                       {val ?? "—"}
                     </td>
                   );
                 })}
               </tr>
-            );
-          })}
+            ))
+          )}
         </tbody>
       </table>
     </div>
   );
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+interface SplitStatTableProps {
+  allPlayers: GamePlayerStat[];
+  filter: (p: GamePlayerStat) => boolean;
+  homeColor: string;
+  awayColor: string;
+  homeAbbr: string;
+  awayAbbr: string;
+  homeName: string;
+  awayName: string;
+  columns: SplitCol[];
+  sortKey: keyof GamePlayerStat;
+}
+
+function SplitStatTable({
+  allPlayers, filter,
+  homeColor, awayColor,
+  homeAbbr, awayAbbr,
+  homeName, awayName,
+  columns, sortKey,
+}: SplitStatTableProps) {
+  const awayPlayers = allPlayers.filter((p) => !p.is_home_team && filter(p));
+  const homePlayers = allPlayers.filter((p) => p.is_home_team && filter(p));
+  const noData = awayPlayers.length === 0 && homePlayers.length === 0;
+
+  if (noData) {
+    return <p className="text-center text-white/25 text-xs py-8">No stats recorded</p>;
+  }
+
+  return (
+    <div className="flex rounded-xl border border-white/8 overflow-hidden">
+      <HalfTable
+        players={awayPlayers}
+        teamColor={awayColor}
+        teamAbbr={awayAbbr}
+        teamName={awayName}
+        columns={columns}
+        sortKey={sortKey}
+        align="left"
+      />
+      <div className="w-px bg-white/8 shrink-0" />
+      <HalfTable
+        players={homePlayers}
+        teamColor={homeColor}
+        teamAbbr={homeAbbr}
+        teamName={homeName}
+        columns={columns}
+        sortKey={sortKey}
+        align="right"
+      />
+    </div>
+  );
+}
+
+// ─── Special Teams (split per sub-category) ──────────────────────────────────
+
+interface SplitSpecialTeamsProps {
+  allPlayers: GamePlayerStat[];
+  homeColor: string;
+  awayColor: string;
+  homeAbbr: string;
+  awayAbbr: string;
+  homeName: string;
+  awayName: string;
+}
+
+function SplitSpecialTeams({ allPlayers, homeColor, awayColor, homeAbbr, awayAbbr, homeName, awayName }: SplitSpecialTeamsProps) {
+  const shared = { allPlayers, homeColor, awayColor, homeAbbr, awayAbbr, homeName, awayName };
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Kicking</p>
+        <SplitStatTable
+          {...shared}
+          filter={(p) => (p.fg_att ?? 0) > 0 || (p.xp_att ?? 0) > 0}
+          sortKey="fg_made"
+          columns={[
+            { label: "FG", key: "fg_made" },
+            { label: "FGA", key: "fg_att" },
+            { label: "LNG", key: "fg_lng" },
+            { label: "XP", key: "xp_made" },
+            { label: "XPA", key: "xp_att" },
+          ]}
+        />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Punting</p>
+        <SplitStatTable
+          {...shared}
+          filter={(p) => (p.punt_att ?? 0) > 0}
+          sortKey="punt_yds"
+          columns={[
+            { label: "PUNT", key: "punt_att" },
+            { label: "YDS", key: "punt_yds" },
+            { label: "AVG", key: "punt_avg" },
+            { label: "LNG", key: "punt_lng" },
+            { label: "IN20", key: "punt_in20" },
+            { label: "TB", key: "punt_tbs" },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Recap Tab ───────────────────────────────────────────────────────────────
+
+function RecapTab() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <div className="w-16 h-16 rounded-2xl border border-white/8 bg-white/3 flex items-center justify-center">
+        <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        </svg>
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-bold text-white/40">Recap coming soon</p>
+        <p className="text-xs text-white/20 mt-1">Game recap image will appear here</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function GameDetail() {
   const params = useParams<{ id: string }>();
   const gameId = Number(params.id);
 
-  const [tab, setTab] = useState<StatTab>("passing");
+  const [tab, setTab] = useState<StatTab>("recap");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { data: game, isLoading } = useGetGame(gameId, {
@@ -179,19 +576,27 @@ export default function GameDetail() {
   const awayColor = game?.away_team_color ?? "#555555";
   const homeAbbr = game?.home_team_abbreviation ?? "HME";
   const awayAbbr = game?.away_team_abbreviation ?? "AWY";
+  const homeName = game?.home_team_name ?? homeAbbr;
+  const awayName = game?.away_team_name ?? awayAbbr;
 
   const isCompleted = game?.status === "COMPLETED";
   const homeWon = isCompleted && (game?.home_score ?? 0) > (game?.away_score ?? 0);
   const awayWon = isCompleted && (game?.away_score ?? 0) > (game?.home_score ?? 0);
 
   const stats = game?.player_stats ?? [];
+  const awayStats = computeTeamStats(stats.filter((p) => !p.is_home_team));
+  const homeStats = computeTeamStats(stats.filter((p) => p.is_home_team));
+
+  const splitProps = { allPlayers: stats, homeColor, awayColor, homeAbbr, awayAbbr, homeName, awayName };
 
   const tabs: { key: StatTab; label: string }[] = [
-    { key: "passing", label: "Passing" },
-    { key: "rushing", label: "Rushing" },
+    { key: "recap",     label: "Recap" },
+    { key: "team",      label: "Team Stats" },
+    { key: "passing",   label: "Passing" },
+    { key: "rushing",   label: "Rushing" },
     { key: "receiving", label: "Receiving" },
-    { key: "defense", label: "Defense" },
-    { key: "special", label: "Special Teams" },
+    { key: "defense",   label: "Defense" },
+    { key: "special",   label: "Special Teams" },
   ];
 
   return (
@@ -211,18 +616,17 @@ export default function GameDetail() {
               <div className="h-8 w-8 rounded-full border-2 border-[#00C8FF]/30 border-t-[#00C8FF] animate-spin" />
             </div>
           ) : !game ? (
-            <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <div className="flex items-center justify-center h-64">
               <p className="text-white/40">Game not found</p>
             </div>
           ) : (
             <>
               {/* ─── Scoreboard Hero ─── */}
               <div className="relative border-b border-white/8 overflow-hidden">
-                {/* Background gradients split by team colors */}
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: `linear-gradient(to right, ${awayColor}22 0%, ${awayColor}08 40%, ${homeColor}08 60%, ${homeColor}22 100%)`,
+                    background: `linear-gradient(to right, ${awayColor}28 0%, ${awayColor}08 42%, transparent 50%, ${homeColor}08 58%, ${homeColor}28 100%)`,
                   }}
                 />
 
@@ -237,75 +641,78 @@ export default function GameDetail() {
                     </Link>
                     <span>/</span>
                     <span className="text-white/50">
-                      {game.away_team_name ?? awayAbbr} vs {game.home_team_name ?? homeAbbr}
+                      {awayName} vs {homeName}
                     </span>
                   </div>
 
-                  {/* Main scoreboard */}
-                  <div className="flex items-center gap-6">
+                  {/* Scoreboard row */}
+                  <div className="flex items-center gap-4">
 
-                    {/* Away team */}
+                    {/* ── Away (left) ── */}
                     <div className="flex-1 flex items-center gap-5">
-                      <div style={{ filter: `drop-shadow(0 0 12px ${awayColor}50)` }}>
-                        <TeamLogo abbreviation={awayAbbr} className="h-[72px] w-[72px]" shape="rounded" />
+                      <div style={{ filter: `drop-shadow(0 0 14px ${awayColor}60)` }}>
+                        <TeamLogo abbreviation={awayAbbr} className="h-[80px] w-[80px]" shape="rounded" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-0.5">Away</p>
-                        <p className={`text-2xl font-black tracking-tight leading-none ${awayWon ? "text-white" : "text-white/55"}`}>
-                          {game.away_team_name ?? awayAbbr}
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">Away</p>
+                        <p className={`text-3xl font-black tracking-tight leading-none ${awayWon ? "text-white" : "text-white/50"}`}>
+                          {awayName}
                         </p>
-                        <p className="text-xs text-white/30 mt-0.5">{awayAbbr}</p>
+                        <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wider">{awayAbbr}</p>
                       </div>
                     </div>
 
-                    {/* Score center */}
-                    <div className="text-center shrink-0 px-8">
+                    {/* ── Score Center ── */}
+                    <div className="text-center shrink-0 px-6">
+                      {isCompleted && (
+                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/25 mb-2">Final Score</p>
+                      )}
                       {isCompleted ? (
-                        <div className="flex items-center gap-3">
-                          <span className={`text-5xl font-black tabular-nums tracking-tight ${awayWon ? "text-white" : "text-white/40"}`}>
+                        <div className="flex items-center gap-4">
+                          <span className={`text-6xl font-black tabular-nums leading-none ${awayWon ? "text-white" : "text-white/35"}`}>
                             {game.away_score ?? 0}
                           </span>
-                          <span className="text-2xl text-white/15 font-black">–</span>
-                          <span className={`text-5xl font-black tabular-nums tracking-tight ${homeWon ? "text-[#00C8FF]" : "text-white/40"}`}>
+                          <span className="text-3xl text-white/12 font-black">–</span>
+                          <span className={`text-6xl font-black tabular-nums leading-none ${homeWon ? "text-[#00C8FF]" : "text-white/35"}`}>
                             {game.home_score ?? 0}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-3xl font-black text-white/20">VS</span>
+                        <span className="text-4xl font-black text-white/20">VS</span>
                       )}
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mt-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mt-2.5">
                         {STATUS_LABELS[game.status] ?? game.status}
                       </p>
-                      <p className="text-[10px] text-white/25 mt-1">
-                        S{game.season} · Week {game.week}
+                      <p className="text-[10px] text-white/22 mt-1">
+                        Season {game.season} · Week {game.week}
                       </p>
                     </div>
 
-                    {/* Home team */}
-                    <div className="flex-1 flex items-center gap-5 justify-end flex-row-reverse">
-                      <div style={{ filter: `drop-shadow(0 0 12px ${homeColor}50)` }}>
-                        <TeamLogo abbreviation={homeAbbr} className="h-[72px] w-[72px]" shape="rounded" />
-                      </div>
+                    {/* ── Home (right) ── */}
+                    <div className="flex-1 flex items-center gap-5 justify-end">
                       <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-0.5">Home</p>
-                        <p className={`text-2xl font-black tracking-tight leading-none ${homeWon ? "text-[#00C8FF]" : "text-white/55"}`}>
-                          {game.home_team_name ?? homeAbbr}
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">Home</p>
+                        <p className={`text-3xl font-black tracking-tight leading-none ${homeWon ? "text-[#00C8FF]" : "text-white/50"}`}>
+                          {homeName}
                         </p>
-                        <p className="text-xs text-white/30 mt-0.5">{homeAbbr}</p>
+                        <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wider">{homeAbbr}</p>
+                      </div>
+                      <div style={{ filter: `drop-shadow(0 0 14px ${homeColor}60)` }}>
+                        <TeamLogo abbreviation={homeAbbr} className="h-[80px] w-[80px]" shape="rounded" />
                       </div>
                     </div>
 
                   </div>
 
-                  {/* Team color bars */}
-                  <div className="flex gap-2 mt-6">
-                    <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-lg px-3 py-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: awayColor }} />
-                      <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider">{awayAbbr} Away</span>
+                  {/* Legend chips */}
+                  <div className="flex gap-2 mt-5">
+                    <div className="flex items-center gap-2 bg-white/4 border border-white/8 rounded-lg px-3 py-1.5">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: awayColor }} />
+                      <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider">{awayAbbr} Away</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-lg px-3 py-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: homeColor }} />
-                      <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider">{homeAbbr} Home</span>
+                    <div className="flex items-center gap-2 bg-white/4 border border-white/8 rounded-lg px-3 py-1.5">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: homeColor }} />
+                      <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider">{homeAbbr} Home</span>
                     </div>
                   </div>
                 </div>
@@ -314,12 +721,12 @@ export default function GameDetail() {
               {/* ─── Stats ─── */}
               <div className="px-6 py-6">
                 {/* Tabs */}
-                <div className="flex items-center gap-1 border-b border-white/8 mb-6">
+                <div className="flex items-center gap-0.5 border-b border-white/8 mb-6 overflow-x-auto">
                   {tabs.map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => setTab(key)}
-                      className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 -mb-px ${
+                      className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 -mb-px whitespace-nowrap ${
                         tab === key
                           ? "text-[#00C8FF] border-[#00C8FF]"
                           : "text-white/40 border-transparent hover:text-white/70"
@@ -330,133 +737,87 @@ export default function GameDetail() {
                   ))}
                 </div>
 
-                {/* Passing */}
-                {tab === "passing" && (
-                  <StatTable
-                    players={stats.filter(hasPassingStats)}
-                    homeColor={homeColor}
+                {/* Tab content */}
+                {tab === "recap" && <RecapTab />}
+
+                {tab === "team" && (
+                  <TeamStatsTab
+                    awayStats={awayStats}
+                    homeStats={homeStats}
                     awayColor={awayColor}
-                    homeAbbr={homeAbbr}
+                    homeColor={homeColor}
                     awayAbbr={awayAbbr}
+                    homeAbbr={homeAbbr}
+                    awayName={awayName}
+                    homeName={homeName}
+                  />
+                )}
+
+                {tab === "passing" && (
+                  <SplitStatTable
+                    {...splitProps}
+                    filter={hasPassingStats}
                     sortKey="pss_yds"
                     columns={[
-                      { label: "C/ATT", key: "pss_att" },
+                      { label: "ATT", key: "pss_att" },
                       { label: "CMP", key: "pss_cmp" },
-                      { label: "YDS", key: "pss_yds", primary: true },
-                      { label: "TD", key: "pss_tds" },
+                      { label: "YDS", key: "pss_yds" },
+                      { label: "TD",  key: "pss_tds" },
                       { label: "INT", key: "pss_ints" },
-                      { label: "SCK", key: "pss_sacks" },
-                      { label: "LNG", key: "pss_lng" },
                       { label: "RTG", key: "pss_rating" },
                     ]}
                   />
                 )}
 
-                {/* Rushing */}
                 {tab === "rushing" && (
-                  <StatTable
-                    players={stats.filter(hasRushingStats)}
-                    homeColor={homeColor}
-                    awayColor={awayColor}
-                    homeAbbr={homeAbbr}
-                    awayAbbr={awayAbbr}
+                  <SplitStatTable
+                    {...splitProps}
+                    filter={hasRushingStats}
                     sortKey="rsh_yds"
                     columns={[
                       { label: "ATT", key: "rsh_att" },
-                      { label: "YDS", key: "rsh_yds", primary: true },
-                      { label: "TD", key: "rsh_tds" },
+                      { label: "YDS", key: "rsh_yds" },
+                      { label: "TD",  key: "rsh_tds" },
                       { label: "LNG", key: "rsh_lng" },
                       { label: "FMB", key: "fmb" },
                     ]}
                   />
                 )}
 
-                {/* Receiving */}
                 {tab === "receiving" && (
-                  <StatTable
-                    players={stats.filter(hasReceivingStats)}
-                    homeColor={homeColor}
-                    awayColor={awayColor}
-                    homeAbbr={homeAbbr}
-                    awayAbbr={awayAbbr}
+                  <SplitStatTable
+                    {...splitProps}
+                    filter={hasReceivingStats}
                     sortKey="rec_yds"
                     columns={[
-                      { label: "REC", key: "rec_catches", primary: true },
+                      { label: "REC", key: "rec_catches" },
                       { label: "TGT", key: "rec_tgts" },
                       { label: "YDS", key: "rec_yds" },
-                      { label: "TD", key: "rec_tds" },
+                      { label: "TD",  key: "rec_tds" },
                       { label: "YAC", key: "rec_yac" },
                       { label: "LNG", key: "rec_lng" },
-                      { label: "DRP", key: "rec_drops" },
                     ]}
                   />
                 )}
 
-                {/* Defense */}
                 {tab === "defense" && (
-                  <StatTable
-                    players={stats.filter(hasDefenseStats)}
-                    homeColor={homeColor}
-                    awayColor={awayColor}
-                    homeAbbr={homeAbbr}
-                    awayAbbr={awayAbbr}
+                  <SplitStatTable
+                    {...splitProps}
+                    filter={hasDefenseStats}
                     sortKey="def_total_tackles"
                     columns={[
-                      { label: "TKL", key: "def_total_tackles", primary: true },
+                      { label: "TKL", key: "def_total_tackles" },
                       { label: "SCK", key: "def_sacks" },
                       { label: "TFL", key: "def_tfl" },
                       { label: "INT", key: "def_ints" },
-                      { label: "PD", key: "def_pd" },
-                      { label: "FF", key: "def_ff" },
-                      { label: "FR", key: "def_fum_rec" },
-                      { label: "TD", key: "def_tds" },
+                      { label: "PD",  key: "def_pd" },
+                      { label: "FF",  key: "def_ff" },
                     ]}
                   />
                 )}
 
-                {/* Special Teams */}
                 {tab === "special" && (
-                  <div className="space-y-6">
-                    {/* Kicking */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Kicking</p>
-                      <StatTable
-                        players={stats.filter((p) => (p.fg_att ?? 0) > 0 || (p.xp_att ?? 0) > 0)}
-                        homeColor={homeColor}
-                        awayColor={awayColor}
-                        homeAbbr={homeAbbr}
-                        awayAbbr={awayAbbr}
-                        sortKey="fg_made"
-                        columns={[
-                          { label: "FG", key: "fg_made", primary: true },
-                          { label: "FGA", key: "fg_att" },
-                          { label: "LNG", key: "fg_lng" },
-                          { label: "XP", key: "xp_made" },
-                          { label: "XPA", key: "xp_att" },
-                        ]}
-                      />
-                    </div>
-                    {/* Punting */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">Punting</p>
-                      <StatTable
-                        players={stats.filter((p) => (p.punt_att ?? 0) > 0)}
-                        homeColor={homeColor}
-                        awayColor={awayColor}
-                        homeAbbr={homeAbbr}
-                        awayAbbr={awayAbbr}
-                        sortKey="punt_yds"
-                        columns={[
-                          { label: "PUNT", key: "punt_att", primary: true },
-                          { label: "YDS", key: "punt_yds" },
-                          { label: "AVG", key: "punt_avg" },
-                          { label: "LNG", key: "punt_lng" },
-                          { label: "IN20", key: "punt_in20" },
-                          { label: "TB", key: "punt_tbs" },
-                        ]}
-                      />
-                    </div>
-                  </div>
+                  <SplitSpecialTeams {...splitProps} />
                 )}
               </div>
             </>
