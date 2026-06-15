@@ -580,7 +580,7 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
   const showPortrait = !!player.portrait_id && !portraitErr;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 13, marginBottom: 16 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 13, marginBottom: 16 }}>
       {/* Portrait card */}
       <div
         style={{
@@ -596,32 +596,33 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
         }}
       >
         {showPortrait ? (
+          // No CSS transform — use absolute positioning + overflow:hidden for zoom effect
           <img
             src={eaPortraitUrl(player.portrait_id!)}
             alt={player.player_name}
             onError={() => setPortraitErr(true)}
             style={{
+              position: "absolute",
+              top: "-10%",
+              left: 0,
               width: "100%",
-              height: "100%",
+              height: "120%",
               objectFit: "cover",
-              objectPosition: "top",
-              transform: "scale(1.2)",
-              transformOrigin: "top center",
+              objectPosition: "top center",
             }}
-            className="mt-[-10px] mb-[-10px]" />
+          />
         ) : (
           <>
-            {/* Football player silhouette fallback */}
+            {/* Silhouette fallback — explicit top/left/right/bottom instead of inset */}
             <svg
               viewBox="0 0 44 58"
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
             >
               <ellipse cx="22" cy="13" rx="9" ry="10" fill="white" fillOpacity="0.18" />
               <path d="M8 32 L15 25 L22 27 L29 25 L36 32 L34 54 L10 54 Z" fill="white" fillOpacity="0.18" />
               <path d="M8 32 L2 46 L9 47 L13 34 Z" fill="white" fillOpacity="0.18" />
               <path d="M36 32 L42 46 L35 47 L31 34 Z" fill="white" fillOpacity="0.18" />
             </svg>
-            {/* Initials — bottom center */}
             <div
               style={{
                 position: "absolute",
@@ -659,8 +660,16 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
           {pos}
         </div>
       </div>
-      {/* Name + stat line */}
-      <div style={{ minWidth: 0 }}>
+
+      {/* Name + stat line — explicit 58px height so centering doesn't rely
+          on alignItems:center (which html2canvas handles inconsistently) */}
+      <div style={{
+        minWidth: 0,
+        height: 58,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+      }}>
         <div
           style={{
             fontSize: 12,
@@ -805,18 +814,26 @@ function RecapTab({
     try {
       const { default: html2canvas } = await import("html2canvas");
 
-      // Clone the card and place it off-screen with no transform so
-      // html2canvas captures the full 1200×630 layout without any
-      // scroll-offset or CSS-transform shift.
+      // Place clone at the viewport origin (top:0,left:0) with no transform.
+      // html2canvas uses getBoundingClientRect() to locate the element — extreme
+      // negative coords break its math, so (0,0) is the only reliable anchor.
+      // z-index:99999 ensures it's on top; it disappears as soon as capture ends.
       offscreen = cardRef.current.cloneNode(true) as HTMLElement;
-      offscreen.style.transform = "none";
-      offscreen.style.position = "fixed";
-      offscreen.style.top = "-99999px";
-      offscreen.style.left = "-99999px";
-      offscreen.style.width = `${CARD_W}px`;
-      offscreen.style.height = `${CARD_H}px`;
-      offscreen.style.borderRadius = "0";
+      offscreen.style.cssText = [
+        "position:fixed",
+        "top:0",
+        "left:0",
+        `width:${CARD_W}px`,
+        `height:${CARD_H}px`,
+        "transform:none",
+        "border-radius:0",
+        "z-index:99999",
+        "pointer-events:none",
+      ].join(";");
       document.body.appendChild(offscreen);
+
+      // One rAF so the browser has committed the element to layout
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
 
       const canvas = await html2canvas(offscreen, {
         scale: 2,
@@ -826,6 +843,9 @@ function RecapTab({
         logging: false,
         width: CARD_W,
         height: CARD_H,
+        // fixed-position element sits at viewport (0,0) — no scroll correction needed
+        scrollX: 0,
+        scrollY: 0,
         x: 0,
         y: 0,
       });
