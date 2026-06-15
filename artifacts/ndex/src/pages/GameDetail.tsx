@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { Link, useParams } from "wouter";
 import {
   useGetGame,
@@ -105,49 +106,24 @@ interface CompareRowProps {
   lowerIsBetter?: boolean;
 }
 
-function CompareRow({ label, awayVal, homeVal, awayRaw, homeRaw, awayColor, homeColor, lowerIsBetter }: CompareRowProps) {
+function CompareRow({ label, awayVal, homeVal, awayRaw, homeRaw, lowerIsBetter }: CompareRowProps) {
   const awayWins = lowerIsBetter ? awayRaw < homeRaw : awayRaw > homeRaw;
   const homeWins = lowerIsBetter ? homeRaw < awayRaw : homeRaw > awayRaw;
-  const max = Math.max(awayRaw, homeRaw, 1);
 
   return (
-    <div className="py-3 border-b border-white/5 last:border-0">
-      <p className="text-center text-[10px] font-black uppercase tracking-wider text-white/35 mb-2">{label}</p>
-      <div className="flex items-center gap-4">
-        {/* Away bar + value */}
-        <div className="flex-1 flex items-center gap-3 justify-end">
-          <span className={`text-base font-black tabular-nums ${awayWins ? "text-white" : "text-white/45"}`}>
-            {awayVal}
-          </span>
-          <div className="flex-1 max-w-[120px]">
-            <div
-              className="h-2 rounded-full ml-auto transition-all"
-              style={{
-                width: `${(awayRaw / max) * 100}%`,
-                backgroundColor: awayWins ? awayColor : `${awayColor}55`,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Center divider */}
-        <div className="w-px h-5 bg-white/10 shrink-0" />
-
-        {/* Home bar + value */}
-        <div className="flex-1 flex items-center gap-3">
-          <div className="flex-1 max-w-[120px]">
-            <div
-              className="h-2 rounded-full transition-all"
-              style={{
-                width: `${(homeRaw / max) * 100}%`,
-                backgroundColor: homeWins ? homeColor : `${homeColor}55`,
-              }}
-            />
-          </div>
-          <span className={`text-base font-black tabular-nums ${homeWins ? "text-white" : "text-white/45"}`}>
-            {homeVal}
-          </span>
-        </div>
+    <div className="flex items-center py-3 border-b border-white/5 last:border-0">
+      <div className="flex-1 flex justify-end pr-4">
+        <span className={`[font-family:'Lora',serif] text-[15px] tabular-nums ${awayWins ? "text-white font-bold" : "text-white/45"}`}>
+          {awayVal}
+        </span>
+      </div>
+      <div className="w-36 text-center shrink-0">
+        <p className="text-[10px] font-black uppercase tracking-wider text-white/35">{label}</p>
+      </div>
+      <div className="flex-1 flex justify-start pl-4">
+        <span className={`[font-family:'Lora',serif] text-[15px] tabular-nums ${homeWins ? "text-white font-bold" : "text-white/45"}`}>
+          {homeVal}
+        </span>
       </div>
     </div>
   );
@@ -209,15 +185,6 @@ function TeamStatsTab({ awayStats, homeStats, awayColor, homeColor, awayAbbr, ho
           homeColor={homeColor}
         />
         <CompareRow
-          label="Passing Yards"
-          awayVal={awayStats.passYds.toString()}
-          homeVal={homeStats.passYds.toString()}
-          awayRaw={awayStats.passYds}
-          homeRaw={homeStats.passYds}
-          awayColor={awayColor}
-          homeColor={homeColor}
-        />
-        <CompareRow
           label="Comp / Att"
           awayVal={`${awayStats.passCmp}/${awayStats.passAtt}`}
           homeVal={`${homeStats.passCmp}/${homeStats.passAtt}`}
@@ -227,11 +194,20 @@ function TeamStatsTab({ awayStats, homeStats, awayColor, homeColor, awayAbbr, ho
           homeColor={homeColor}
         />
         <CompareRow
-          label="Rushing Yards"
-          awayVal={awayStats.rushYds.toString()}
-          homeVal={homeStats.rushYds.toString()}
-          awayRaw={awayStats.rushYds}
-          homeRaw={homeStats.rushYds}
+          label="Passing Yards"
+          awayVal={awayStats.passYds.toString()}
+          homeVal={homeStats.passYds.toString()}
+          awayRaw={awayStats.passYds}
+          homeRaw={homeStats.passYds}
+          awayColor={awayColor}
+          homeColor={homeColor}
+        />
+        <CompareRow
+          label="Passing TDs"
+          awayVal={awayStats.passTds.toString()}
+          homeVal={homeStats.passTds.toString()}
+          awayRaw={awayStats.passTds}
+          homeRaw={homeStats.passTds}
           awayColor={awayColor}
           homeColor={homeColor}
         />
@@ -245,11 +221,11 @@ function TeamStatsTab({ awayStats, homeStats, awayColor, homeColor, awayAbbr, ho
           homeColor={homeColor}
         />
         <CompareRow
-          label="Passing TDs"
-          awayVal={awayStats.passTds.toString()}
-          homeVal={homeStats.passTds.toString()}
-          awayRaw={awayStats.passTds}
-          homeRaw={homeStats.passTds}
+          label="Rushing Yards"
+          awayVal={awayStats.rushYds.toString()}
+          homeVal={homeStats.rushYds.toString()}
+          awayRaw={awayStats.rushYds}
+          homeRaw={homeStats.rushYds}
           awayColor={awayColor}
           homeColor={homeColor}
         />
@@ -318,18 +294,23 @@ function TeamStatsTab({ awayStats, homeStats, awayColor, homeColor, awayAbbr, ho
 
 // ─── Split Stat Table ─────────────────────────────────────────────────────────
 
-interface SplitCol { label: string; key: keyof GamePlayerStat }
+interface SplitCol {
+  label: string;
+  key: keyof GamePlayerStat;
+  render?: (p: GamePlayerStat) => ReactNode;
+}
 
 interface HalfTableProps {
   players: GamePlayerStat[];
   teamColor: string;
   teamName: string;
   columns: SplitCol[];
-  sortKey: keyof GamePlayerStat;
+  activeSortKey: keyof GamePlayerStat;
+  onSortChange: (key: keyof GamePlayerStat) => void;
 }
 
-function HalfTable({ players, teamColor, teamName, columns, sortKey }: HalfTableProps) {
-  const sorted = [...players].sort((a, b) => ((b[sortKey] as number) ?? 0) - ((a[sortKey] as number) ?? 0));
+function HalfTable({ players, teamColor, teamName, columns, activeSortKey, onSortChange }: HalfTableProps) {
+  const sorted = [...players].sort((a, b) => ((b[activeSortKey] as number) ?? 0) - ((a[activeSortKey] as number) ?? 0));
 
   return (
     <div className="flex-1 min-w-0 overflow-x-auto">
@@ -343,9 +324,13 @@ function HalfTable({ players, teamColor, teamName, columns, sortKey }: HalfTable
             {columns.map((col) => (
               <th
                 key={col.key as string}
-                className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-12"
+                onClick={() => onSortChange(col.key)}
+                className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-12 cursor-pointer select-none hover:opacity-70 transition-opacity"
               >
-                {col.label}
+                <span className="inline-flex items-center justify-center gap-0.5">
+                  {col.label}
+                  <span className={activeSortKey === col.key ? "opacity-90" : "opacity-25"}>↓</span>
+                </span>
               </th>
             ))}
           </tr>
@@ -358,25 +343,27 @@ function HalfTable({ players, teamColor, teamName, columns, sortKey }: HalfTable
           ) : (
             sorted.map((p, i) => (
               <tr key={`${p.player_id}-${i}`} className="border-t border-white/5 hover:bg-white/3 transition-colors">
-                <td className="px-4 py-2.5 font-semibold text-white">
+                <td className="px-4 py-2 font-semibold text-white [font-family:'Lora',serif] text-[14px]">
                   <Link href={`/players/${p.player_id}`} className="hover:text-[#00C8FF] transition-colors whitespace-nowrap">
                     {p.player_name}
                   </Link>
                 </td>
-                <td className="px-2 py-2.5 text-center">
+                <td className="px-2 py-2 text-center">
                   <span className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/8 text-white/55">
                     {p.position}
                   </span>
                 </td>
                 {columns.map((col) => {
-                  const val = p[col.key] as number | null | undefined;
-                  const isPrimary = col.key === sortKey;
+                  const isActive = col.key === activeSortKey;
+                  const display = col.render
+                    ? col.render(p)
+                    : ((p[col.key] as number | null | undefined) ?? "—");
                   return (
                     <td
                       key={col.key as string}
-                      className={`px-2 py-2.5 text-center tabular-nums ${isPrimary ? "font-bold text-white" : "text-white/55"}`}
+                      className={`px-2 py-2 text-center tabular-nums [font-family:'Lora',serif] text-[14px] ${isActive ? "font-bold text-white" : "text-white/60"}`}
                     >
-                      {val ?? "—"}
+                      {display}
                     </td>
                   );
                 })}
@@ -409,6 +396,7 @@ function SplitStatTable({
   homeName, awayName,
   columns, sortKey,
 }: SplitStatTableProps) {
+  const [activeSortKey, setActiveSortKey] = useState<keyof GamePlayerStat>(sortKey);
   const awayPlayers = allPlayers.filter((p) => !p.is_home_team && filter(p));
   const homePlayers = allPlayers.filter((p) => p.is_home_team && filter(p));
   const noData = awayPlayers.length === 0 && homePlayers.length === 0;
@@ -424,7 +412,8 @@ function SplitStatTable({
         teamColor={awayColor}
         teamName={awayName}
         columns={columns}
-        sortKey={sortKey}
+        activeSortKey={activeSortKey}
+        onSortChange={setActiveSortKey}
       />
       <div className="w-px bg-white/8 shrink-0" />
       <HalfTable
@@ -432,7 +421,8 @@ function SplitStatTable({
         teamColor={homeColor}
         teamName={homeName}
         columns={columns}
-        sortKey={sortKey}
+        activeSortKey={activeSortKey}
+        onSortChange={setActiveSortKey}
       />
     </div>
   );
@@ -718,8 +708,7 @@ export default function GameDetail() {
                     filter={hasPassingStats}
                     sortKey="pss_yds"
                     columns={[
-                      { label: "ATT", key: "pss_att" },
-                      { label: "CMP", key: "pss_cmp" },
+                      { label: "CMP/ATT", key: "pss_cmp", render: (p) => `${p.pss_cmp ?? 0}/${p.pss_att ?? 0}` },
                       { label: "YDS", key: "pss_yds" },
                       { label: "TD",  key: "pss_tds" },
                       { label: "INT", key: "pss_ints" },
