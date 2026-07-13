@@ -1138,7 +1138,7 @@ function RecapTab({
                 background: `linear-gradient(180deg, rgba(${hexRgb(awayColor)},0.18) 0%, rgba(${hexRgb(awayColor)},0.06) 100%)`,
               }}
             >
-              <div style={sectionHeader(awayColor)}>PLAYER STATS</div>
+              <div style={{ ...sectionHeader(awayColor), textAlign: "right" }}>PLAYER STATS</div>
               {noStats ? (
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 32 }}>No stats recorded</div>
               ) : (
