@@ -845,6 +845,65 @@ export interface GameDetail {
   player_stats: GamePlayerStat[];
 }
 
+export type LeagueTransactionPlayer = {
+  id: number;
+  name: string;
+  position: string;
+  overall: number;
+  /** @nullable */
+  portrait_id?: number | null;
+};
+
+export type LeagueTransactionTeam = {
+  id: number;
+  name: string;
+  abbreviation: string;
+  /** @nullable */
+  primary_color?: string | null;
+};
+
+export interface LeagueTransaction {
+  id: number;
+  player: LeagueTransactionPlayer;
+  team: LeagueTransactionTeam;
+  season: number;
+  /** @nullable */
+  week?: number | null;
+  transaction_type: string;
+  /** @nullable */
+  from_team?: string | null;
+  /** @nullable */
+  to_team?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface LeagueDraftEntry {
+  player_id: number;
+  name: string;
+  position: string;
+  overall: number;
+  age: number;
+  /** @nullable */
+  dev_trait?: number | null;
+  /** @nullable */
+  portrait_id?: number | null;
+  /** @nullable */
+  draft_round?: number | null;
+  /** @nullable */
+  draft_pick?: number | null;
+  /** @nullable */
+  rookie_year?: number | null;
+  /** @nullable */
+  years_pro?: number | null;
+  team_id: number;
+  team_name: string;
+  team_abbreviation: string;
+  /** @nullable */
+  team_color?: string | null;
+}
+
 export type ListLeaguesParams = {
 platform?: string;
 difficulty?: string;

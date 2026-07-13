@@ -27,10 +27,12 @@ import type {
   GameUpdate,
   HealthStatus,
   League,
+  LeagueDraftEntry,
   LeagueInput,
   LeaguePlayerStats,
   LeagueStatsMeta,
   LeagueSummary,
+  LeagueTransaction,
   LeagueUpdate,
   ListLeaguesParams,
   Member,
@@ -1421,6 +1423,160 @@ export const useDeleteLeagueMember = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeleteLeagueMemberMutationOptions(options));
     }
+
+export const getGetLeagueTransactionsUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/transactions`
+}
+
+/**
+ * @summary List player transactions in a league
+ */
+export const getLeagueTransactions = async (id: number, options?: RequestInit): Promise<LeagueTransaction[]> => {
+
+  return customFetch<LeagueTransaction[]>(getGetLeagueTransactionsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueTransactionsQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/transactions`
+    ] as const;
+    }
+
+
+export const getGetLeagueTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueTransactions>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueTransactionsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueTransactions>>> = ({ signal }) => getLeagueTransactions(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueTransactions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueTransactions>>>
+export type GetLeagueTransactionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List player transactions in a league
+ */
+
+export function useGetLeagueTransactions<TData = Awaited<ReturnType<typeof getLeagueTransactions>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueTransactionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetLeagueDraftUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/draft`
+}
+
+/**
+ * @summary List draft picks for a league
+ */
+export const getLeagueDraft = async (id: number, options?: RequestInit): Promise<LeagueDraftEntry[]> => {
+
+  return customFetch<LeagueDraftEntry[]>(getGetLeagueDraftUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueDraftQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/draft`
+    ] as const;
+    }
+
+
+export const getGetLeagueDraftQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueDraft>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueDraft>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueDraftQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueDraft>>> = ({ signal }) => getLeagueDraft(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueDraft>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueDraftQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueDraft>>>
+export type GetLeagueDraftQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List draft picks for a league
+ */
+
+export function useGetLeagueDraft<TData = Awaited<ReturnType<typeof getLeagueDraft>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueDraft>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueDraftQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetLeagueGamesUrl = (id: number,) => {
 

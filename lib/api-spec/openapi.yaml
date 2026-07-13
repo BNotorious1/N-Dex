@@ -399,6 +399,48 @@ paths:
         "204":
           description: Deleted
 
+  /leagues/{id}/transactions:
+    get:
+      operationId: getLeagueTransactions
+      tags: [leagues]
+      summary: List player transactions in a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeagueTransaction"
+
+  /leagues/{id}/draft:
+    get:
+      operationId: getLeagueDraft
+      tags: [leagues]
+      summary: List draft picks for a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Draft picks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeagueDraftEntry"
+
   /leagues/{id}/games:
     get:
       operationId: getLeagueGames
@@ -2071,3 +2113,99 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GamePlayerStat"
+
+    LeagueTransaction:
+      type: object
+      required:
+        - id
+        - player
+        - team
+        - season
+        - transaction_type
+        - created_at
+      properties:
+        id:
+          type: integer
+        player:
+          type: object
+          required: [id, name, position, overall]
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            position:
+              type: string
+            overall:
+              type: integer
+            portrait_id:
+              type: ["integer", "null"]
+        team:
+          type: object
+          required: [id, name, abbreviation]
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            abbreviation:
+              type: string
+            primary_color:
+              type: ["string", "null"]
+        season:
+          type: integer
+        week:
+          type: ["integer", "null"]
+        transaction_type:
+          type: string
+        from_team:
+          type: ["string", "null"]
+        to_team:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    LeagueDraftEntry:
+      type: object
+      required:
+        - player_id
+        - name
+        - position
+        - overall
+        - age
+        - team_id
+        - team_name
+        - team_abbreviation
+      properties:
+        player_id:
+          type: integer
+        name:
+          type: string
+        position:
+          type: string
+        overall:
+          type: integer
+        age:
+          type: integer
+        dev_trait:
+          type: ["integer", "null"]
+        portrait_id:
+          type: ["integer", "null"]
+        draft_round:
+          type: ["integer", "null"]
+        draft_pick:
+          type: ["integer", "null"]
+        rookie_year:
+          type: ["integer", "null"]
+        years_pro:
+          type: ["integer", "null"]
+        team_id:
+          type: integer
+        team_name:
+          type: string
+        team_abbreviation:
+          type: string
+        team_color:
+          type: ["string", "null"]

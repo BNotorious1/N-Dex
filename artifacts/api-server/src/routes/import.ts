@@ -80,7 +80,7 @@ export async function upsertLeagueTeams(leagueId: number, teams: RawTeam[]): Pro
 
     const values = {
       leagueId,
-      name: str(t["nickName"] || t["displayName"] || t["teamName"], "Unknown"),
+      name: str(t["teamName"] || t["nickName"] || t["displayName"], "Unknown"),
       city: str(t["cityName"], "Unknown"),
       abbreviation: str(t["abbrName"], "???").toUpperCase().slice(0, 4),
       conference,
@@ -151,6 +151,8 @@ export async function upsertTeamRoster(
       devTrait: ni(p, "devTrait"),
       yearsPro: deriveYearsPro(p),
       rookieYear: ni(p, "rookieYear"),
+      draftRound: ni(p, "draftRound"),
+      draftPick: ni(p, "draftPick"),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
       presentationId: ni(p, "presentationId"),
       portraitId: ni(p, "portraitId"),

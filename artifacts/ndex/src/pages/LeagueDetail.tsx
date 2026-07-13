@@ -12,6 +12,7 @@ import {
   getGetLeagueStatLeadersQueryKey,
   getGetLeagueTeamsQueryKey,
 } from "@workspace/api-client-react";
+
 import Navbar from "@/components/Navbar";
 import LeagueSidebar from "@/components/league/LeagueSidebar";
 import LeagueBanner from "@/components/league/LeagueBanner";
@@ -26,6 +27,8 @@ import PlaceholderSection from "@/components/league/sections/PlaceholderSection"
 import AdminSettingsSection from "@/components/league/sections/AdminSettingsSection";
 import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
 import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
+import TransactionsSection from "@/components/league/sections/TransactionsSection";
+import DraftSection from "@/components/league/sections/DraftSection";
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "players-search" | "suspensions"
@@ -123,12 +126,8 @@ export default function LeagueDetail() {
             {section === "suspensions" && (
               <PlaceholderSection icon="Ban" title="Suspensions" description="No active player suspensions in this league." />
             )}
-            {section === "transactions" && (
-              <PlaceholderSection icon="ArrowLeftRight" title="Transactions" description="Player transactions (signings, releases, trades) will be tracked here." />
-            )}
-            {section === "draft" && (
-              <PlaceholderSection icon="ClipboardList" title="Draft" description="Draft board and picks will appear here when the draft is active." />
-            )}
+            {section === "transactions" && <TransactionsSection leagueId={leagueId} />}
+            {section === "draft" && <DraftSection leagueId={leagueId} />}
             {section === "trades" && (
               <PlaceholderSection icon="Repeat2" title="Trades" description="No trade proposals have been submitted yet." />
             )}

@@ -890,6 +890,66 @@ export const DeleteLeagueMemberParams = zod.object({
 
 
 /**
+ * @summary List player transactions in a league
+ */
+export const GetLeagueTransactionsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueTransactionsResponseItem = zod.object({
+  "id": zod.number(),
+  "player": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string(),
+  "overall": zod.number(),
+  "portrait_id": zod.number().nullish()
+}),
+  "team": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "abbreviation": zod.string(),
+  "primary_color": zod.string().nullish()
+}),
+  "season": zod.number(),
+  "week": zod.number().nullish(),
+  "transaction_type": zod.string(),
+  "from_team": zod.string().nullish(),
+  "to_team": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "created_at": zod.string()
+})
+export const GetLeagueTransactionsResponse = zod.array(GetLeagueTransactionsResponseItem)
+
+
+/**
+ * @summary List draft picks for a league
+ */
+export const GetLeagueDraftParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueDraftResponseItem = zod.object({
+  "player_id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string(),
+  "overall": zod.number(),
+  "age": zod.number(),
+  "dev_trait": zod.number().nullish(),
+  "portrait_id": zod.number().nullish(),
+  "draft_round": zod.number().nullish(),
+  "draft_pick": zod.number().nullish(),
+  "rookie_year": zod.number().nullish(),
+  "years_pro": zod.number().nullish(),
+  "team_id": zod.number(),
+  "team_name": zod.string(),
+  "team_abbreviation": zod.string(),
+  "team_color": zod.string().nullish()
+})
+export const GetLeagueDraftResponse = zod.array(GetLeagueDraftResponseItem)
+
+
+/**
  * @summary List games in league
  */
 export const GetLeagueGamesParams = zod.object({

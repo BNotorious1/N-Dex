@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable } from "@workspace/db";
-import { eq, like, and, sql } from "drizzle-orm";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable } from "@workspace/db";
+import { eq, like, and, sql, desc, isNotNull, or } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
   CreateLeagueBody,
@@ -756,6 +756,85 @@ router.post("/:id/games", async (req, res) => {
     season: data.season,
   }).returning();
   res.status(201).json(formatGame(game));
+});
+
+// GET /leagues/:id/transactions
+router.get("/:id/transactions", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const rows = await db
+    .select()
+    .from(playerTransactionsTable)
+    .innerJoin(playersTable, eq(playerTransactionsTable.playerId, playersTable.id))
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(eq(playerTransactionsTable.leagueId, leagueId))
+    .orderBy(desc(playerTransactionsTable.createdAt));
+
+  res.json(rows.map(r => ({
+    id: r.player_transactions.id,
+    player: {
+      id: r.players.id,
+      name: r.players.name,
+      position: r.players.position,
+      overall: r.players.overall,
+      portrait_id: r.players.portraitId ?? null,
+    },
+    team: {
+      id: r.teams.id,
+      name: r.teams.name,
+      abbreviation: r.teams.abbreviation,
+      primary_color: r.teams.primaryColor ?? null,
+    },
+    season: r.player_transactions.season,
+    week: r.player_transactions.week ?? null,
+    transaction_type: r.player_transactions.transactionType,
+    from_team: r.player_transactions.fromTeam ?? null,
+    to_team: r.player_transactions.toTeam ?? null,
+    notes: r.player_transactions.notes ?? null,
+    created_at: r.player_transactions.createdAt.toISOString(),
+  })));
+});
+
+// GET /leagues/:id/draft
+router.get("/:id/draft", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
+  const teamMap = new Map(teams.map(t => [t.id, t]));
+
+  const players = await db
+    .select()
+    .from(playersTable)
+    .where(
+      and(
+        sql`${playersTable.teamId} IN (SELECT id FROM teams WHERE league_id = ${leagueId})`,
+        or(isNotNull(playersTable.draftRound), isNotNull(playersTable.rookieYear))
+      )
+    )
+    .orderBy(playersTable.draftRound, playersTable.draftPick);
+
+  res.json(players.map(p => {
+    const team = teamMap.get(p.teamId);
+    return {
+      player_id: p.id,
+      name: p.name,
+      position: p.position,
+      overall: p.overall,
+      age: p.age,
+      dev_trait: p.devTrait ?? null,
+      portrait_id: p.portraitId ?? null,
+      draft_round: p.draftRound ?? null,
+      draft_pick: p.draftPick ?? null,
+      rookie_year: p.rookieYear ?? null,
+      years_pro: p.yearsPro ?? null,
+      team_id: p.teamId,
+      team_name: team?.name ?? "Unknown",
+      team_abbreviation: team?.abbreviation ?? "UNK",
+      team_color: team?.primaryColor ?? null,
+    };
+  }));
 });
 
 // GET /leagues/:id/players
