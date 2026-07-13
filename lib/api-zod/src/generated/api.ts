@@ -366,7 +366,153 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "team_name": zod.string(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
-}))
+})),
+  "tackles": zod.array(zod.object({
+  "player": zod.object({
+  "id": zod.number(),
+  "team_id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string().describe('QB, RB, WR, TE, OL, DL, LB, CB, S, K, P'),
+  "overall": zod.number(),
+  "age": zod.number(),
+  "speed": zod.number(),
+  "strength": zod.number(),
+  "awareness": zod.number(),
+  "throwing_power": zod.number().nullish(),
+  "catching": zod.number().nullish(),
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
+}),
+  "team_name": zod.string(),
+  "stat_label": zod.string(),
+  "stat_value": zod.number()
+})).optional(),
+  "sacks": zod.array(zod.object({
+  "player": zod.object({
+  "id": zod.number(),
+  "team_id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string().describe('QB, RB, WR, TE, OL, DL, LB, CB, S, K, P'),
+  "overall": zod.number(),
+  "age": zod.number(),
+  "speed": zod.number(),
+  "strength": zod.number(),
+  "awareness": zod.number(),
+  "throwing_power": zod.number().nullish(),
+  "catching": zod.number().nullish(),
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
+}),
+  "team_name": zod.string(),
+  "stat_label": zod.string(),
+  "stat_value": zod.number()
+})).optional(),
+  "interceptions": zod.array(zod.object({
+  "player": zod.object({
+  "id": zod.number(),
+  "team_id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string().describe('QB, RB, WR, TE, OL, DL, LB, CB, S, K, P'),
+  "overall": zod.number(),
+  "age": zod.number(),
+  "speed": zod.number(),
+  "strength": zod.number(),
+  "awareness": zod.number(),
+  "throwing_power": zod.number().nullish(),
+  "catching": zod.number().nullish(),
+  "tackling": zod.number().nullish(),
+  "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
+}),
+  "team_name": zod.string(),
+  "stat_label": zod.string(),
+  "stat_value": zod.number()
+})).optional()
+})
+
+
+/**
+ * @summary Get current Game of the Week for a league
+ */
+export const GetLeagueGameOfWeekParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueGameOfWeekResponse = zod.union([zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "week": zod.number(),
+  "season": zod.number(),
+  "home_team_id": zod.number().nullish(),
+  "away_team_id": zod.number().nullish(),
+  "home_team": zod.union([zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "abbreviation": zod.string(),
+  "conference": zod.string().describe('AFC, NFC'),
+  "division": zod.string().describe('North, South, East, West'),
+  "wins": zod.number(),
+  "losses": zod.number(),
+  "ties": zod.number(),
+  "overall_rating": zod.number(),
+  "is_user_team": zod.boolean(),
+  "primary_color": zod.string().nullish(),
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
+}),zod.null()]).optional(),
+  "away_team": zod.union([zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "abbreviation": zod.string(),
+  "conference": zod.string().describe('AFC, NFC'),
+  "division": zod.string().describe('North, South, East, West'),
+  "wins": zod.number(),
+  "losses": zod.number(),
+  "ties": zod.number(),
+  "overall_rating": zod.number(),
+  "is_user_team": zod.boolean(),
+  "primary_color": zod.string().nullish(),
+  "secondary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
+}),zod.null()]).optional(),
+  "headline": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "kickoff": zod.string().nullish(),
+  "created_at": zod.string()
+}),zod.null()])
+
+
+/**
+ * @summary Create or replace the Game of the Week
+ */
+export const CreateLeagueGameOfWeekParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateLeagueGameOfWeekBody = zod.object({
+  "week": zod.number(),
+  "season": zod.number(),
+  "home_team_id": zod.number().nullish(),
+  "away_team_id": zod.number().nullish(),
+  "headline": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "kickoff": zod.string().nullish()
+})
+
+
+/**
+ * @summary Delete the current Game of the Week
+ */
+export const DeleteLeagueGameOfWeekParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 

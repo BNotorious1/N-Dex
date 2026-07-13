@@ -12,4 +12,7 @@ export interface StatLeaders {
   rushing: PlayerStatLine[];
   receiving: PlayerStatLine[];
   defense: PlayerStatLine[];
+  tackles?: PlayerStatLine[];
+  sacks?: PlayerStatLine[];
+  interceptions?: PlayerStatLine[];
 }

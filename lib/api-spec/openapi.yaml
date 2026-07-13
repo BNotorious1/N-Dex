@@ -225,6 +225,63 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatLeaders"
 
+  /leagues/{id}/game-of-week:
+    get:
+      operationId: getLeagueGameOfWeek
+      tags: [leagues]
+      summary: Get current Game of the Week for a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game of the Week or null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/GameOfWeek"
+                  - type: "null"
+    post:
+      operationId: createLeagueGameOfWeek
+      tags: [leagues]
+      summary: Create or replace the Game of the Week
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameOfWeekInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameOfWeek"
+    delete:
+      operationId: deleteLeagueGameOfWeek
+      tags: [leagues]
+      summary: Delete the current Game of the Week
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /leagues/{id}/stats/players:
     get:
       operationId: getLeaguePlayerStats
@@ -1386,6 +1443,77 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PlayerStatLine"
+        tackles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+        sacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+        interceptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStatLine"
+
+    GameOfWeek:
+      type: object
+      required:
+        - id
+        - league_id
+        - week
+        - season
+        - created_at
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        week:
+          type: integer
+        season:
+          type: integer
+        home_team_id:
+          type: ["integer", "null"]
+        away_team_id:
+          type: ["integer", "null"]
+        home_team:
+          oneOf:
+            - $ref: "#/components/schemas/Team"
+            - type: "null"
+        away_team:
+          oneOf:
+            - $ref: "#/components/schemas/Team"
+            - type: "null"
+        headline:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        kickoff:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    GameOfWeekInput:
+      type: object
+      required:
+        - week
+        - season
+      properties:
+        week:
+          type: integer
+        season:
+          type: integer
+        home_team_id:
+          type: ["integer", "null"]
+        away_team_id:
+          type: ["integer", "null"]
+        headline:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        kickoff:
+          type: ["string", "null"]
 
     PlayerStatLine:
       type: object

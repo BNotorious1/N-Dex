@@ -6,11 +6,13 @@ import {
   useGetLeagueGames,
   useGetLeagueStatLeaders,
   useGetLeagueTeams,
+  useGetLeagueGameOfWeek,
   getGetLeagueSummaryQueryKey,
   getGetLeagueStandingsQueryKey,
   getGetLeagueGamesQueryKey,
   getGetLeagueStatLeadersQueryKey,
   getGetLeagueTeamsQueryKey,
+  getGetLeagueGameOfWeekQueryKey,
 } from "@workspace/api-client-react";
 
 import Navbar from "@/components/Navbar";
@@ -29,6 +31,7 @@ import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
 import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
 import AdminMembersSection from "@/components/league/sections/AdminMembersSection";
 import AdminJoinRequestsSection from "@/components/league/sections/AdminJoinRequestsSection";
+import AdminGameOfWeekSection from "@/components/league/sections/AdminGameOfWeekSection";
 import TransactionsSection from "@/components/league/sections/TransactionsSection";
 import DraftSection from "@/components/league/sections/DraftSection";
 import CreateTradeSection from "@/components/league/sections/CreateTradeSection";
@@ -37,7 +40,7 @@ import TradeCountsSection from "@/components/league/sections/TradeCountsSection"
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "players-search" | "suspensions"
-  | "games" | "statistics" | "standings" | "transactions" | "draft"
+  | "games" | "games-gotw" | "statistics" | "standings" | "transactions" | "draft"
   | "rankings" | "trades" | "trades-create" | "trades-league" | "trades-counts" | "awards"
   | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
   | "admin-members" | "admin-requests" | "admin-invite" | "admin-advance";
@@ -71,6 +74,12 @@ export default function LeagueDetail() {
   });
   const { data: teams } = useGetLeagueTeams(leagueId, {
     query: { enabled: !!leagueId && section === "teams", queryKey: getGetLeagueTeamsQueryKey(leagueId) },
+  });
+  const { data: gotw } = useGetLeagueGameOfWeek(leagueId, {
+    query: {
+      enabled: !!leagueId && (section === "home" || section === "games-gotw"),
+      queryKey: getGetLeagueGameOfWeekQueryKey(leagueId),
+    },
   });
 
   if (isLoading) {
@@ -114,12 +123,15 @@ export default function LeagueDetail() {
           <LeagueBanner league={league} summary={summary} />
           <div className="px-6 py-6">
             {section === "home" && (
-              <HomeSection summary={summary} statLeaders={statLeaders} standings={standings} />
+              <HomeSection summary={summary} statLeaders={statLeaders} standings={standings} gotw={gotw} onNavigate={setSection as (s: string) => void} />
             )}
             {section === "teams" && <TeamsSection teams={teams ?? []} leagueId={leagueId} />}
             {(section === "players" || section === "players-search") && <PlayersSection leagueId={leagueId} />}
             {section === "standings" && <StandingsSection standings={standings ?? []} />}
             {section === "games" && <GamesSection games={games ?? []} />}
+            {section === "games-gotw" && (
+              <AdminGameOfWeekSection leagueId={leagueId} currentWeek={summary?.current_week} currentSeason={summary?.league?.season} />
+            )}
             {section === "statistics" && <StatisticsSection leagueId={leagueId} />}
             {section === "rankings" && <RankingsSection standings={standings ?? []} />}
             {section === "rules" && (

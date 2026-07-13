@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable, joinRequestsTable } from "@workspace/db";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable, joinRequestsTable, gameOfWeekTable } from "@workspace/db";
 import { eq, like, and, sql, desc, isNotNull, or, inArray } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
@@ -387,13 +387,108 @@ router.get("/:id/stats/leaders", async (req, res) => {
   const rushers = players.filter(p => ["RB", "FB"].includes(p.position)).sort((a, b) => b.speed - a.speed).slice(0, 5);
   const receivers = players.filter(p => ["WR", "TE"].includes(p.position)).sort((a, b) => (b.catching ?? 0) - (a.catching ?? 0)).slice(0, 5);
   const defenders = players.filter(p => ["DL", "LB", "CB", "S"].includes(p.position)).sort((a, b) => (b.tackling ?? 0) - (a.tackling ?? 0)).slice(0, 5);
+  const tacklers = players.filter(p => ["LB", "S", "CB", "DL"].includes(p.position)).sort((a, b) => (b.tackling ?? 0) - (a.tackling ?? 0)).slice(0, 5);
+  const sackers = players.filter(p => ["DL", "LB"].includes(p.position)).sort((a, b) => (b.powerMoves ?? 0) - (a.powerMoves ?? 0)).slice(0, 5);
+  const interceptors = players.filter(p => ["CB", "S"].includes(p.position)).sort((a, b) => ((b.manCoverage ?? 0) + (b.zoneCoverage ?? 0)) - ((a.manCoverage ?? 0) + (a.zoneCoverage ?? 0))).slice(0, 5);
 
   res.json({
-    passing: qbs.map(p => makeStatLine(p, "Throwing Power", p.throwingPower ?? 0)),
+    passing: qbs.map(p => makeStatLine(p, "Throw Power", p.throwingPower ?? 0)),
     rushing: rushers.map(p => makeStatLine(p, "Speed", p.speed)),
     receiving: receivers.map(p => makeStatLine(p, "Catching", p.catching ?? 0)),
     defense: defenders.map(p => makeStatLine(p, "Tackling", p.tackling ?? 0)),
+    tackles: tacklers.map(p => makeStatLine(p, "Tackling", p.tackling ?? 0)),
+    sacks: sackers.map(p => makeStatLine(p, "Power Moves", p.powerMoves ?? 0)),
+    interceptions: interceptors.map(p => makeStatLine(p, "Coverage", Math.round(((p.manCoverage ?? 0) + (p.zoneCoverage ?? 0)) / 2))),
   });
+});
+
+// GET /leagues/:id/game-of-week
+router.get("/:id/game-of-week", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const rows = await db
+    .select()
+    .from(gameOfWeekTable)
+    .where(eq(gameOfWeekTable.leagueId, leagueId))
+    .orderBy(desc(gameOfWeekTable.createdAt))
+    .limit(1);
+
+  if (rows.length === 0) { res.json(null); return; }
+
+  const gotw = rows[0];
+  const teamIds = [gotw.homeTeamId, gotw.awayTeamId].filter(Boolean) as number[];
+  const teams = teamIds.length > 0
+    ? await db.select().from(teamsTable).where(inArray(teamsTable.id, teamIds))
+    : [];
+  const teamMap = new Map(teams.map(t => [t.id, t]));
+
+  const formatTeamBrief = (t: typeof teamsTable.$inferSelect) => ({
+    id: t.id, league_id: t.leagueId, name: t.name, city: t.city, abbreviation: t.abbreviation,
+    conference: t.conference, division: t.division, wins: t.wins, losses: t.losses, ties: t.ties,
+    overall_rating: t.overallRating, is_user_team: t.isUserTeam,
+    primary_color: t.primaryColor ?? null, secondary_color: t.secondaryColor ?? null,
+  });
+
+  res.json({
+    id: gotw.id,
+    league_id: gotw.leagueId,
+    week: gotw.week,
+    season: gotw.season,
+    home_team_id: gotw.homeTeamId ?? null,
+    away_team_id: gotw.awayTeamId ?? null,
+    home_team: gotw.homeTeamId && teamMap.has(gotw.homeTeamId) ? formatTeamBrief(teamMap.get(gotw.homeTeamId)!) : null,
+    away_team: gotw.awayTeamId && teamMap.has(gotw.awayTeamId) ? formatTeamBrief(teamMap.get(gotw.awayTeamId)!) : null,
+    headline: gotw.headline ?? null,
+    description: gotw.description ?? null,
+    kickoff: gotw.kickoff ?? null,
+    created_at: gotw.createdAt.toISOString(),
+  });
+});
+
+// POST /leagues/:id/game-of-week
+router.post("/:id/game-of-week", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const body = req.body as { week: number; season: number; home_team_id?: number | null; away_team_id?: number | null; headline?: string | null; description?: string | null; kickoff?: string | null };
+
+  // Delete existing GOTW for this league, then insert new
+  await db.delete(gameOfWeekTable).where(eq(gameOfWeekTable.leagueId, leagueId));
+
+  const [inserted] = await db.insert(gameOfWeekTable).values({
+    leagueId,
+    week: body.week,
+    season: body.season,
+    homeTeamId: body.home_team_id ?? null,
+    awayTeamId: body.away_team_id ?? null,
+    headline: body.headline ?? null,
+    description: body.description ?? null,
+    kickoff: body.kickoff ?? null,
+  }).returning();
+
+  res.status(201).json({
+    id: inserted.id,
+    league_id: inserted.leagueId,
+    week: inserted.week,
+    season: inserted.season,
+    home_team_id: inserted.homeTeamId ?? null,
+    away_team_id: inserted.awayTeamId ?? null,
+    home_team: null,
+    away_team: null,
+    headline: inserted.headline ?? null,
+    description: inserted.description ?? null,
+    kickoff: inserted.kickoff ?? null,
+    created_at: inserted.createdAt.toISOString(),
+  });
+});
+
+// DELETE /leagues/:id/game-of-week
+router.delete("/:id/game-of-week", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  await db.delete(gameOfWeekTable).where(eq(gameOfWeekTable.leagueId, leagueId));
+  res.status(204).end();
 });
 
 // GET /leagues/:id/stats/seasons

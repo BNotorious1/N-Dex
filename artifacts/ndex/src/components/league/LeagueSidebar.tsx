@@ -3,7 +3,7 @@ import {
   BarChart3, ListOrdered, ArrowLeftRight, ClipboardList,
   TrendingUp, Repeat2, Download, Trophy, ChevronDown, ChevronRight,
   ShieldCheck, Settings2, Plug, UserCog, SkipForward, UserPlus, Activity,
-  PanelLeftClose, PanelLeftOpen, Plus,
+  PanelLeftClose, PanelLeftOpen, Plus, Star,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -38,7 +38,13 @@ const NAV: NavItem[] = [
       { key: "suspensions", label: "Suspensions", icon: Ban },
     ],
   },
-  { key: "games", label: "Games", icon: Calendar },
+  {
+    key: "games", label: "Games", icon: Calendar,
+    sub: [
+      { key: "games" as LeagueSection, label: "Schedule", icon: Calendar },
+      { key: "games-gotw" as LeagueSection, label: "Game of Week", icon: Star },
+    ],
+  },
   { key: "statistics", label: "Statistics", icon: BarChart3 },
   { key: "standings", label: "Standings", icon: ListOrdered },
   { key: "transactions", label: "Transactions", icon: ArrowLeftRight },
@@ -70,12 +76,16 @@ const NAV: NavItem[] = [
 const ADMIN_KEYS: LeagueSection[] = [
   "admin", "admin-settings", "admin-ea-connect", "admin-import-status",
   "admin-members", "admin-requests", "admin-invite", "admin-advance",
+  "games-gotw",
 ];
 
 export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle, navLeagueId }: Props) {
   const initialExpanded = new Set(["players", "admin"]);
   if (["trades", "trades-create", "trades-league", "trades-counts"].includes(section)) {
     initialExpanded.add("trades");
+  }
+  if (["games", "games-gotw"].includes(section)) {
+    initialExpanded.add("games");
   }
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [, navigate] = useLocation();

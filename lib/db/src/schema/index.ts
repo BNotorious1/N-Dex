@@ -10,3 +10,4 @@ export * from "./playerAwards";
 export * from "./playerTransactions";
 export * from "./trades";
 export * from "./joinRequests";
+export * from "./gameOfWeek";

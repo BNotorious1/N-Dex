@@ -11,6 +11,8 @@ export * from './game';
 export * from './gameDetail';
 export * from './gameInput';
 export * from './gameLogEntry';
+export * from './gameOfWeek';
+export * from './gameOfWeekInput';
 export * from './gamePlayerStat';
 export * from './gameUpdate';
 export * from './healthStatus';

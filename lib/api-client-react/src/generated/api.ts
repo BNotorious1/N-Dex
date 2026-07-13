@@ -25,6 +25,8 @@ import type {
   GameDetail,
   GameInput,
   GameLogEntry,
+  GameOfWeek,
+  GameOfWeekInput,
   GameUpdate,
   HealthStatus,
   JoinRequest,
@@ -832,6 +834,225 @@ export function useGetLeagueStatLeaders<TData = Awaited<ReturnType<typeof getLea
 
 
 
+
+export const getGetLeagueGameOfWeekUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/game-of-week`
+}
+
+/**
+ * @summary Get current Game of the Week for a league
+ */
+export const getLeagueGameOfWeek = async (id: number, options?: RequestInit): Promise<GameOfWeek | null> => {
+
+  return customFetch<GameOfWeek | null>(getGetLeagueGameOfWeekUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueGameOfWeekQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/game-of-week`
+    ] as const;
+    }
+
+
+export const getGetLeagueGameOfWeekQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueGameOfWeek>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueGameOfWeek>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueGameOfWeekQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueGameOfWeek>>> = ({ signal }) => getLeagueGameOfWeek(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueGameOfWeek>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueGameOfWeekQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueGameOfWeek>>>
+export type GetLeagueGameOfWeekQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get current Game of the Week for a league
+ */
+
+export function useGetLeagueGameOfWeek<TData = Awaited<ReturnType<typeof getLeagueGameOfWeek>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueGameOfWeek>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueGameOfWeekQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateLeagueGameOfWeekUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/game-of-week`
+}
+
+/**
+ * @summary Create or replace the Game of the Week
+ */
+export const createLeagueGameOfWeek = async (id: number,
+    gameOfWeekInput: GameOfWeekInput, options?: RequestInit): Promise<GameOfWeek> => {
+
+  return customFetch<GameOfWeek>(getCreateLeagueGameOfWeekUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      gameOfWeekInput,)
+  }
+);}
+
+
+
+
+export const getCreateLeagueGameOfWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLeagueGameOfWeek>>, TError,{id: number;data: BodyType<GameOfWeekInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLeagueGameOfWeek>>, TError,{id: number;data: BodyType<GameOfWeekInput>}, TContext> => {
+
+const mutationKey = ['createLeagueGameOfWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLeagueGameOfWeek>>, {id: number;data: BodyType<GameOfWeekInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createLeagueGameOfWeek(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLeagueGameOfWeekMutationResult = NonNullable<Awaited<ReturnType<typeof createLeagueGameOfWeek>>>
+    export type CreateLeagueGameOfWeekMutationBody = BodyType<GameOfWeekInput>
+    export type CreateLeagueGameOfWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create or replace the Game of the Week
+ */
+export const useCreateLeagueGameOfWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLeagueGameOfWeek>>, TError,{id: number;data: BodyType<GameOfWeekInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createLeagueGameOfWeek>>,
+        TError,
+        {id: number;data: BodyType<GameOfWeekInput>},
+        TContext
+      > => {
+      return useMutation(getCreateLeagueGameOfWeekMutationOptions(options));
+    }
+
+export const getDeleteLeagueGameOfWeekUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/game-of-week`
+}
+
+/**
+ * @summary Delete the current Game of the Week
+ */
+export const deleteLeagueGameOfWeek = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteLeagueGameOfWeekUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLeagueGameOfWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueGameOfWeek>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueGameOfWeek>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteLeagueGameOfWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLeagueGameOfWeek>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteLeagueGameOfWeek(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLeagueGameOfWeekMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLeagueGameOfWeek>>>
+
+    export type DeleteLeagueGameOfWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete the current Game of the Week
+ */
+export const useDeleteLeagueGameOfWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueGameOfWeek>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLeagueGameOfWeek>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteLeagueGameOfWeekMutationOptions(options));
+    }
 
 export const getGetLeaguePlayerStatsUrl = (id: number,) => {
 
