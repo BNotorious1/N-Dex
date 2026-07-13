@@ -27,6 +27,9 @@ import type {
   GameLogEntry,
   GameUpdate,
   HealthStatus,
+  JoinRequest,
+  JoinRequestInput,
+  JoinRequestUpdate,
   League,
   LeagueDraftEntry,
   LeagueInput,
@@ -1426,6 +1429,301 @@ export const useDeleteLeagueMember = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteLeagueMemberMutationOptions(options));
+    }
+
+export const getGetLeagueJoinRequestsUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/join-requests`
+}
+
+/**
+ * @summary List join requests for a league
+ */
+export const getLeagueJoinRequests = async (id: number, options?: RequestInit): Promise<JoinRequest[]> => {
+
+  return customFetch<JoinRequest[]>(getGetLeagueJoinRequestsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueJoinRequestsQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/join-requests`
+    ] as const;
+    }
+
+
+export const getGetLeagueJoinRequestsQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueJoinRequests>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueJoinRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueJoinRequestsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueJoinRequests>>> = ({ signal }) => getLeagueJoinRequests(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueJoinRequests>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueJoinRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueJoinRequests>>>
+export type GetLeagueJoinRequestsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List join requests for a league
+ */
+
+export function useGetLeagueJoinRequests<TData = Awaited<ReturnType<typeof getLeagueJoinRequests>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueJoinRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueJoinRequestsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateLeagueJoinRequestUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/join-requests`
+}
+
+/**
+ * @summary Submit a join request
+ */
+export const createLeagueJoinRequest = async (id: number,
+    joinRequestInput: JoinRequestInput, options?: RequestInit): Promise<JoinRequest> => {
+
+  return customFetch<JoinRequest>(getCreateLeagueJoinRequestUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      joinRequestInput,)
+  }
+);}
+
+
+
+
+export const getCreateLeagueJoinRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLeagueJoinRequest>>, TError,{id: number;data: BodyType<JoinRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLeagueJoinRequest>>, TError,{id: number;data: BodyType<JoinRequestInput>}, TContext> => {
+
+const mutationKey = ['createLeagueJoinRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLeagueJoinRequest>>, {id: number;data: BodyType<JoinRequestInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createLeagueJoinRequest(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLeagueJoinRequestMutationResult = NonNullable<Awaited<ReturnType<typeof createLeagueJoinRequest>>>
+    export type CreateLeagueJoinRequestMutationBody = BodyType<JoinRequestInput>
+    export type CreateLeagueJoinRequestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit a join request
+ */
+export const useCreateLeagueJoinRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLeagueJoinRequest>>, TError,{id: number;data: BodyType<JoinRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createLeagueJoinRequest>>,
+        TError,
+        {id: number;data: BodyType<JoinRequestInput>},
+        TContext
+      > => {
+      return useMutation(getCreateLeagueJoinRequestMutationOptions(options));
+    }
+
+export const getUpdateLeagueJoinRequestUrl = (id: number,
+    requestId: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/join-requests/${requestId}`
+}
+
+/**
+ * @summary Approve, deny, or update a join request
+ */
+export const updateLeagueJoinRequest = async (id: number,
+    requestId: number,
+    joinRequestUpdate: JoinRequestUpdate, options?: RequestInit): Promise<JoinRequest> => {
+
+  return customFetch<JoinRequest>(getUpdateLeagueJoinRequestUrl(id,requestId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      joinRequestUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateLeagueJoinRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLeagueJoinRequest>>, TError,{id: number;requestId: number;data: BodyType<JoinRequestUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLeagueJoinRequest>>, TError,{id: number;requestId: number;data: BodyType<JoinRequestUpdate>}, TContext> => {
+
+const mutationKey = ['updateLeagueJoinRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLeagueJoinRequest>>, {id: number;requestId: number;data: BodyType<JoinRequestUpdate>}> = (props) => {
+          const {id,requestId,data} = props ?? {};
+
+          return  updateLeagueJoinRequest(id,requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLeagueJoinRequestMutationResult = NonNullable<Awaited<ReturnType<typeof updateLeagueJoinRequest>>>
+    export type UpdateLeagueJoinRequestMutationBody = BodyType<JoinRequestUpdate>
+    export type UpdateLeagueJoinRequestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve, deny, or update a join request
+ */
+export const useUpdateLeagueJoinRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLeagueJoinRequest>>, TError,{id: number;requestId: number;data: BodyType<JoinRequestUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateLeagueJoinRequest>>,
+        TError,
+        {id: number;requestId: number;data: BodyType<JoinRequestUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateLeagueJoinRequestMutationOptions(options));
+    }
+
+export const getDeleteLeagueJoinRequestUrl = (id: number,
+    requestId: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/join-requests/${requestId}`
+}
+
+/**
+ * @summary Delete a join request
+ */
+export const deleteLeagueJoinRequest = async (id: number,
+    requestId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteLeagueJoinRequestUrl(id,requestId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLeagueJoinRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueJoinRequest>>, TError,{id: number;requestId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueJoinRequest>>, TError,{id: number;requestId: number}, TContext> => {
+
+const mutationKey = ['deleteLeagueJoinRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLeagueJoinRequest>>, {id: number;requestId: number}> = (props) => {
+          const {id,requestId} = props ?? {};
+
+          return  deleteLeagueJoinRequest(id,requestId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLeagueJoinRequestMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLeagueJoinRequest>>>
+
+    export type DeleteLeagueJoinRequestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a join request
+ */
+export const useDeleteLeagueJoinRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueJoinRequest>>, TError,{id: number;requestId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLeagueJoinRequest>>,
+        TError,
+        {id: number;requestId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteLeagueJoinRequestMutationOptions(options));
     }
 
 export const getGetLeagueTradesUrl = (id: number,) => {

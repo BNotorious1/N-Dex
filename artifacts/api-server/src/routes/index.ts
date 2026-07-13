@@ -7,10 +7,12 @@ import gamesRouter from "./games";
 import importRouter from "./import";
 import eaRouter from "./ea";
 import proxyRouter from "./proxy";
+import authRouter from "./auth";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use("/auth", authRouter);
 router.use("/leagues", leaguesRouter);
 router.use("/leagues/:id/ea", eaRouter);
 router.use("/teams", teamsRouter);

@@ -890,6 +890,81 @@ export const DeleteLeagueMemberParams = zod.object({
 
 
 /**
+ * @summary List join requests for a league
+ */
+export const GetLeagueJoinRequestsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueJoinRequestsResponseItem = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "team_id": zod.number().nullish(),
+  "discord_name": zod.string(),
+  "discord_id": zod.string().nullish(),
+  "gamer_tag": zod.string().nullish(),
+  "platform": zod.string().nullish(),
+  "message": zod.string().nullish(),
+  "status": zod.string(),
+  "created_at": zod.string()
+})
+export const GetLeagueJoinRequestsResponse = zod.array(GetLeagueJoinRequestsResponseItem)
+
+
+/**
+ * @summary Submit a join request
+ */
+export const CreateLeagueJoinRequestParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateLeagueJoinRequestBody = zod.object({
+  "discord_name": zod.string(),
+  "discord_id": zod.string().optional(),
+  "gamer_tag": zod.string().optional(),
+  "platform": zod.string().optional(),
+  "message": zod.string().optional(),
+  "team_id": zod.number().optional()
+})
+
+
+/**
+ * @summary Approve, deny, or update a join request
+ */
+export const UpdateLeagueJoinRequestParams = zod.object({
+  "id": zod.coerce.number(),
+  "requestId": zod.coerce.number()
+})
+
+export const UpdateLeagueJoinRequestBody = zod.object({
+  "status": zod.string().optional(),
+  "team_id": zod.number().nullish()
+})
+
+export const UpdateLeagueJoinRequestResponse = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "team_id": zod.number().nullish(),
+  "discord_name": zod.string(),
+  "discord_id": zod.string().nullish(),
+  "gamer_tag": zod.string().nullish(),
+  "platform": zod.string().nullish(),
+  "message": zod.string().nullish(),
+  "status": zod.string(),
+  "created_at": zod.string()
+})
+
+
+/**
+ * @summary Delete a join request
+ */
+export const DeleteLeagueJoinRequestParams = zod.object({
+  "id": zod.coerce.number(),
+  "requestId": zod.coerce.number()
+})
+
+
+/**
  * @summary List trades in a league
  */
 export const GetLeagueTradesParams = zod.object({

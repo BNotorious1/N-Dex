@@ -9,3 +9,4 @@ export * from "./members";
 export * from "./playerAwards";
 export * from "./playerTransactions";
 export * from "./trades";
+export * from "./joinRequests";

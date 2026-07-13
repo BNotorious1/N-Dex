@@ -522,6 +522,39 @@ export interface Member {
   gamer_tag?: string | null;
 }
 
+export interface JoinRequest {
+  id: number;
+  league_id: number;
+  /** @nullable */
+  team_id?: number | null;
+  discord_name: string;
+  /** @nullable */
+  discord_id?: string | null;
+  /** @nullable */
+  gamer_tag?: string | null;
+  /** @nullable */
+  platform?: string | null;
+  /** @nullable */
+  message?: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface JoinRequestInput {
+  discord_name: string;
+  discord_id?: string;
+  gamer_tag?: string;
+  platform?: string;
+  message?: string;
+  team_id?: number;
+}
+
+export interface JoinRequestUpdate {
+  status?: string;
+  /** @nullable */
+  team_id?: number | null;
+}
+
 export interface MemberInput {
   discord_name: string;
   gamer_tag?: string;

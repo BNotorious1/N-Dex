@@ -399,6 +399,98 @@ paths:
         "204":
           description: Deleted
 
+  /leagues/{id}/join-requests:
+    get:
+      operationId: getLeagueJoinRequests
+      tags: [leagues]
+      summary: List join requests for a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Join requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JoinRequest"
+    post:
+      operationId: createLeagueJoinRequest
+      tags: [leagues]
+      summary: Submit a join request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequestInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+
+  /leagues/{id}/join-requests/{requestId}:
+    patch:
+      operationId: updateLeagueJoinRequest
+      tags: [leagues]
+      summary: Approve, deny, or update a join request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequestUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+    delete:
+      operationId: deleteLeagueJoinRequest
+      tags: [leagues]
+      summary: Delete a join request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /leagues/{id}/trades:
     get:
       operationId: getLeagueTrades
@@ -1824,6 +1916,56 @@ components:
           type: string
         gamer_tag:
           type: ["string", "null"]
+
+    JoinRequest:
+      type: object
+      required: [id, league_id, discord_name, status, created_at]
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        team_id:
+          type: ["integer", "null"]
+        discord_name:
+          type: string
+        discord_id:
+          type: ["string", "null"]
+        gamer_tag:
+          type: ["string", "null"]
+        platform:
+          type: ["string", "null"]
+        message:
+          type: ["string", "null"]
+        status:
+          type: string
+        created_at:
+          type: string
+
+    JoinRequestInput:
+      type: object
+      required: [discord_name]
+      properties:
+        discord_name:
+          type: string
+        discord_id:
+          type: string
+        gamer_tag:
+          type: string
+        platform:
+          type: string
+        message:
+          type: string
+        team_id:
+          type: integer
+
+    JoinRequestUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        team_id:
+          type: ["integer", "null"]
 
     MemberInput:
       type: object

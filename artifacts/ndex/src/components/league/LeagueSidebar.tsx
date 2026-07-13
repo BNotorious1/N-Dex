@@ -60,6 +60,7 @@ const NAV: NavItem[] = [
       { key: "admin-ea-connect", label: "EA Connect", icon: Plug },
       { key: "admin-import-status", label: "Import Status", icon: Activity },
       { key: "admin-members", label: "Members", icon: UserCog },
+      { key: "admin-requests", label: "Join Requests", icon: UserPlus },
       { key: "admin-invite", label: "Invite Players", icon: UserPlus },
       { key: "admin-advance", label: "Advance Week", icon: SkipForward },
     ],
@@ -68,7 +69,7 @@ const NAV: NavItem[] = [
 
 const ADMIN_KEYS: LeagueSection[] = [
   "admin", "admin-settings", "admin-ea-connect", "admin-import-status",
-  "admin-members", "admin-invite", "admin-advance",
+  "admin-members", "admin-requests", "admin-invite", "admin-advance",
 ];
 
 export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle, navLeagueId }: Props) {

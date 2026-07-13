@@ -27,6 +27,8 @@ import PlaceholderSection from "@/components/league/sections/PlaceholderSection"
 import AdminSettingsSection from "@/components/league/sections/AdminSettingsSection";
 import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
 import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
+import AdminMembersSection from "@/components/league/sections/AdminMembersSection";
+import AdminJoinRequestsSection from "@/components/league/sections/AdminJoinRequestsSection";
 import TransactionsSection from "@/components/league/sections/TransactionsSection";
 import DraftSection from "@/components/league/sections/DraftSection";
 import CreateTradeSection from "@/components/league/sections/CreateTradeSection";
@@ -38,7 +40,7 @@ export type LeagueSection =
   | "games" | "statistics" | "standings" | "transactions" | "draft"
   | "rankings" | "trades" | "trades-create" | "trades-league" | "trades-counts" | "awards"
   | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
-  | "admin-members" | "admin-invite" | "admin-advance";
+  | "admin-members" | "admin-requests" | "admin-invite" | "admin-advance";
 
 export default function LeagueDetail() {
   const params = useParams<{ id: string }>();
@@ -151,11 +153,10 @@ export default function LeagueDetail() {
               <AdminImportStatus leagueId={leagueId} />
             )}
             {section === "admin-members" && (
-              <PlaceholderSection
-                icon="UserCog"
-                title="Members"
-                description="Manage league members, assign teams, and set permissions. Member management panel coming soon."
-              />
+              <AdminMembersSection leagueId={leagueId} />
+            )}
+            {section === "admin-requests" && (
+              <AdminJoinRequestsSection leagueId={leagueId} />
             )}
             {section === "admin-invite" && (
               <PlaceholderSection

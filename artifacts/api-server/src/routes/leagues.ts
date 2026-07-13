@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable } from "@workspace/db";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable, joinRequestsTable } from "@workspace/db";
 import { eq, like, and, sql, desc, isNotNull, or, inArray } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
@@ -689,6 +689,88 @@ router.delete("/:id/members/:memberId", async (req, res) => {
     return;
   }
   await db.delete(membersTable).where(eq(membersTable.id, paramResult.data.memberId));
+  res.status(204).send();
+});
+
+// GET /leagues/:id/join-requests
+router.get("/:id/join-requests", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+  const rows = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.leagueId, id));
+  res.json(rows.map(r => ({
+    id: r.id,
+    league_id: r.leagueId,
+    team_id: r.teamId ?? null,
+    discord_name: r.discordName,
+    discord_id: r.discordId ?? null,
+    gamer_tag: r.gamerTag ?? null,
+    platform: r.platform ?? null,
+    message: r.message ?? null,
+    status: r.status,
+    created_at: r.createdAt.toISOString(),
+  })));
+});
+
+// POST /leagues/:id/join-requests
+router.post("/:id/join-requests", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+  const { discord_name, discord_id, gamer_tag, platform, message, team_id } = req.body as Record<string, string | number | undefined>;
+  if (!discord_name) { res.status(400).json({ error: "discord_name required" }); return; }
+  const [row] = await db.insert(joinRequestsTable).values({
+    leagueId: id,
+    discordName: String(discord_name),
+    discordId: discord_id ? String(discord_id) : null,
+    gamerTag: gamer_tag ? String(gamer_tag) : null,
+    platform: platform ? String(platform) : null,
+    message: message ? String(message) : null,
+    teamId: team_id ? Number(team_id) : null,
+    status: "pending",
+  }).returning();
+  res.status(201).json({
+    id: row.id,
+    league_id: row.leagueId,
+    team_id: row.teamId ?? null,
+    discord_name: row.discordName,
+    discord_id: row.discordId ?? null,
+    gamer_tag: row.gamerTag ?? null,
+    platform: row.platform ?? null,
+    message: row.message ?? null,
+    status: row.status,
+    created_at: row.createdAt.toISOString(),
+  });
+});
+
+// PATCH /leagues/:id/join-requests/:requestId
+router.patch("/:id/join-requests/:requestId", async (req, res) => {
+  const id = Number(req.params.id);
+  const requestId = Number(req.params.requestId);
+  if (!id || !requestId) { res.status(400).json({ error: "Invalid params" }); return; }
+  const { status, team_id } = req.body as { status?: string; team_id?: number | null };
+  const updates: Record<string, unknown> = {};
+  if (status !== undefined) updates.status = status;
+  if (team_id !== undefined) updates.teamId = team_id;
+  const [row] = await db.update(joinRequestsTable).set(updates).where(eq(joinRequestsTable.id, requestId)).returning();
+  if (!row) { res.status(404).json({ error: "Not found" }); return; }
+  res.json({
+    id: row.id,
+    league_id: row.leagueId,
+    team_id: row.teamId ?? null,
+    discord_name: row.discordName,
+    discord_id: row.discordId ?? null,
+    gamer_tag: row.gamerTag ?? null,
+    platform: row.platform ?? null,
+    message: row.message ?? null,
+    status: row.status,
+    created_at: row.createdAt.toISOString(),
+  });
+});
+
+// DELETE /leagues/:id/join-requests/:requestId
+router.delete("/:id/join-requests/:requestId", async (req, res) => {
+  const requestId = Number(req.params.requestId);
+  if (!requestId) { res.status(400).json({ error: "Invalid id" }); return; }
+  await db.delete(joinRequestsTable).where(eq(joinRequestsTable.id, requestId));
   res.status(204).send();
 });
 
