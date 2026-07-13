@@ -596,7 +596,7 @@ function eaPortraitUrl(portraitId: number): string {
   return `/api/proxy/image?url=${encodeURIComponent(direct)}`;
 }
 
-function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: string }) {
+function PlayerStatRow({ player, color, mirror }: { player: GamePlayerStat; color: string; mirror?: boolean }) {
   const [portraitErr, setPortraitErr] = useState(false);
   const initials = player.player_name
     .split(" ")
@@ -608,7 +608,7 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
   const showPortrait = !!player.portrait_id && !portraitErr;
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 13, marginBottom: 16 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 13, marginBottom: 16, flexDirection: mirror ? "row-reverse" : "row" }}>
       {/* Portrait card */}
       <div
         style={{
@@ -696,6 +696,7 @@ function PlayerStatRow({ player, color }: { player: GamePlayerStat; color: strin
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
+        textAlign: mirror ? "right" : "left",
       }}>
         <div
           style={{
@@ -1141,7 +1142,7 @@ function RecapTab({
               {noStats ? (
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 32 }}>No stats recorded</div>
               ) : (
-                awayTop.map((p, i) => <PlayerStatRow key={i} player={p} color={awayColor} />)
+                awayTop.map((p, i) => <PlayerStatRow key={i} player={p} color={awayColor} mirror />)
               )}
             </div>
 
