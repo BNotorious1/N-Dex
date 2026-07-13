@@ -845,6 +845,83 @@ export interface GameDetail {
   player_stats: GamePlayerStat[];
 }
 
+export type LeagueTradeTeamA = {
+  id: number;
+  name: string;
+  abbreviation: string;
+  /** @nullable */
+  primary_color?: string | null;
+};
+
+export type LeagueTradeTeamB = {
+  id: number;
+  name: string;
+  abbreviation: string;
+  /** @nullable */
+  primary_color?: string | null;
+};
+
+export type LeagueTradePlayersFromAItem = {
+  id: number;
+  name: string;
+  position: string;
+  overall: number;
+  /** @nullable */
+  portrait_id?: number | null;
+};
+
+export type LeagueTradePlayersFromBItem = {
+  id: number;
+  name: string;
+  position: string;
+  overall: number;
+  /** @nullable */
+  portrait_id?: number | null;
+};
+
+export interface LeagueTrade {
+  id: number;
+  league_id: number;
+  season: number;
+  /** @nullable */
+  week?: number | null;
+  status: string;
+  team_a: LeagueTradeTeamA;
+  team_b: LeagueTradeTeamB;
+  players_from_a: LeagueTradePlayersFromAItem[];
+  players_from_b: LeagueTradePlayersFromBItem[];
+  /** @nullable */
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface CreateLeagueTradeInput {
+  season: number;
+  week?: number;
+  team_a_id: number;
+  team_b_id: number;
+  players_from_a: number[];
+  players_from_b: number[];
+  notes?: string;
+}
+
+export interface UpdateLeagueTradeInput {
+  status: string;
+}
+
+export interface LeagueTradeCount {
+  team_id: number;
+  team_name: string;
+  team_abbreviation: string;
+  /** @nullable */
+  team_color?: string | null;
+  pending: number;
+  approved: number;
+  denied: number;
+  cancelled: number;
+  total: number;
+}
+
 export type LeagueTransactionPlayer = {
   id: number;
   name: string;

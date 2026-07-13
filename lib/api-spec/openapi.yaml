@@ -399,6 +399,119 @@ paths:
         "204":
           description: Deleted
 
+  /leagues/{id}/trades:
+    get:
+      operationId: getLeagueTrades
+      tags: [leagues]
+      summary: List trades in a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trades list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeagueTrade"
+    post:
+      operationId: createLeagueTrade
+      tags: [leagues]
+      summary: Create a trade proposal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeagueTradeInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeagueTrade"
+
+  /leagues/{id}/trades/{tradeId}:
+    patch:
+      operationId: updateLeagueTrade
+      tags: [leagues]
+      summary: Update trade status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeagueTradeInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeagueTrade"
+    delete:
+      operationId: deleteLeagueTrade
+      tags: [leagues]
+      summary: Delete a trade
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /leagues/{id}/trades/counts:
+    get:
+      operationId: getLeagueTradeCounts
+      tags: [leagues]
+      summary: Per-team trade counts for a league
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trade counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeagueTradeCount"
+
   /leagues/{id}/transactions:
     get:
       operationId: getLeagueTransactions
@@ -2113,6 +2226,107 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GamePlayerStat"
+
+    LeagueTrade:
+      type: object
+      required: [id, league_id, season, status, team_a, team_b, players_from_a, players_from_b, created_at]
+      properties:
+        id:
+          type: integer
+        league_id:
+          type: integer
+        season:
+          type: integer
+        week:
+          type: ["integer", "null"]
+        status:
+          type: string
+        team_a:
+          type: object
+          required: [id, name, abbreviation]
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            abbreviation: { type: string }
+            primary_color: { type: ["string", "null"] }
+        team_b:
+          type: object
+          required: [id, name, abbreviation]
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            abbreviation: { type: string }
+            primary_color: { type: ["string", "null"] }
+        players_from_a:
+          type: array
+          items:
+            type: object
+            required: [id, name, position, overall]
+            properties:
+              id: { type: integer }
+              name: { type: string }
+              position: { type: string }
+              overall: { type: integer }
+              portrait_id: { type: ["integer", "null"] }
+        players_from_b:
+          type: array
+          items:
+            type: object
+            required: [id, name, position, overall]
+            properties:
+              id: { type: integer }
+              name: { type: string }
+              position: { type: string }
+              overall: { type: integer }
+              portrait_id: { type: ["integer", "null"] }
+        notes:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    CreateLeagueTradeInput:
+      type: object
+      required: [season, team_a_id, team_b_id, players_from_a, players_from_b]
+      properties:
+        season:
+          type: integer
+        week:
+          type: integer
+        team_a_id:
+          type: integer
+        team_b_id:
+          type: integer
+        players_from_a:
+          type: array
+          items:
+            type: integer
+        players_from_b:
+          type: array
+          items:
+            type: integer
+        notes:
+          type: string
+
+    UpdateLeagueTradeInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    LeagueTradeCount:
+      type: object
+      required: [team_id, team_name, team_abbreviation, pending, approved, denied, cancelled, total]
+      properties:
+        team_id: { type: integer }
+        team_name: { type: string }
+        team_abbreviation: { type: string }
+        team_color: { type: ["string", "null"] }
+        pending: { type: integer }
+        approved: { type: integer }
+        denied: { type: integer }
+        cancelled: { type: integer }
+        total: { type: integer }
 
     LeagueTransaction:
       type: object

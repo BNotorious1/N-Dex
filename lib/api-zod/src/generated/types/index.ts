@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './createLeagueTradeInput';
 export * from './game';
 export * from './gameDetail';
 export * from './gameInput';
@@ -20,6 +21,12 @@ export * from './leaguePlayerStats';
 export * from './leagueStatsMeta';
 export * from './leagueStatsMetaWeeksBySeason';
 export * from './leagueSummary';
+export * from './leagueTrade';
+export * from './leagueTradeCount';
+export * from './leagueTradePlayersFromAItem';
+export * from './leagueTradePlayersFromBItem';
+export * from './leagueTradeTeamA';
+export * from './leagueTradeTeamB';
 export * from './leagueTransaction';
 export * from './leagueTransactionPlayer';
 export * from './leagueTransactionTeam';
@@ -45,3 +52,4 @@ export * from './team';
 export * from './teamGame';
 export * from './teamInput';
 export * from './teamUpdate';
+export * from './updateLeagueTradeInput';

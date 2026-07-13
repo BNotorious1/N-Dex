@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable } from "@workspace/db";
-import { eq, like, and, sql, desc, isNotNull, or } from "drizzle-orm";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable } from "@workspace/db";
+import { eq, like, and, sql, desc, isNotNull, or, inArray } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
   CreateLeagueBody,
@@ -756,6 +756,143 @@ router.post("/:id/games", async (req, res) => {
     season: data.season,
   }).returning();
   res.status(201).json(formatGame(game));
+});
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+async function loadTrade(tradeId: number, leagueId: number) {
+  const [trade] = await db.select().from(tradesTable)
+    .where(and(eq(tradesTable.id, tradeId), eq(tradesTable.leagueId, leagueId)))
+    .limit(1);
+  if (!trade) return null;
+
+  const teams = await db.select().from(teamsTable)
+    .where(inArray(teamsTable.id, [trade.teamAId, trade.teamBId]));
+  const teamMap = new Map(teams.map(t => [t.id, t]));
+
+  const tps = await db.select().from(tradePlayersTable)
+    .innerJoin(playersTable, eq(tradePlayersTable.playerId, playersTable.id))
+    .where(eq(tradePlayersTable.tradeId, trade.id));
+
+  const teamA = teamMap.get(trade.teamAId)!;
+  const teamB = teamMap.get(trade.teamBId)!;
+
+  const playersFromA = tps.filter(r => r.trade_players.fromTeamId === trade.teamAId).map(r => ({
+    id: r.players.id, name: r.players.name, position: r.players.position,
+    overall: r.players.overall, portrait_id: r.players.portraitId ?? null,
+  }));
+  const playersFromB = tps.filter(r => r.trade_players.fromTeamId === trade.teamBId).map(r => ({
+    id: r.players.id, name: r.players.name, position: r.players.position,
+    overall: r.players.overall, portrait_id: r.players.portraitId ?? null,
+  }));
+
+  return {
+    id: trade.id,
+    league_id: trade.leagueId,
+    season: trade.season,
+    week: trade.week ?? null,
+    status: trade.status,
+    team_a: { id: teamA.id, name: teamA.name, abbreviation: teamA.abbreviation, primary_color: teamA.primaryColor ?? null },
+    team_b: { id: teamB.id, name: teamB.name, abbreviation: teamB.abbreviation, primary_color: teamB.primaryColor ?? null },
+    players_from_a: playersFromA,
+    players_from_b: playersFromB,
+    notes: trade.notes ?? null,
+    created_at: trade.createdAt.toISOString(),
+  };
+}
+
+// GET /leagues/:id/trades
+router.get("/:id/trades", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const trades = await db.select().from(tradesTable)
+    .where(eq(tradesTable.leagueId, leagueId))
+    .orderBy(desc(tradesTable.createdAt));
+
+  const results = await Promise.all(trades.map(t => loadTrade(t.id, leagueId)));
+  res.json(results.filter(Boolean));
+});
+
+// POST /leagues/:id/trades
+router.post("/:id/trades", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const { season, week, team_a_id, team_b_id, players_from_a = [], players_from_b = [], notes } = req.body as {
+    season: number; week?: number; team_a_id: number; team_b_id: number;
+    players_from_a: number[]; players_from_b: number[]; notes?: string;
+  };
+
+  if (!season || !team_a_id || !team_b_id) {
+    res.status(400).json({ error: "season, team_a_id, and team_b_id are required" }); return;
+  }
+
+  const [trade] = await db.insert(tradesTable).values({
+    leagueId, season, week: week ?? null, status: "PENDING",
+    teamAId: team_a_id, teamBId: team_b_id, notes: notes ?? null,
+  }).returning();
+
+  const playerRows = [
+    ...players_from_a.map((pid: number) => ({ tradeId: trade!.id, playerId: pid, fromTeamId: team_a_id })),
+    ...players_from_b.map((pid: number) => ({ tradeId: trade!.id, playerId: pid, fromTeamId: team_b_id })),
+  ];
+  if (playerRows.length > 0) await db.insert(tradePlayersTable).values(playerRows);
+
+  const result = await loadTrade(trade!.id, leagueId);
+  res.status(201).json(result);
+});
+
+// PATCH /leagues/:id/trades/:tradeId
+router.patch("/:id/trades/:tradeId", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  const tradeId = Number(req.params.tradeId);
+  if (isNaN(leagueId) || isNaN(tradeId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const { status } = req.body as { status: string };
+  if (!status) { res.status(400).json({ error: "status is required" }); return; }
+
+  await db.update(tradesTable)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(tradesTable.id, tradeId), eq(tradesTable.leagueId, leagueId)));
+
+  const result = await loadTrade(tradeId, leagueId);
+  if (!result) { res.status(404).json({ error: "Trade not found" }); return; }
+  res.json(result);
+});
+
+// DELETE /leagues/:id/trades/:tradeId
+router.delete("/:id/trades/:tradeId", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  const tradeId = Number(req.params.tradeId);
+  if (isNaN(leagueId) || isNaN(tradeId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  await db.delete(tradesTable).where(and(eq(tradesTable.id, tradeId), eq(tradesTable.leagueId, leagueId)));
+  res.status(204).end();
+});
+
+// GET /leagues/:id/trades/counts — NOTE: must be defined BEFORE /:id/trades/:tradeId to avoid "counts" being parsed as a tradeId
+router.get("/:id/trades/counts", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
+  const trades = await db.select().from(tradesTable).where(eq(tradesTable.leagueId, leagueId));
+
+  const counts = teams.map(team => {
+    const teamTrades = trades.filter(t => t.teamAId === team.id || t.teamBId === team.id);
+    return {
+      team_id: team.id,
+      team_name: team.name,
+      team_abbreviation: team.abbreviation,
+      team_color: team.primaryColor ?? null,
+      pending:   teamTrades.filter(t => t.status === "PENDING").length,
+      approved:  teamTrades.filter(t => t.status === "APPROVED").length,
+      denied:    teamTrades.filter(t => t.status === "DENIED").length,
+      cancelled: teamTrades.filter(t => t.status === "CANCELLED").length,
+      total:     teamTrades.length,
+    };
+  });
+
+  res.json(counts);
 });
 
 // GET /leagues/:id/transactions

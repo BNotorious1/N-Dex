@@ -29,11 +29,14 @@ import AdminEAConnect from "@/components/league/sections/AdminEAConnect";
 import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
 import TransactionsSection from "@/components/league/sections/TransactionsSection";
 import DraftSection from "@/components/league/sections/DraftSection";
+import CreateTradeSection from "@/components/league/sections/CreateTradeSection";
+import LeagueTradesSection from "@/components/league/sections/LeagueTradesSection";
+import TradeCountsSection from "@/components/league/sections/TradeCountsSection";
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "players-search" | "suspensions"
   | "games" | "statistics" | "standings" | "transactions" | "draft"
-  | "rankings" | "trades" | "awards"
+  | "rankings" | "trades" | "trades-create" | "trades-league" | "trades-counts" | "awards"
   | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
   | "admin-members" | "admin-invite" | "admin-advance";
 
@@ -128,9 +131,11 @@ export default function LeagueDetail() {
             )}
             {section === "transactions" && <TransactionsSection leagueId={leagueId} />}
             {section === "draft" && <DraftSection leagueId={leagueId} />}
-            {section === "trades" && (
-              <PlaceholderSection icon="Repeat2" title="Trades" description="No trade proposals have been submitted yet." />
+            {(section === "trades" || section === "trades-create") && (
+              <CreateTradeSection leagueId={leagueId} season={league.season} />
             )}
+            {section === "trades-league" && <LeagueTradesSection leagueId={leagueId} />}
+            {section === "trades-counts" && <TradeCountsSection leagueId={leagueId} />}
             {section === "awards" && (
               <PlaceholderSection icon="Trophy" title="Awards" description="Season awards and accolades will be displayed here at the end of each season." />
             )}

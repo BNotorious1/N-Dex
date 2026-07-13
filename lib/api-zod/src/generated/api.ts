@@ -890,6 +890,148 @@ export const DeleteLeagueMemberParams = zod.object({
 
 
 /**
+ * @summary List trades in a league
+ */
+export const GetLeagueTradesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueTradesResponseItem = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "season": zod.number(),
+  "week": zod.number().nullish(),
+  "status": zod.string(),
+  "team_a": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "abbreviation": zod.string(),
+  "primary_color": zod.string().nullish()
+}),
+  "team_b": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "abbreviation": zod.string(),
+  "primary_color": zod.string().nullish()
+}),
+  "players_from_a": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string(),
+  "overall": zod.number(),
+  "portrait_id": zod.number().nullish()
+})),
+  "players_from_b": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string(),
+  "overall": zod.number(),
+  "portrait_id": zod.number().nullish()
+})),
+  "notes": zod.string().nullish(),
+  "created_at": zod.string()
+})
+export const GetLeagueTradesResponse = zod.array(GetLeagueTradesResponseItem)
+
+
+/**
+ * @summary Create a trade proposal
+ */
+export const CreateLeagueTradeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateLeagueTradeBody = zod.object({
+  "season": zod.number(),
+  "week": zod.number().optional(),
+  "team_a_id": zod.number(),
+  "team_b_id": zod.number(),
+  "players_from_a": zod.array(zod.number()),
+  "players_from_b": zod.array(zod.number()),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary Update trade status
+ */
+export const UpdateLeagueTradeParams = zod.object({
+  "id": zod.coerce.number(),
+  "tradeId": zod.coerce.number()
+})
+
+export const UpdateLeagueTradeBody = zod.object({
+  "status": zod.string()
+})
+
+export const UpdateLeagueTradeResponse = zod.object({
+  "id": zod.number(),
+  "league_id": zod.number(),
+  "season": zod.number(),
+  "week": zod.number().nullish(),
+  "status": zod.string(),
+  "team_a": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "abbreviation": zod.string(),
+  "primary_color": zod.string().nullish()
+}),
+  "team_b": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "abbreviation": zod.string(),
+  "primary_color": zod.string().nullish()
+}),
+  "players_from_a": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string(),
+  "overall": zod.number(),
+  "portrait_id": zod.number().nullish()
+})),
+  "players_from_b": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string(),
+  "overall": zod.number(),
+  "portrait_id": zod.number().nullish()
+})),
+  "notes": zod.string().nullish(),
+  "created_at": zod.string()
+})
+
+
+/**
+ * @summary Delete a trade
+ */
+export const DeleteLeagueTradeParams = zod.object({
+  "id": zod.coerce.number(),
+  "tradeId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Per-team trade counts for a league
+ */
+export const GetLeagueTradeCountsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLeagueTradeCountsResponseItem = zod.object({
+  "team_id": zod.number(),
+  "team_name": zod.string(),
+  "team_abbreviation": zod.string(),
+  "team_color": zod.string().nullish(),
+  "pending": zod.number(),
+  "approved": zod.number(),
+  "denied": zod.number(),
+  "cancelled": zod.number(),
+  "total": zod.number()
+})
+export const GetLeagueTradeCountsResponse = zod.array(GetLeagueTradeCountsResponseItem)
+
+
+/**
  * @summary List player transactions in a league
  */
 export const GetLeagueTransactionsParams = zod.object({

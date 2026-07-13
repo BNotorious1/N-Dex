@@ -3,7 +3,7 @@ import {
   BarChart3, ListOrdered, ArrowLeftRight, ClipboardList,
   TrendingUp, Repeat2, Download, Trophy, ChevronDown, ChevronRight,
   ShieldCheck, Settings2, Plug, UserCog, SkipForward, UserPlus, Activity,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, Plus,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -44,7 +44,14 @@ const NAV: NavItem[] = [
   { key: "transactions", label: "Transactions", icon: ArrowLeftRight },
   { key: "draft", label: "Draft", icon: ClipboardList },
   { key: "rankings", label: "Rankings", icon: TrendingUp },
-  { key: "trades", label: "Trades", icon: Repeat2 },
+  {
+    key: "trades", label: "Trades", icon: Repeat2,
+    sub: [
+      { key: "trades-create", label: "Create Trade", icon: Plus },
+      { key: "trades-league", label: "League Trades", icon: ArrowLeftRight },
+      { key: "trades-counts", label: "Trade Counts", icon: BarChart3 },
+    ],
+  },
   { key: "awards", label: "Awards", icon: Trophy },
   {
     key: "admin", label: "Administration", icon: ShieldCheck,
@@ -65,9 +72,11 @@ const ADMIN_KEYS: LeagueSection[] = [
 ];
 
 export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle, navLeagueId }: Props) {
-  const [expanded, setExpanded] = useState<Set<string>>(
-    new Set(["players", "admin"])
-  );
+  const initialExpanded = new Set(["players", "admin"]);
+  if (["trades", "trades-create", "trades-league", "trades-counts"].includes(section)) {
+    initialExpanded.add("trades");
+  }
+  const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [, navigate] = useLocation();
 
   const toggle = (key: string) => {

@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CreateLeagueTradeInput,
   Game,
   GameDetail,
   GameInput,
@@ -32,6 +33,8 @@ import type {
   LeaguePlayerStats,
   LeagueStatsMeta,
   LeagueSummary,
+  LeagueTrade,
+  LeagueTradeCount,
   LeagueTransaction,
   LeagueUpdate,
   ListLeaguesParams,
@@ -51,7 +54,8 @@ import type {
   Team,
   TeamGame,
   TeamInput,
-  TeamUpdate
+  TeamUpdate,
+  UpdateLeagueTradeInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1423,6 +1427,378 @@ export const useDeleteLeagueMember = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeleteLeagueMemberMutationOptions(options));
     }
+
+export const getGetLeagueTradesUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/trades`
+}
+
+/**
+ * @summary List trades in a league
+ */
+export const getLeagueTrades = async (id: number, options?: RequestInit): Promise<LeagueTrade[]> => {
+
+  return customFetch<LeagueTrade[]>(getGetLeagueTradesUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueTradesQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/trades`
+    ] as const;
+    }
+
+
+export const getGetLeagueTradesQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueTrades>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueTrades>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueTradesQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueTrades>>> = ({ signal }) => getLeagueTrades(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueTrades>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueTradesQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueTrades>>>
+export type GetLeagueTradesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List trades in a league
+ */
+
+export function useGetLeagueTrades<TData = Awaited<ReturnType<typeof getLeagueTrades>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueTrades>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueTradesQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateLeagueTradeUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/trades`
+}
+
+/**
+ * @summary Create a trade proposal
+ */
+export const createLeagueTrade = async (id: number,
+    createLeagueTradeInput: CreateLeagueTradeInput, options?: RequestInit): Promise<LeagueTrade> => {
+
+  return customFetch<LeagueTrade>(getCreateLeagueTradeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createLeagueTradeInput,)
+  }
+);}
+
+
+
+
+export const getCreateLeagueTradeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLeagueTrade>>, TError,{id: number;data: BodyType<CreateLeagueTradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLeagueTrade>>, TError,{id: number;data: BodyType<CreateLeagueTradeInput>}, TContext> => {
+
+const mutationKey = ['createLeagueTrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLeagueTrade>>, {id: number;data: BodyType<CreateLeagueTradeInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createLeagueTrade(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLeagueTradeMutationResult = NonNullable<Awaited<ReturnType<typeof createLeagueTrade>>>
+    export type CreateLeagueTradeMutationBody = BodyType<CreateLeagueTradeInput>
+    export type CreateLeagueTradeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a trade proposal
+ */
+export const useCreateLeagueTrade = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLeagueTrade>>, TError,{id: number;data: BodyType<CreateLeagueTradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createLeagueTrade>>,
+        TError,
+        {id: number;data: BodyType<CreateLeagueTradeInput>},
+        TContext
+      > => {
+      return useMutation(getCreateLeagueTradeMutationOptions(options));
+    }
+
+export const getUpdateLeagueTradeUrl = (id: number,
+    tradeId: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/trades/${tradeId}`
+}
+
+/**
+ * @summary Update trade status
+ */
+export const updateLeagueTrade = async (id: number,
+    tradeId: number,
+    updateLeagueTradeInput: UpdateLeagueTradeInput, options?: RequestInit): Promise<LeagueTrade> => {
+
+  return customFetch<LeagueTrade>(getUpdateLeagueTradeUrl(id,tradeId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateLeagueTradeInput,)
+  }
+);}
+
+
+
+
+export const getUpdateLeagueTradeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLeagueTrade>>, TError,{id: number;tradeId: number;data: BodyType<UpdateLeagueTradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLeagueTrade>>, TError,{id: number;tradeId: number;data: BodyType<UpdateLeagueTradeInput>}, TContext> => {
+
+const mutationKey = ['updateLeagueTrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLeagueTrade>>, {id: number;tradeId: number;data: BodyType<UpdateLeagueTradeInput>}> = (props) => {
+          const {id,tradeId,data} = props ?? {};
+
+          return  updateLeagueTrade(id,tradeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLeagueTradeMutationResult = NonNullable<Awaited<ReturnType<typeof updateLeagueTrade>>>
+    export type UpdateLeagueTradeMutationBody = BodyType<UpdateLeagueTradeInput>
+    export type UpdateLeagueTradeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update trade status
+ */
+export const useUpdateLeagueTrade = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLeagueTrade>>, TError,{id: number;tradeId: number;data: BodyType<UpdateLeagueTradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateLeagueTrade>>,
+        TError,
+        {id: number;tradeId: number;data: BodyType<UpdateLeagueTradeInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateLeagueTradeMutationOptions(options));
+    }
+
+export const getDeleteLeagueTradeUrl = (id: number,
+    tradeId: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/trades/${tradeId}`
+}
+
+/**
+ * @summary Delete a trade
+ */
+export const deleteLeagueTrade = async (id: number,
+    tradeId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteLeagueTradeUrl(id,tradeId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLeagueTradeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueTrade>>, TError,{id: number;tradeId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueTrade>>, TError,{id: number;tradeId: number}, TContext> => {
+
+const mutationKey = ['deleteLeagueTrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLeagueTrade>>, {id: number;tradeId: number}> = (props) => {
+          const {id,tradeId} = props ?? {};
+
+          return  deleteLeagueTrade(id,tradeId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLeagueTradeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLeagueTrade>>>
+
+    export type DeleteLeagueTradeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a trade
+ */
+export const useDeleteLeagueTrade = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLeagueTrade>>, TError,{id: number;tradeId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLeagueTrade>>,
+        TError,
+        {id: number;tradeId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteLeagueTradeMutationOptions(options));
+    }
+
+export const getGetLeagueTradeCountsUrl = (id: number,) => {
+
+
+
+
+  return `/api/leagues/${id}/trades/counts`
+}
+
+/**
+ * @summary Per-team trade counts for a league
+ */
+export const getLeagueTradeCounts = async (id: number, options?: RequestInit): Promise<LeagueTradeCount[]> => {
+
+  return customFetch<LeagueTradeCount[]>(getGetLeagueTradeCountsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeagueTradeCountsQueryKey = (id: number,) => {
+    return [
+    `/api/leagues/${id}/trades/counts`
+    ] as const;
+    }
+
+
+export const getGetLeagueTradeCountsQueryOptions = <TData = Awaited<ReturnType<typeof getLeagueTradeCounts>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueTradeCounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeagueTradeCountsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeagueTradeCounts>>> = ({ signal }) => getLeagueTradeCounts(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeagueTradeCounts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeagueTradeCountsQueryResult = NonNullable<Awaited<ReturnType<typeof getLeagueTradeCounts>>>
+export type GetLeagueTradeCountsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Per-team trade counts for a league
+ */
+
+export function useGetLeagueTradeCounts<TData = Awaited<ReturnType<typeof getLeagueTradeCounts>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeagueTradeCounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeagueTradeCountsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetLeagueTransactionsUrl = (id: number,) => {
 
