@@ -1527,6 +1527,12 @@ components:
           $ref: "#/components/schemas/Player"
         team_name:
           type: string
+        team_id:
+          type: integer
+        team_abbreviation:
+          type: string
+        team_color:
+          type: ["string", "null"]
         stat_label:
           type: string
         stat_value:

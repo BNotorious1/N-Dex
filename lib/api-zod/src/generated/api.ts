@@ -301,6 +301,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })),
@@ -322,6 +325,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })),
@@ -343,6 +349,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })),
@@ -364,6 +373,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })),
@@ -385,6 +397,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })).optional(),
@@ -406,6 +421,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })).optional(),
@@ -427,6 +445,9 @@ export const GetLeagueStatLeadersResponse = zod.object({
   "years_pro": zod.number().nullish().describe('Years in the league (0 = rookie)')
 }),
   "team_name": zod.string(),
+  "team_id": zod.number().optional(),
+  "team_abbreviation": zod.string().optional(),
+  "team_color": zod.string().nullish(),
   "stat_label": zod.string(),
   "stat_value": zod.number()
 })).optional()

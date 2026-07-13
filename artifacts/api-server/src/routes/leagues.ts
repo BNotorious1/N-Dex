@@ -361,45 +361,52 @@ router.get("/:id/standings", async (req, res) => {
 // GET /leagues/:id/stats/leaders
 router.get("/:id/stats/leaders", async (req, res) => {
   const parseResult = GetLeagueStatLeadersParams.safeParse({ id: Number(req.params.id) });
-  if (!parseResult.success) {
-    res.status(400).json({ error: "Invalid id" });
-    return;
-  }
+  if (!parseResult.success) { res.status(400).json({ error: "Invalid id" }); return; }
   const leagueId = parseResult.data.id;
-  const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
-  const teamMap = new Map(teams.map(t => [t.id, t]));
 
-  const players = await db
-    .select()
-    .from(playersTable)
-    .where(
-      sql`${playersTable.teamId} IN (SELECT id FROM teams WHERE league_id = ${leagueId})`
-    );
+  type ColRef = typeof playerGameStatsTable.pssYds | typeof playerGameStatsTable.rshYds |
+    typeof playerGameStatsTable.recYds | typeof playerGameStatsTable.defTotalTackles |
+    typeof playerGameStatsTable.defSacks | typeof playerGameStatsTable.defInts;
 
-  const makeStatLine = (player: typeof playersTable.$inferSelect, label: string, value: number) => ({
-    player: formatPlayer(player),
-    team_name: teamMap.get(player.teamId)?.name ?? "Unknown",
-    stat_label: label,
-    stat_value: value,
-  });
+  const getLeaders = async (col: ColRef, label: string) => {
+    const rows = await db
+      .select({
+        player: playersTable,
+        team: teamsTable,
+        val: sql<string>`COALESCE(SUM(${col}), 0)`,
+      })
+      .from(playerGameStatsTable)
+      .innerJoin(playersTable, eq(playerGameStatsTable.playerId, playersTable.id))
+      .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+      .where(eq(playerGameStatsTable.leagueId, leagueId))
+      .groupBy(playersTable.id, teamsTable.id)
+      .orderBy(desc(sql`COALESCE(SUM(${col}), 0)`))
+      .limit(10);
+    return rows
+      .map(r => ({ ...r, numVal: parseFloat(r.val) || 0 }))
+      .filter(r => r.numVal > 0)
+      .slice(0, 5)
+      .map(r => ({
+        player: formatPlayer(r.player),
+        team_name: r.team.name,
+        team_id: r.team.id,
+        team_abbreviation: r.team.abbreviation,
+        team_color: r.team.primaryColor ?? null,
+        stat_label: label,
+        stat_value: r.numVal,
+      }));
+  };
 
-  const qbs = players.filter(p => p.position === "QB").sort((a, b) => (b.throwingPower ?? 0) - (a.throwingPower ?? 0)).slice(0, 5);
-  const rushers = players.filter(p => ["RB", "FB"].includes(p.position)).sort((a, b) => b.speed - a.speed).slice(0, 5);
-  const receivers = players.filter(p => ["WR", "TE"].includes(p.position)).sort((a, b) => (b.catching ?? 0) - (a.catching ?? 0)).slice(0, 5);
-  const defenders = players.filter(p => ["DL", "LB", "CB", "S"].includes(p.position)).sort((a, b) => (b.tackling ?? 0) - (a.tackling ?? 0)).slice(0, 5);
-  const tacklers = players.filter(p => ["LB", "S", "CB", "DL"].includes(p.position)).sort((a, b) => (b.tackling ?? 0) - (a.tackling ?? 0)).slice(0, 5);
-  const sackers = players.filter(p => ["DL", "LB"].includes(p.position)).sort((a, b) => (b.powerMoves ?? 0) - (a.powerMoves ?? 0)).slice(0, 5);
-  const interceptors = players.filter(p => ["CB", "S"].includes(p.position)).sort((a, b) => ((b.manCoverage ?? 0) + (b.zoneCoverage ?? 0)) - ((a.manCoverage ?? 0) + (a.zoneCoverage ?? 0))).slice(0, 5);
+  const [passing, rushing, receiving, tackles, sacks, interceptions] = await Promise.all([
+    getLeaders(playerGameStatsTable.pssYds, "Pass YDS"),
+    getLeaders(playerGameStatsTable.rshYds, "Rush YDS"),
+    getLeaders(playerGameStatsTable.recYds, "Rec YDS"),
+    getLeaders(playerGameStatsTable.defTotalTackles, "Tackles"),
+    getLeaders(playerGameStatsTable.defSacks, "Sacks"),
+    getLeaders(playerGameStatsTable.defInts, "INT"),
+  ]);
 
-  res.json({
-    passing: qbs.map(p => makeStatLine(p, "Throw Power", p.throwingPower ?? 0)),
-    rushing: rushers.map(p => makeStatLine(p, "Speed", p.speed)),
-    receiving: receivers.map(p => makeStatLine(p, "Catching", p.catching ?? 0)),
-    defense: defenders.map(p => makeStatLine(p, "Tackling", p.tackling ?? 0)),
-    tackles: tacklers.map(p => makeStatLine(p, "Tackling", p.tackling ?? 0)),
-    sacks: sackers.map(p => makeStatLine(p, "Power Moves", p.powerMoves ?? 0)),
-    interceptions: interceptors.map(p => makeStatLine(p, "Coverage", Math.round(((p.manCoverage ?? 0) + (p.zoneCoverage ?? 0)) / 2))),
-  });
+  res.json({ passing, rushing, receiving, defense: tackles, tackles, sacks, interceptions });
 });
 
 // GET /leagues/:id/game-of-week
