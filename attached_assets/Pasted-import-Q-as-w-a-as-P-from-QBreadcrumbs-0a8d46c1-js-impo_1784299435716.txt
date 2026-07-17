@@ -1,0 +1,288 @@
+import {Q as w, a as P} from "./QBreadcrumbs.0a8d46c1.js";
+import {Q as y} from "./QImg.9227dcca.js";
+import {Q as N} from "./QTd.19168942.js";
+import {Q as k} from "./QTable.e2e08738.js";
+import {Q} from "./QPage.9a445450.js";
+import {_ as F, L as T, bf as D, n as d, c as p, w as l, j as $, K as C, r as b, o as m, y as x, a as n, D as B, E as h, z as I} from "./index.d2715038.js";
+import {F as R} from "./FilterForm.af5df732.js";
+import {F as g} from "./format.8a5aab59.js";
+import {U as S} from "./UserProfileLink.9c27b017.js";
+import {u as U} from "./use-meta.2a6e0cf9.js";
+import {i as A, g as L, u as j} from "./parameters.e05129ac.js";
+import "./QList.17169c42.js";
+import "./QMarkupTable.d1dfcacb.js";
+import "./QSelect.dd7e03d1.js";
+import "./QChip.578a5122.js";
+import "./QItem.c467235f.js";
+import "./QItemLabel.87198b18.js";
+import "./QMenu.8ed28db6.js";
+import "./position-engine.c907210e.js";
+import "./use-fullscreen.c3260f72.js";
+import "./QScrollArea.133ee23a.js";
+import "./QResizeObserver.8a48b140.js";
+import "./QScrollObserver.b42f1391.js";
+import "./QDrawer.b3d00eb0.js";
+import "./QSpace.55853ea7.js";
+import "./ClosePopup.9672c58e.js";
+import "./Filters.5a0c40a1.js";
+import "./Madden.c396dfa1.js";
+import "./_commonjsHelpers.0592d25c.js";
+import "./index.75d5c6f6.js";
+const O = [{
+    name: "displayName",
+    align: "left",
+    label: "Name",
+    field: "displayName",
+    format: (a, r) => `${r.cityName} ${a}`,
+    required: !0,
+    sortable: !0
+}, {
+    name: "leaguemember",
+    align: "left",
+    label: "Member",
+    field: "leaguemember",
+    required: !1,
+    sortable: !1
+}, {
+    name: "userName",
+    align: "left",
+    label: "In Game",
+    field: "userName",
+    format: a => a ? `${a}` : "CPU",
+    required: !1,
+    sortable: !1
+}, {
+    name: "divisionName",
+    align: "center",
+    label: "Division",
+    field: "divisionName",
+    required: !0,
+    sortable: !0
+}, {
+    name: "winPct",
+    align: "center",
+    label: "Record",
+    field: "totalWins",
+    format: (a, r) => `${r.totalWins}-${r.totalLosses}-${r.totalTies}`,
+    required: !0,
+    sortable: !0
+}, {
+    name: "teamOvr",
+    align: "center",
+    label: "Overall",
+    field: "teamOvr",
+    required: !0,
+    sortable: !0
+}, {
+    name: "roster_count",
+    align: "center",
+    label: "Roster",
+    field: "roster_count",
+    required: !0,
+    sortable: !0
+}, {
+    name: "offense_dev_count",
+    align: "center",
+    label: "Off Devs",
+    field: "offense_dev_count",
+    required: !0,
+    sortable: !0
+}, {
+    name: "defense_dev_count",
+    align: "center",
+    label: "Def Devs",
+    field: "defense_dev_count",
+    required: !0,
+    sortable: !0
+}, {
+    name: "injuryCount",
+    align: "center",
+    label: "Injuries",
+    field: "injuryCount",
+    required: !0,
+    sortable: !0
+}, {
+    name: "capAvailable",
+    align: "center",
+    label: "Cap Available",
+    field: "capAvailable",
+    format: a => `${g.money(a)}`,
+    required: !0,
+    sortable: !0
+}, {
+    name: "offScheme",
+    align: "center",
+    label: "Offense Scheme",
+    field: "offScheme",
+    format: a => `${g.scheme(a)}`,
+    required: !0,
+    sortable: !0
+}, {
+    name: "defScheme",
+    align: "center",
+    label: "Defense Scheme",
+    field: "defScheme",
+    format: a => `${g.scheme(a)}`,
+    required: !0,
+    sortable: !0
+}]
+  , E = {
+    name: "TeamsDashboard",
+    components: {
+        FilterForm: R,
+        UserProfileLink: S
+    },
+    setup() {
+        U({
+            titleTemplate: c => `${c} - Teams`
+        });
+        const a = $("api")
+          , r = T()
+          , v = D()
+          , _ = `/leagues/${r.params.abbrev}/teams/`
+          , s = d(!0)
+          , o = d({
+            sortBy: null,
+            descending: !0,
+            page: 1,
+            rowsPerPage: 0,
+            rowsNumber: 0
+        })
+          , u = d([])
+          , i = d([{
+            type: "text",
+            value: "",
+            default: "",
+            field: "displayName",
+            label: "Name"
+        }, {
+            type: "select",
+            value: null,
+            default: null,
+            options: ["AFC", "NFC"],
+            field: "conferenceName",
+            label: "Conference"
+        }]);
+        function e({pagination: c, filter: q}) {
+            s.value = !0,
+            a(L(_, c, q)).then( ({data: f}) => {
+                o.value = c,
+                o.value.rowsNumber = parseInt(f.count),
+                u.value = f,
+                s.value = !1,
+                j(v, i.value, o.value)
+            }
+            ).catch(f => {
+                C(f),
+                s.value = !1
+            }
+            )
+        }
+        return A(r, i.value, o.value),
+        e({
+            pagination: o.value,
+            filter: i.value
+        }),
+        {
+            serverData: u,
+            columns: O,
+            serverPagination: o,
+            filters: i,
+            loading: s,
+            request: e
+        }
+    }
+}
+  , z = {
+    class: "q-pa-sm"
+}
+  , V = {
+    key: 1,
+    class: "text-italic"
+};
+function M(a, r, v, t, _, s) {
+    const o = b("FilterForm")
+      , u = b("router-link")
+      , i = b("UserProfileLink");
+    return m(),
+    p(Q, {
+        padding: ""
+    }, {
+        default: l( () => [x("div", z, [n(P, null, {
+            default: l( () => [n(w, {
+                label: "Teams",
+                icon: "groups"
+            })]),
+            _: 1
+        })]), n(o, {
+            filters: t.filters
+        }, null, 8, ["filters"]), n(k, {
+            pagination: t.serverPagination,
+            "onUpdate:pagination": r[0] || (r[0] = e => t.serverPagination = e),
+            "rows-per-page-options": [10, 25, 50, 100],
+            title: "Teams",
+            rows: t.serverData,
+            columns: t.columns,
+            filter: t.filters,
+            loading: t.loading,
+            separator: "none",
+            "binary-state-sort": "",
+            dense: "",
+            "hide-pagination": "",
+            onRequest: t.request
+        }, {
+            "body-cell-displayName": l(e => [n(N, {
+                key: "displayName",
+                props: e
+            }, {
+                default: l( () => [n(u, {
+                    to: {
+                        name: "Team",
+                        params: {
+                            abbrev: a.$route.params.abbrev,
+                            abbrName: e.row.abbrName
+                        }
+                    }
+                }, {
+                    default: l( () => [e.row.logo ? (m(),
+                    p(y, {
+                        key: 0,
+                        "no-spinner": "",
+                        fit: "contain",
+                        style: {
+                            width: "40px"
+                        },
+                        src: e.row.logo
+                    }, null, 8, ["src"])) : (m(),
+                    p(y, {
+                        key: 1,
+                        "no-spinner": "",
+                        fit: "contain",
+                        style: {
+                            width: "40px"
+                        },
+                        src: "https://cdn.neonsportz.com/teamlogos/256/" + e.row.logoId + ".png"
+                    }, null, 8, ["src"])), B(" " + h(e.row.cityName) + " " + h(e.row.displayName), 1)]),
+                    _: 2
+                }, 1032, ["to"])]),
+                _: 2
+            }, 1032, ["props"])]),
+            "body-cell-leaguemember": l(e => [n(N, {
+                key: "leaguemember",
+                props: e
+            }, {
+                default: l( () => [e.row.leaguemember ? (m(),
+                p(i, {
+                    key: 0,
+                    user: e.row.leaguemember.user
+                }, null, 8, ["user"])) : (m(),
+                I("span", V, "None"))]),
+                _: 2
+            }, 1032, ["props"])]),
+            _: 1
+        }, 8, ["pagination", "rows", "columns", "filter", "loading", "onRequest"])]),
+        _: 1
+    })
+}
+var qe = F(E, [["render", M]]);
+export {qe as default};

@@ -29,4 +29,7 @@ export interface Team {
   member_discord?: string | null;
   /** @nullable */
   member_gamertag?: string | null;
+  roster_count?: number;
+  offense_dev_count?: number;
+  defense_dev_count?: number;
 }

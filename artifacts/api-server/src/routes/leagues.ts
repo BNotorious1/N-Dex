@@ -662,6 +662,9 @@ router.get("/:id/stats/players", async (req, res) => {
   });
 });
 
+const OFF_POSITIONS = ["QB","HB","FB","WR","TE","LT","LG","C","RG","RT"];
+const DEF_POSITIONS = ["LE","RE","DT","LOLB","MLB","ROLB","CB","FS","SS"];
+
 // GET /leagues/:id/teams
 router.get("/:id/teams", async (req, res) => {
   const parseResult = GetLeagueTeamsParams.safeParse({ id: Number(req.params.id) });
@@ -670,7 +673,7 @@ router.get("/:id/teams", async (req, res) => {
     return;
   }
   const leagueId = parseResult.data.id;
-  const [rows, allGames] = await Promise.all([
+  const [rows, allGames, playerCounts] = await Promise.all([
     db
       .select({
         team: teamsTable,
@@ -681,10 +684,23 @@ router.get("/:id/teams", async (req, res) => {
       .leftJoin(membersTable, eq(membersTable.teamId, teamsTable.id))
       .where(eq(teamsTable.leagueId, leagueId)),
     db.select().from(gamesTable).where(eq(gamesTable.leagueId, leagueId)),
+    db
+      .select({
+        teamId: playersTable.teamId,
+        rosterCount: sql<number>`count(*)::int`,
+        offDevCount: sql<number>`count(*) filter (where ${playersTable.position} = any(${sql.raw(`array['${OFF_POSITIONS.join("','")}']`)}) and ${playersTable.devTrait} >= 1)::int`,
+        defDevCount: sql<number>`count(*) filter (where ${playersTable.position} = any(${sql.raw(`array['${DEF_POSITIONS.join("','")}']`)}) and ${playersTable.devTrait} >= 1)::int`,
+      })
+      .from(playersTable)
+      .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+      .where(eq(teamsTable.leagueId, leagueId))
+      .groupBy(playersTable.teamId),
   ]);
   const records = computeTeamRecords(allGames);
+  const countMap = new Map(playerCounts.map(c => [c.teamId, c]));
   res.json(rows.map(r => {
     const rec = records.get(r.team.id) ?? { wins: 0, losses: 0, ties: 0 };
+    const counts = countMap.get(r.team.id);
     return {
       ...formatTeam(r.team),
       wins: rec.wins,
@@ -692,6 +708,9 @@ router.get("/:id/teams", async (req, res) => {
       ties: rec.ties,
       member_discord: r.memberDiscord ?? null,
       member_gamertag: r.memberGamertag ?? null,
+      roster_count: counts?.rosterCount ?? 0,
+      offense_dev_count: counts?.offDevCount ?? 0,
+      defense_dev_count: counts?.defDevCount ?? 0,
     };
   }));
 });

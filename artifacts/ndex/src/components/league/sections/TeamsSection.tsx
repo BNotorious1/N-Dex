@@ -11,6 +11,9 @@ interface Team {
   is_user_team: boolean;
   member_discord?: string | null;
   member_gamertag?: string | null;
+  roster_count?: number | null;
+  offense_dev_count?: number | null;
+  defense_dev_count?: number | null;
 }
 
 interface Props {
@@ -19,6 +22,18 @@ interface Props {
 }
 
 const CONFERENCES = ["All", "AFC", "NFC"];
+
+function DevBadge({ count, color }: { count: number; color: string }) {
+  if (count === 0) return <span className="text-white/20">—</span>;
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+      style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
+    >
+      {count}
+    </span>
+  );
+}
 
 export default function TeamsSection({ teams }: Props) {
   const [search, setSearch] = useState("");
@@ -66,26 +81,29 @@ export default function TeamsSection({ teams }: Props) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+      <div className="rounded-xl border border-white/8 bg-[#141414] overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-white/8 bg-[#0f0f0f]">
-              <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Team</th>
-              <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Member</th>
-              <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">In Game</th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">Division</th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">Record</th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">Win %</th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30">OVR</th>
+              <th className="px-4 py-3 text-left   text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Team</th>
+              <th className="px-3 py-3 text-left   text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Member</th>
+              <th className="px-3 py-3 text-left   text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">In Game</th>
+              <th className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Division</th>
+              <th className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Record</th>
+              <th className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">OVR</th>
+              <th className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Roster</th>
+              <th className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Off Devs</th>
+              <th className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white/30 whitespace-nowrap">Def Devs</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length > 0 ? filtered.map((team) => {
-              const gp = team.wins + team.losses + team.ties;
-              const pct = gp > 0 ? ((team.wins + team.ties * 0.5) / gp).toFixed(3) : "—";
+              const color = team.primary_color ?? "#00C8FF";
               return (
                 <tr key={team.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
-                  <td className="px-4 py-3">
+
+                  {/* Team name + logo */}
+                  <td className="px-4 py-2.5">
                     <Link href={`/teams/${team.id}`} className="flex items-center gap-3 hover:text-[#00C8FF] transition-colors group">
                       <TeamLogo
                         abbreviation={team.abbreviation}
@@ -94,7 +112,7 @@ export default function TeamsSection({ teams }: Props) {
                         shape="rounded"
                       />
                       <div>
-                        <p className="font-bold text-white group-hover:text-[#00C8FF] transition-colors">
+                        <p className="font-bold text-white group-hover:text-[#00C8FF] transition-colors whitespace-nowrap">
                           {team.city} {team.name}
                         </p>
                         {team.is_user_team && (
@@ -103,40 +121,67 @@ export default function TeamsSection({ teams }: Props) {
                       </div>
                     </Link>
                   </td>
-                  <td className="px-3 py-3">
+
+                  {/* Member (Discord) */}
+                  <td className="px-3 py-2.5">
                     {team.member_discord
                       ? (
                         <span className="flex items-center gap-1.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-[#5865F2] shrink-0" />
-                          <span className="text-white/80 font-medium">{team.member_discord}</span>
+                          <span className="text-white/80 font-medium whitespace-nowrap">{team.member_discord}</span>
                         </span>
                       )
                       : <span className="text-white/20">—</span>
                     }
                   </td>
-                  <td className="px-3 py-3">
+
+                  {/* In Game (gamertag) */}
+                  <td className="px-3 py-2.5">
                     {team.member_gamertag
-                      ? <span className="text-white/70 font-mono text-[11px]">{team.member_gamertag}</span>
+                      ? <span className="text-white/70 font-mono text-[11px] whitespace-nowrap">{team.member_gamertag}</span>
                       : <span className="text-white/20">—</span>
                     }
                   </td>
-                  <td className="px-3 py-3 text-center text-white/50">
+
+                  {/* Division */}
+                  <td className="px-3 py-2.5 text-center text-white/50 whitespace-nowrap">
                     {team.conference} {team.division}
                   </td>
-                  <td className="px-3 py-3 text-center font-semibold text-white">
+
+                  {/* Record */}
+                  <td className="px-3 py-2.5 text-center font-semibold text-white tabular-nums whitespace-nowrap">
                     {team.wins}-{team.losses}{team.ties > 0 ? `-${team.ties}` : ""}
                   </td>
-                  <td className="px-3 py-3 text-center text-white/50">{pct}</td>
-                  <td className="px-3 py-3 text-center">
-                    <span className="rounded bg-[#00C8FF]/10 border border-[#00C8FF]/20 px-2 py-0.5 text-[10px] font-bold text-[#00C8FF]">
+
+                  {/* OVR */}
+                  <td className="px-3 py-2.5 text-center">
+                    <span
+                      className="rounded px-2 py-0.5 text-[10px] font-bold"
+                      style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
+                    >
                       {team.overall_rating}
                     </span>
+                  </td>
+
+                  {/* Roster count */}
+                  <td className="px-3 py-2.5 text-center text-white/60 tabular-nums">
+                    {team.roster_count ?? 0}
+                  </td>
+
+                  {/* Off Devs */}
+                  <td className="px-3 py-2.5 text-center">
+                    <DevBadge count={team.offense_dev_count ?? 0} color="#00C8FF" />
+                  </td>
+
+                  {/* Def Devs */}
+                  <td className="px-3 py-2.5 text-center">
+                    <DevBadge count={team.defense_dev_count ?? 0} color="#F44336" />
                   </td>
                 </tr>
               );
             }) : (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-white/30 text-xs">
+                <td colSpan={9} className="py-10 text-center text-white/30 text-xs">
                   No teams found
                 </td>
               </tr>
