@@ -1,14 +1,52 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useGetFeaturedLeagues } from "@workspace/api-client-react";
 import Navbar from "@/components/Navbar";
 import LeagueCard from "@/components/LeagueCard";
+import { X, AlertTriangle } from "lucide-react";
+
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  no_code:   "Discord did not return an authorization code. Please try again.",
+  token:     "Failed to exchange the Discord authorization code. Make sure the redirect URI is registered in your Discord app.",
+  user:      "Could not fetch your Discord profile. Please try again.",
+  session:   "Session could not be saved. Please try again.",
+  exception: "An unexpected error occurred during login. Please try again.",
+  config:    "Server configuration error — the Discord redirect URI could not be determined.",
+  access_denied: "You cancelled the Discord login. Click the button again when you're ready.",
+};
+
+function getAuthErrorMessage(reason: string | null): string {
+  if (!reason) return "Login failed. Please try again.";
+  return AUTH_ERROR_MESSAGES[reason] ?? `Login failed (${reason}). Please try again.`;
+}
 
 export default function Home() {
   const { data: featured, isLoading } = useGetFeaturedLeagues();
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auth") === "error") {
+      setAuthError(getAuthErrorMessage(params.get("reason")));
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <Navbar />
+
+      {authError && (
+        <div className="bg-[#F44336]/10 border-b border-[#F44336]/25">
+          <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 text-[#F44336] shrink-0" />
+            <p className="text-sm text-white/80 flex-1">{authError}</p>
+            <button onClick={() => setAuthError(null)} className="text-white/40 hover:text-white transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-white/8">

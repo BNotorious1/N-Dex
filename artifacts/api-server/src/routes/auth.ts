@@ -1,6 +1,4 @@
 import { Router } from "express";
-import { db, membersTable, leaguesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -8,16 +6,34 @@ const router = Router();
 const DISCORD_CLIENT_ID = process.env["DISCORD_CLIENT_ID"] ?? "";
 const DISCORD_CLIENT_SECRET = process.env["DISCORD_CLIENT_SECRET"] ?? "";
 
-function getRedirectUri(req: { headers: { host?: string; "x-forwarded-proto"?: string; "x-forwarded-host"?: string } }) {
-  const forwardedHost = req.headers["x-forwarded-host"] ?? req.headers["host"] ?? "";
-  const proto = req.headers["x-forwarded-proto"] ?? "https";
-  const host = Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost;
-  return `${proto}://${host}/api/auth/discord/callback`;
+function getRedirectUri() {
+  const domain =
+    process.env["DISCORD_REDIRECT_BASE"] ??
+    process.env["REPLIT_DOMAINS"]?.split(",")[0] ??
+    process.env["REPLIT_DEV_DOMAIN"];
+
+  if (domain) {
+    return `https://${domain}/api/auth/discord/callback`;
+  }
+
+  throw new Error(
+    "Cannot determine callback URI: set DISCORD_REDIRECT_BASE, or ensure REPLIT_DOMAINS / REPLIT_DEV_DOMAIN is available.",
+  );
 }
 
 // GET /api/auth/discord
 router.get("/discord", (req, res) => {
-  const redirectUri = getRedirectUri(req);
+  let redirectUri: string;
+  try {
+    redirectUri = getRedirectUri();
+  } catch (err) {
+    logger.error({ err }, "Could not determine Discord redirect URI");
+    res.redirect("/?auth=error&reason=config");
+    return;
+  }
+
+  logger.info({ redirectUri }, "Initiating Discord OAuth");
+
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -30,13 +46,21 @@ router.get("/discord", (req, res) => {
 // GET /api/auth/discord/callback
 router.get("/discord/callback", async (req, res) => {
   const code = req.query["code"] as string | undefined;
+  const error = req.query["error"] as string | undefined;
+
+  if (error) {
+    logger.warn({ error }, "Discord OAuth returned an error");
+    res.redirect(`/?auth=error&reason=${encodeURIComponent(error)}`);
+    return;
+  }
+
   if (!code) {
-    res.redirect("/?auth=error");
+    res.redirect("/?auth=error&reason=no_code");
     return;
   }
 
   try {
-    const redirectUri = getRedirectUri(req);
+    const redirectUri = getRedirectUri();
 
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
@@ -51,8 +75,9 @@ router.get("/discord/callback", async (req, res) => {
     });
 
     if (!tokenRes.ok) {
-      logger.error({ status: tokenRes.status }, "Discord token exchange failed");
-      res.redirect("/?auth=error");
+      const body = await tokenRes.text().catch(() => "");
+      logger.error({ status: tokenRes.status, body }, "Discord token exchange failed");
+      res.redirect("/?auth=error&reason=token");
       return;
     }
 
@@ -63,7 +88,8 @@ router.get("/discord/callback", async (req, res) => {
     });
 
     if (!userRes.ok) {
-      res.redirect("/?auth=error");
+      logger.error({ status: userRes.status }, "Discord user fetch failed");
+      res.redirect("/?auth=error&reason=user");
       return;
     }
 
@@ -76,20 +102,31 @@ router.get("/discord/callback", async (req, res) => {
       global_name?: string | null;
     };
 
-    const displayName = user.global_name ?? (user.discriminator !== "0" ? `${user.username}#${user.discriminator}` : user.username);
+    const displayName =
+      user.global_name ??
+      (user.discriminator !== "0" ? `${user.username}#${user.discriminator}` : user.username);
 
     req.session.user = {
       id: user.id,
       username: user.username,
       displayName,
-      avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : null,
+      avatar: user.avatar
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+        : null,
       email: user.email,
     };
 
-    res.redirect("/leagues");
+    req.session.save((err) => {
+      if (err) {
+        logger.error({ err }, "Session save failed after Discord auth");
+        res.redirect("/?auth=error&reason=session");
+        return;
+      }
+      res.redirect("/leagues");
+    });
   } catch (err) {
     logger.error({ err }, "Discord auth callback error");
-    res.redirect("/?auth=error");
+    res.redirect("/?auth=error&reason=exception");
   }
 });
 
