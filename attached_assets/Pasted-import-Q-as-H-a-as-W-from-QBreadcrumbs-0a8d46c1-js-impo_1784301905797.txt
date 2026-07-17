@@ -1,0 +1,451 @@
+import {Q as H, a as W} from "./QBreadcrumbs.0a8d46c1.js";
+import {Q as Y} from "./QSpace.55853ea7.js";
+import {Q as D} from "./QTooltip.66179e25.js";
+import {_ as $, u as ee, L as ae, n as b, a4 as te, bU as v, c as V, w as l, j as oe, bX as f, K as Q, bg as R, r as x, o as u, y as E, a as t, Q as O, D as k, aZ as T, z as m, U as S, F as I, G as le, I as h, bj as re, J as N, B as ne, S as ie, x as se, bk as de, O as ue, E as q} from "./index.d2715038.js";
+import {Q as B} from "./QTd.19168942.js";
+import {Q as F, a as P} from "./QItem.c467235f.js";
+import {Q as me} from "./QItemLabel.87198b18.js";
+import {Q as ce} from "./QSelect.dd7e03d1.js";
+import {Q as fe} from "./QTr.3ab95250.js";
+import {Q as ge} from "./QTable.e2e08738.js";
+import {Q as be} from "./QPage.9a445450.js";
+import {C as K} from "./ClosePopup.9672c58e.js";
+import {F as _e} from "./format.8a5aab59.js";
+import {L as we} from "./LeagueAdminToolbar.3966db01.js";
+import {u as ve} from "./league.0b437310.js";
+import {g as ke} from "./parameters.e05129ac.js";
+import {U as Te} from "./UserProfileLink.9c27b017.js";
+import "./position-engine.c907210e.js";
+import "./QChip.578a5122.js";
+import "./QMenu.8ed28db6.js";
+import "./QList.17169c42.js";
+import "./QMarkupTable.d1dfcacb.js";
+import "./use-fullscreen.c3260f72.js";
+import "./Madden.c396dfa1.js";
+import "./_commonjsHelpers.0592d25c.js";
+import "./index.75d5c6f6.js";
+import "./QRouteTab.4ff53132.js";
+import "./QTabs.cbda311e.js";
+import "./QResizeObserver.8a48b140.js";
+const pe = [{
+    name: "user",
+    align: "left",
+    label: "Name",
+    field: "user",
+    sortable: !0
+}, {
+    name: "team",
+    align: "left",
+    label: "Team",
+    field: "team",
+    sortable: !1
+}, {
+    name: "createTrade",
+    align: "center",
+    label: "Create A Trade",
+    field: "createTrade",
+    sortable: !1
+}, {
+    name: "voteTrade",
+    align: "center",
+    label: "Vote On Trade",
+    field: "voteTrade",
+    sortable: !1
+}, {
+    name: "forceTrade",
+    align: "center",
+    label: "Force A Trade",
+    field: "forceTrade",
+    sortable: !1
+}, {
+    name: "editLeague",
+    align: "center",
+    label: "Edit League/Admin",
+    field: "editLeague",
+    sortable: !1
+}, {
+    name: "date_joined",
+    align: "center",
+    label: "Date Joined",
+    field: "date_joined",
+    format: g => _e.date(g),
+    sortable: !0
+}]
+  , ye = {
+    components: {
+        LeagueAdminToolbar: we,
+        UserProfileLink: Te
+    },
+    setup() {
+        const g = oe("api")
+          , r = ee()
+          , M = ve()
+          , L = ae().params.abbrev
+          , p = `/leagues/${L}/members/`
+          , _ = b(!0)
+          , w = b([])
+          , e = b({
+            sortBy: null,
+            descending: !0,
+            page: 1,
+            rowsPerPage: 50,
+            rowsNumber: 50
+        })
+          , s = b([])
+          , n = b([])
+          , C = b([])
+          , j = b(!1);
+        function U(o) {
+            return M.isOwner(o.user.discord_id)
+        }
+        function z(o) {
+            var i;
+            return !(U(o) && o.user.discord_id !== ((i = r.user) == null ? void 0 : i.discord_id))
+        }
+        function G(o) {
+            var i;
+            return !(o.user.discord_id === ((i = r.user) == null ? void 0 : i.discord_id) || U(o))
+        }
+        function A({pagination: o, filter: i}) {
+            _.value = !0,
+            g(ke(p, o, i)).then( ({data: c}) => {
+                e.value = o,
+                e.value.rowsNumber = parseInt(c.count),
+                s.value.length = 0;
+                for (const d of c.results)
+                    d.editLeague = v(d, f.EDIT_LEAGUE),
+                    d.forceTrade = v(d, f.FORCE_TRADE),
+                    d.voteTrade = v(d, f.VOTE_TRADE),
+                    d.createTrade = v(d, f.CREATE_TRADE),
+                    s.value.push(d);
+                _.value = !1
+            }
+            ).catch(c => {
+                Q(c)
+            }
+            )
+        }
+        function y() {
+            g.get(`/leagues/${L}/teams/?leaguemember=False&size=0&ordering=displayName`).then( ({data: o}) => {
+                w.value = o
+            }
+            ).catch(o => {
+                Q(o)
+            }
+            )
+        }
+        async function J() {
+            if (n.value.length > 0) {
+                for (const o of n.value)
+                    await g.delete(p + `${o.user.discord_id}/`).then( () => {
+                        R(`Successfully kicked ${o.user.username} from the league.`)
+                    }
+                    ).catch(i => {
+                        Q(i)
+                    }
+                    );
+                n.value.length = 0,
+                A({
+                    pagination: e.value,
+                    filter: C.value
+                }),
+                y()
+            }
+        }
+        function X(o) {
+            let i = 0;
+            return o.createTrade && (i += f.CREATE_TRADE),
+            o.voteTrade && (i += f.VOTE_TRADE),
+            o.forceTrade && (i += f.FORCE_TRADE),
+            o.editLeague && (i += f.EDIT_LEAGUE),
+            i
+        }
+        function Z(o) {
+            const c = {
+                permissions: X(o)
+            };
+            o.team ? c.team = o.team.id ? o.team.id : o.team : c.team = null,
+            g.patch(p + `${o.user.discord_id}/`, c).then( () => {
+                var d;
+                R(`Successfully updated ${o.user.username}.`),
+                y(),
+                o.user.discord_id === ((d = r.user) == null ? void 0 : d.discord_id) && r.populateUser()
+            }
+            ).catch(d => {
+                Q(d)
+            }
+            )
+        }
+        return te( () => {
+            A({
+                pagination: e.value,
+                filter: C.value
+            }),
+            y()
+        }
+        ),
+        {
+            serverData: s,
+            columns: pe,
+            serverPagination: e,
+            filters: C,
+            loading: _,
+            selected: n,
+            displayKickMember: j,
+            teamOptions: w,
+            updateMember: Z,
+            request: A,
+            requestOpenTeams: y,
+            kickMembers: J,
+            isPermitted: v,
+            isEditable: z,
+            isKickable: G,
+            isLeagueOwner: U
+        }
+    }
+}
+  , Ve = {
+    class: "q-pa-sm"
+}
+  , Qe = {
+    key: 0
+}
+  , Ee = {
+    key: 1
+}
+  , Le = ["src"]
+  , Ce = {
+    key: 2
+}
+  , Ue = {
+    key: 3
+}
+  , Ae = {
+    key: 4
+}
+  , Oe = {
+    key: 5
+}
+  , he = {
+    key: 6
+};
+function Pe(g, r, M, a, L, p) {
+    const _ = x("LeagueAdminToolbar")
+      , w = x("UserProfileLink");
+    return u(),
+    V(be, {
+        padding: ""
+    }, {
+        default: l( () => [E("div", Ve, [t(W, null, {
+            default: l( () => [t(H, {
+                label: "Members",
+                icon: "admin_panel_settings"
+            })]),
+            _: 1
+        })]), t(_), t(ge, {
+            pagination: a.serverPagination,
+            "onUpdate:pagination": r[1] || (r[1] = e => a.serverPagination = e),
+            selected: a.selected,
+            "onUpdate:selected": r[2] || (r[2] = e => a.selected = e),
+            "rows-per-page-options": [10, 25, 50, 100],
+            rows: a.serverData,
+            columns: a.columns,
+            filter: a.filters,
+            loading: a.loading,
+            separator: "none",
+            "binary-state-sort": "",
+            dense: "",
+            "row-key": "id",
+            selection: "multiple",
+            onRequest: a.request
+        }, {
+            top: l( () => [r[5] || (r[5] = E("div", {
+                class: "q-table__title"
+            }, "Members", -1)), t(Y), t(O, {
+                color: "negative",
+                label: "Kick",
+                icon: "block",
+                size: "sm",
+                disable: a.selected.length === 0,
+                onClick: r[0] || (r[0] = e => a.displayKickMember = !0)
+            }, {
+                default: l( () => [t(D, {
+                    class: "bg-negative"
+                }, {
+                    default: l( () => [...r[4] || (r[4] = [k(" Kick the selected users. ", -1)])]),
+                    _: 1
+                })]),
+                _: 1
+            }, 8, ["disable"])]),
+            body: l(e => [t(fe, {
+                props: e
+            }, {
+                default: l( () => [t(B, null, {
+                    default: l( () => [t(T, {
+                        modelValue: e.selected,
+                        "onUpdate:modelValue": s => e.selected = s,
+                        disable: a.isLeagueOwner(e.row)
+                    }, null, 8, ["modelValue", "onUpdate:modelValue", "disable"])]),
+                    _: 2
+                }, 1024), (u(!0),
+                m(I, null, S(e.cols, s => (u(),
+                V(B, {
+                    key: s.name,
+                    props: e
+                }, {
+                    default: l( () => [s.name === "user" ? (u(),
+                    m("span", Qe, [t(w, {
+                        user: e.row.user
+                    }, {
+                        extra: l( () => [a.isLeagueOwner(e.row) ? (u(),
+                        V(ie, {
+                            key: 0,
+                            name: "star",
+                            color: "yellow-14"
+                        }, {
+                            default: l( () => [t(D, {
+                                class: "bg-warning"
+                            }, {
+                                default: l( () => [...r[6] || (r[6] = [k(" Owner ", -1)])]),
+                                _: 1
+                            })]),
+                            _: 1
+                        })) : se("", !0)]),
+                        _: 2
+                    }, 1032, ["user"])])) : s.name === "team" ? (u(),
+                    m("span", Ee, [t(ce, {
+                        modelValue: e.row.team,
+                        "onUpdate:modelValue": [n => e.row.team = n, n => a.updateMember(e.row)],
+                        filled: "",
+                        dense: "",
+                        "options-dense": "",
+                        options: a.teamOptions,
+                        loading: a.loading,
+                        readonly: !a.isEditable(e.row),
+                        "option-value": "id",
+                        "option-label": "displayName",
+                        label: "Team",
+                        clearable: "",
+                        "emit-value": "",
+                        "map-options": "",
+                        square: ""
+                    }, {
+                        "no-option": l( () => [t(F, null, {
+                            default: l( () => [t(P, {
+                                class: "text-italic text-grey"
+                            }, {
+                                default: l( () => [...r[7] || (r[7] = [k(" No teams exported / All teams are taken ", -1)])]),
+                                _: 1
+                            })]),
+                            _: 1
+                        })]),
+                        option: l(n => [t(F, de({
+                            ref_for: !0
+                        }, n.itemProps, {
+                            dense: ""
+                        }), {
+                            default: l( () => [t(P, {
+                                avatar: ""
+                            }, {
+                                default: l( () => [t(ue, null, {
+                                    default: l( () => [E("img", {
+                                        src: `https://cdn.neonsportz.com/teamlogos/256/${n.opt.logoId}.png`
+                                    }, null, 8, Le)]),
+                                    _: 2
+                                }, 1024)]),
+                                _: 2
+                            }, 1024), t(P, null, {
+                                default: l( () => [t(me, null, {
+                                    default: l( () => [k(q(n.opt.displayName), 1)]),
+                                    _: 2
+                                }, 1024)]),
+                                _: 2
+                            }, 1024)]),
+                            _: 2
+                        }, 1040)]),
+                        _: 1
+                    }, 8, ["modelValue", "onUpdate:modelValue", "options", "loading", "readonly"])])) : s.name === "createTrade" ? (u(),
+                    m("span", Ce, [t(T, {
+                        modelValue: e.row.createTrade,
+                        "onUpdate:modelValue": n => e.row.createTrade = n,
+                        color: "positive",
+                        disable: !a.isEditable(e.row) || a.isLeagueOwner(e.row),
+                        onClick: n => a.updateMember(e.row)
+                    }, null, 8, ["modelValue", "onUpdate:modelValue", "disable", "onClick"])])) : s.name === "voteTrade" ? (u(),
+                    m("span", Ue, [t(T, {
+                        modelValue: e.row.voteTrade,
+                        "onUpdate:modelValue": n => e.row.voteTrade = n,
+                        color: "info",
+                        disable: !a.isEditable(e.row) || a.isLeagueOwner(e.row),
+                        onClick: n => a.updateMember(e.row)
+                    }, null, 8, ["modelValue", "onUpdate:modelValue", "disable", "onClick"])])) : s.name === "forceTrade" ? (u(),
+                    m("span", Ae, [t(T, {
+                        modelValue: e.row.forceTrade,
+                        "onUpdate:modelValue": n => e.row.forceTrade = n,
+                        color: "warning",
+                        disable: !a.isEditable(e.row) || a.isLeagueOwner(e.row),
+                        onClick: n => a.updateMember(e.row)
+                    }, null, 8, ["modelValue", "onUpdate:modelValue", "disable", "onClick"])])) : s.name === "editLeague" ? (u(),
+                    m("span", Oe, [t(T, {
+                        modelValue: e.row.editLeague,
+                        "onUpdate:modelValue": n => e.row.editLeague = n,
+                        color: "negative",
+                        disable: !a.isEditable(e.row) || a.isLeagueOwner(e.row),
+                        onClick: n => a.updateMember(e.row)
+                    }, null, 8, ["modelValue", "onUpdate:modelValue", "disable", "onClick"])])) : (u(),
+                    m("span", he, q(s.value), 1))]),
+                    _: 2
+                }, 1032, ["props"]))), 128))]),
+                _: 2
+            }, 1032, ["props"])]),
+            _: 1
+        }, 8, ["pagination", "selected", "rows", "columns", "filter", "loading", "onRequest"]), t(ne, {
+            modelValue: a.displayKickMember,
+            "onUpdate:modelValue": r[3] || (r[3] = e => a.displayKickMember = e),
+            persistent: ""
+        }, {
+            default: l( () => [t(le, null, {
+                default: l( () => [t(h, null, {
+                    default: l( () => [...r[8] || (r[8] = [E("div", {
+                        class: "text-h6"
+                    }, "Confirmation", -1)])]),
+                    _: 1
+                }), t(h, {
+                    class: "q-pt-none"
+                }, {
+                    default: l( () => [...r[9] || (r[9] = [k(" These member(s) will be kicked from the league. ", -1)])]),
+                    _: 1
+                }), (u(!0),
+                m(I, null, S(a.selected, e => (u(),
+                V(h, {
+                    key: e,
+                    class: "q-pt-none"
+                }, {
+                    default: l( () => [t(w, {
+                        user: e.user
+                    }, null, 8, ["user"])]),
+                    _: 2
+                }, 1024))), 128)), t(re, {
+                    align: "right"
+                }, {
+                    default: l( () => [N(t(O, {
+                        flat: "",
+                        label: "Cancel",
+                        color: "primary"
+                    }, null, 512), [[K]]), N(t(O, {
+                        flat: "",
+                        label: "Ok",
+                        color: "primary",
+                        onClick: a.kickMembers
+                    }, null, 8, ["onClick"]), [[K]])]),
+                    _: 1
+                })]),
+                _: 1
+            })]),
+            _: 1
+        }, 8, ["modelValue"])]),
+        _: 1
+    })
+}
+var sa = $(ye, [["render", Pe]]);
+export {sa as default};

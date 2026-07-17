@@ -730,6 +730,8 @@ router.get("/:id/members", async (req, res) => {
     team_id: m.teamId ?? null,
     discord_name: m.discordName,
     gamer_tag: m.gamerTag ?? null,
+    permissions: m.permissions,
+    date_joined: m.createdAt.toISOString(),
   })));
 });
 
@@ -751,6 +753,7 @@ router.post("/:id/members", async (req, res) => {
     discordName: data.discord_name,
     gamerTag: data.gamer_tag ?? null,
     teamId: data.team_id ?? null,
+    permissions: data.permissions ?? 0,
   }).returning();
   res.status(201).json({
     id: member.id,
@@ -758,6 +761,8 @@ router.post("/:id/members", async (req, res) => {
     team_id: member.teamId ?? null,
     discord_name: member.discordName,
     gamer_tag: member.gamerTag ?? null,
+    permissions: member.permissions,
+    date_joined: member.createdAt.toISOString(),
   });
 });
 
@@ -781,6 +786,7 @@ router.patch("/:id/members/:memberId", async (req, res) => {
   if (data.discord_name !== undefined) updates.discordName = data.discord_name;
   if (data.gamer_tag !== undefined) updates.gamerTag = data.gamer_tag;
   if (data.team_id !== undefined) updates.teamId = data.team_id;
+  if (data.permissions !== undefined) updates.permissions = data.permissions;
 
   const [member] = await db
     .update(membersTable)
@@ -797,6 +803,8 @@ router.patch("/:id/members/:memberId", async (req, res) => {
     team_id: member.teamId ?? null,
     discord_name: member.discordName,
     gamer_tag: member.gamerTag ?? null,
+    permissions: member.permissions,
+    date_joined: member.createdAt.toISOString(),
   });
 });
 

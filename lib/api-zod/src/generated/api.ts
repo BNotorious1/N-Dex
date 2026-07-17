@@ -1025,7 +1025,9 @@ export const GetLeagueMembersResponseItem = zod.object({
   "league_id": zod.number(),
   "team_id": zod.number().nullish(),
   "discord_name": zod.string(),
-  "gamer_tag": zod.string().nullish()
+  "gamer_tag": zod.string().nullish(),
+  "permissions": zod.number().optional(),
+  "date_joined": zod.string().nullish()
 })
 export const GetLeagueMembersResponse = zod.array(GetLeagueMembersResponseItem)
 
@@ -1040,7 +1042,8 @@ export const AddLeagueMemberParams = zod.object({
 export const AddLeagueMemberBody = zod.object({
   "discord_name": zod.string(),
   "gamer_tag": zod.string().optional(),
-  "team_id": zod.number().optional()
+  "team_id": zod.number().optional(),
+  "permissions": zod.number().optional()
 })
 
 
@@ -1055,7 +1058,8 @@ export const UpdateLeagueMemberParams = zod.object({
 export const UpdateLeagueMemberBody = zod.object({
   "discord_name": zod.string().optional(),
   "gamer_tag": zod.string().nullish(),
-  "team_id": zod.number().nullish()
+  "team_id": zod.number().nullish(),
+  "permissions": zod.number().optional()
 })
 
 export const UpdateLeagueMemberResponse = zod.object({
@@ -1063,7 +1067,9 @@ export const UpdateLeagueMemberResponse = zod.object({
   "league_id": zod.number(),
   "team_id": zod.number().nullish(),
   "discord_name": zod.string(),
-  "gamer_tag": zod.string().nullish()
+  "gamer_tag": zod.string().nullish(),
+  "permissions": zod.number().optional(),
+  "date_joined": zod.string().nullish()
 })
 
 

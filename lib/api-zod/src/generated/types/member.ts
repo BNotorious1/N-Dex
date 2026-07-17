@@ -14,4 +14,7 @@ export interface Member {
   discord_name: string;
   /** @nullable */
   gamer_tag?: string | null;
+  permissions?: number;
+  /** @nullable */
+  date_joined?: string | null;
 }

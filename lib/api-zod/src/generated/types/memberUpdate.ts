@@ -12,4 +12,5 @@ export interface MemberUpdate {
   gamer_tag?: string | null;
   /** @nullable */
   team_id?: number | null;
+  permissions?: number;
 }

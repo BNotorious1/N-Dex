@@ -2058,6 +2058,10 @@ components:
           type: string
         gamer_tag:
           type: ["string", "null"]
+        permissions:
+          type: integer
+        date_joined:
+          type: ["string", "null"]
 
     JoinRequest:
       type: object
@@ -2120,6 +2124,8 @@ components:
           type: string
         team_id:
           type: integer
+        permissions:
+          type: integer
 
     MemberUpdate:
       type: object
@@ -2130,6 +2136,8 @@ components:
           type: ["string", "null"]
         team_id:
           type: ["integer", "null"]
+        permissions:
+          type: integer
 
     TeamGame:
       allOf:

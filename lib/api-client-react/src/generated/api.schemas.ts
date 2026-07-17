@@ -567,6 +567,9 @@ export interface Member {
   discord_name: string;
   /** @nullable */
   gamer_tag?: string | null;
+  permissions?: number;
+  /** @nullable */
+  date_joined?: string | null;
 }
 
 export interface JoinRequest {
@@ -606,6 +609,7 @@ export interface MemberInput {
   discord_name: string;
   gamer_tag?: string;
   team_id?: number;
+  permissions?: number;
 }
 
 export interface MemberUpdate {
@@ -614,6 +618,7 @@ export interface MemberUpdate {
   gamer_tag?: string | null;
   /** @nullable */
   team_id?: number | null;
+  permissions?: number;
 }
 
 export type TeamGame = Game & ({
