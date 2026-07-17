@@ -11,6 +11,7 @@ interface Team {
   is_user_team: boolean;
   member_discord?: string | null;
   member_gamertag?: string | null;
+  user_name?: string | null;
   roster_count?: number | null;
   offense_dev_count?: number | null;
   defense_dev_count?: number | null;
@@ -135,11 +136,11 @@ export default function TeamsSection({ teams }: Props) {
                     }
                   </td>
 
-                  {/* In Game (gamertag) */}
+                  {/* In Game (EA username > manual gamertag) */}
                   <td className="px-3 py-2.5">
-                    {team.member_gamertag
-                      ? <span className="text-white/70 font-mono text-[11px] whitespace-nowrap">{team.member_gamertag}</span>
-                      : <span className="text-white/20">—</span>
+                    {(team.user_name || team.member_gamertag)
+                      ? <span className="text-white/70 font-mono text-[11px] whitespace-nowrap">{team.user_name || team.member_gamertag}</span>
+                      : <span className="text-white/20 text-[11px] italic">CPU</span>
                     }
                   </td>
 

@@ -19,6 +19,7 @@ export const teamsTable = pgTable("teams", {
   primaryColor: text("primary_color"),
   secondaryColor: text("secondary_color"),
   eaTeamId: integer("ea_team_id"),
+  userName: text("user_name"),
 });
 
 export const insertTeamSchema = createInsertSchema(teamsTable).omit({ id: true });

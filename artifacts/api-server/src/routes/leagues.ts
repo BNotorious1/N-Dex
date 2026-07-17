@@ -99,6 +99,7 @@ function formatTeam(team: typeof teamsTable.$inferSelect) {
     is_user_team: team.isUserTeam,
     primary_color: team.primaryColor,
     secondary_color: team.secondaryColor,
+    user_name: team.userName ?? null,
   };
 }
 

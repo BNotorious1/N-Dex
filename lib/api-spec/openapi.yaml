@@ -1588,6 +1588,8 @@ components:
           type: ["string", "null"]
         member_gamertag:
           type: ["string", "null"]
+        user_name:
+          type: ["string", "null"]
         roster_count:
           type: integer
         offense_dev_count:

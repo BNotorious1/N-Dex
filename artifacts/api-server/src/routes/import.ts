@@ -78,6 +78,7 @@ export async function upsertLeagueTeams(leagueId: number, teams: RawTeam[]): Pro
 
     const { conference, division } = parseDivName(t);
 
+    const rawUserName = str(t["userName"], "");
     const values = {
       leagueId,
       name: str(t["teamName"] || t["nickName"] || t["displayName"], "Unknown"),
@@ -93,6 +94,7 @@ export async function upsertLeagueTeams(leagueId: number, teams: RawTeam[]): Pro
       secondaryColor: intToHex(t["secondaryColor"]),
       eaTeamId,
       isUserTeam: false,
+      userName: rawUserName || null,
     };
 
     const existing = await db

@@ -218,6 +218,7 @@ export const GetLeagueSummaryResponse = zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
@@ -266,6 +267,7 @@ export const GetLeagueStandingsResponseItem = zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
@@ -491,6 +493,7 @@ export const GetLeagueGameOfWeekResponse = zod.union([zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
@@ -512,6 +515,7 @@ export const GetLeagueGameOfWeekResponse = zod.union([zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
@@ -981,6 +985,7 @@ export const GetLeagueTeamsResponseItem = zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
@@ -1410,6 +1415,7 @@ export const GetTeamResponse = zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
@@ -1451,6 +1457,7 @@ export const UpdateTeamResponse = zod.object({
   "secondary_color": zod.string().nullish(),
   "member_discord": zod.string().nullish(),
   "member_gamertag": zod.string().nullish(),
+  "user_name": zod.string().nullish(),
   "roster_count": zod.number().optional(),
   "offense_dev_count": zod.number().optional(),
   "defense_dev_count": zod.number().optional()
