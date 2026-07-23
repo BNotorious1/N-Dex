@@ -72,7 +72,6 @@ export default function GamesSection({ games }: Props) {
         </select>
         <span className="text-[10px] text-white/30 ml-auto">{filtered.length} games</span>
       </div>
-
       {/* Games grouped by week */}
       {Object.keys(grouped).length > 0 ? (
         <div className="space-y-6">
@@ -80,7 +79,7 @@ export default function GamesSection({ games }: Props) {
             .sort(([a], [b]) => Number(a) - Number(b))
             .map(([week, weekGames]) => (
               <div key={week}>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-3">
+                <p className="font-bold uppercase tracking-widest text-white/40 mb-3 text-center text-[20px]">
                   Week {week}
                 </p>
                 <div className="space-y-2">
@@ -110,17 +109,16 @@ function GameRow({ game }: { game: Game }) {
     >
       {/* Away */}
       <div className="flex-1 text-right">
-        <p className={`text-sm font-bold ${isCompleted && (game.away_score ?? 0) > (game.home_score ?? 0) ? "text-white" : "text-white/60"}`}>
+        <p className="font-bold text-white text-[24px] text-center">
           {game.away_team_name ?? "TBD"}
         </p>
-        <p className="text-[10px] text-white/30">Away</p>
+        <p className="text-white/30 text-[14px] text-center">Away</p>
       </div>
-
       {/* Score / VS */}
       <div className="text-center min-w-[100px]">
         {isCompleted ? (
           <p className="text-xl font-black tracking-tight">
-            <span className={(game.away_score ?? 0) > (game.home_score ?? 0) ? "text-white" : "text-white/45"}>
+            <span className="font-black tracking-tight text-[32px]">
               {game.away_score}
             </span>
             <span className="text-white/20 mx-1.5">–</span>
@@ -135,13 +133,12 @@ function GameRow({ game }: { game: Game }) {
           {statusLabel}
         </span>
       </div>
-
       {/* Home */}
       <div className="flex-1">
-        <p className={`text-sm font-bold ${isCompleted && (game.home_score ?? 0) > (game.away_score ?? 0) ? "text-[#00C8FF]" : "text-white/60"}`}>
+        <p className={`font-bold text-[24px] text-center ${isCompleted && (game.home_score ?? 0) > (game.away_score ?? 0) ? "text-[#00C8FF]" : "text-white/60"}`}>
           {game.home_team_name ?? "TBD"}
         </p>
-        <p className="text-[10px] text-white/30">Home</p>
+        <p className="text-white/30 text-[14px] text-center">Home</p>
       </div>
     </Link>
   );
