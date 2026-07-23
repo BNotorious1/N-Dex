@@ -646,7 +646,7 @@ function PlayerCell({ p }: { p: PlayerSeasonStats }) {
         </Link>
         <Link
           href={`/teams/${p.team_id}`}
-          className="text-white/35 hover:text-[#00C8FF] transition-colors text-[11px]"
+          className="text-white/35 hover:text-[#00C8FF] transition-colors text-left text-[12px]"
         >
           {p.team_name}
         </Link>
