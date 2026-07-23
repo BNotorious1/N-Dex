@@ -106,21 +106,20 @@ function GameRow({ game }: { game: Game }) {
   return (
     <Link
       href={`/games/${game.id}`}
-      className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 flex items-center gap-4 hover:border-[#00C8FF]/30 hover:bg-[#00C8FF]/3 transition-colors block"
+      className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 items-center gap-4 hover:border-[#00C8FF]/30 hover:bg-[#00C8FF]/3 transition-colors block text-[24px] text-center"
     >
       {/* Away */}
       <div className="flex-1 text-right">
-        <p className={`text-sm font-bold ${isCompleted && (game.away_score ?? 0) > (game.home_score ?? 0) ? "text-white" : "text-white/60"}`}>
+        <p className="font-bold text-white text-center text-[24px]">
           {game.away_team_name ?? "TBD"}
         </p>
-        <p className="text-[10px] text-white/30">Away</p>
+        <p className="text-white/30 text-center text-[14px]">Away</p>
       </div>
-
       {/* Score / VS */}
       <div className="text-center min-w-[100px]">
         {isCompleted ? (
           <p className="text-xl font-black tracking-tight">
-            <span className={(game.away_score ?? 0) > (game.home_score ?? 0) ? "text-white" : "text-white/45"}>
+            <span className="font-black tracking-tight text-[32px]">
               {game.away_score}
             </span>
             <span className="text-white/20 mx-1.5">–</span>
@@ -135,13 +134,12 @@ function GameRow({ game }: { game: Game }) {
           {statusLabel}
         </span>
       </div>
-
       {/* Home */}
       <div className="flex-1">
-        <p className={`text-sm font-bold ${isCompleted && (game.home_score ?? 0) > (game.away_score ?? 0) ? "text-[#00C8FF]" : "text-white/60"}`}>
+        <p className={`font-bold text-[24px] ${isCompleted && (game.home_score ?? 0) > (game.away_score ?? 0) ? "text-[#00C8FF]" : "text-white/60"}`}>
           {game.home_team_name ?? "TBD"}
         </p>
-        <p className="text-[10px] text-white/30">Home</p>
+        <p className="text-white/30 text-[14px]">Home</p>
       </div>
     </Link>
   );
