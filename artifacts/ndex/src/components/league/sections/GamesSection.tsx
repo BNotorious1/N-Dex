@@ -106,7 +106,7 @@ function GameRow({ game }: { game: Game }) {
   return (
     <Link
       href={`/games/${game.id}`}
-      className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 items-center gap-4 hover:border-[#00C8FF]/30 hover:bg-[#00C8FF]/3 transition-colors block text-[24px] text-center"
+      className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 items-center gap-4 hover:border-[#00C8FF]/30 hover:bg-[#00C8FF]/3 transition-colors block text-center text-[14px]"
     >
       {/* Away */}
       <div className="flex-1 text-right">
