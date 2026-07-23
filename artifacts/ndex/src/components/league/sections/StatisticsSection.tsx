@@ -529,7 +529,7 @@ function SortableTable<T>({
                   sortKey === col.key ? "text-[#00C8FF]" : "text-white/30 hover:text-white/60"
                 } ${col.align === "left" ? "text-left" : col.align === "right" ? "text-right" : "text-center"}`}
               >
-                <span className="inline-flex items-center gap-0.5 text-[#ffffff99] border-t-[#ffffff99] border-r-[#ffffff99] border-b-[#ffffff99] border-l-[#ffffff99]">
+                <span className="inline-flex items-center gap-0.5 text-[#ffffff99] border-t-[#ffffff99] border-r-[#ffffff99] border-b-[#ffffff99] border-l-[#ffffff99] text-[12px]">
                   {col.label}
                   {sortKey === col.key
                     ? sortDir === "desc"
@@ -556,9 +556,7 @@ function SortableTable<T>({
               {cols.map(col => (
                 <td
                   key={col.key}
-                  className={`px-3 py-2 whitespace-nowrap ${col.bold ? "font-bold text-white" : "text-white/70"} ${
-                    col.align === "left" ? "text-left" : col.align === "right" ? "text-right" : "text-center"
-                  }`}
+                  className="px-3 py-2 whitespace-nowrap text-white/70 text-center text-[16px]"
                 >
                   {col.render(row)}
                 </td>
@@ -648,7 +646,7 @@ function PlayerCell({ p }: { p: PlayerSeasonStats }) {
         </Link>
         <Link
           href={`/teams/${p.team_id}`}
-          className="text-[9px] text-white/35 hover:text-[#00C8FF] transition-colors leading-tight"
+          className="text-white/35 hover:text-[#00C8FF] transition-colors text-[11px]"
         >
           {p.team_name}
         </Link>
@@ -659,7 +657,7 @@ function PlayerCell({ p }: { p: PlayerSeasonStats }) {
 
 function PosBadge({ pos }: { pos: string }) {
   return (
-    <span className="rounded border border-white/12 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-white/55">
+    <span className="rounded border border-white/12 bg-white/5 px-1.5 py-0.5 font-bold text-white/55 text-[12px]">
       {pos}
     </span>
   );
