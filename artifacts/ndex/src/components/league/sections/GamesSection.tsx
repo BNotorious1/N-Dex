@@ -5,6 +5,7 @@ interface Game {
   id: number; week: number; season: number; status: string;
   home_team_name?: string | null; away_team_name?: string | null;
   home_score?: number | null; away_score?: number | null;
+  home_team_color?: string | null; away_team_color?: string | null;
 }
 
 interface Props { games: Game[] }
@@ -102,10 +103,17 @@ function GameRow({ game }: { game: Game }) {
   const statusClass = STATUS_COLORS[game.status] ?? STATUS_COLORS.SCHEDULED;
   const statusLabel = STATUS_LABELS[game.status] ?? game.status;
 
+  const awayColor = game.away_team_color ?? "#333333";
+  const homeColor = game.home_team_color ?? "#333333";
+  const gradientStyle = {
+    background: `linear-gradient(to right, ${awayColor}22 0%, #141414 40%, #141414 60%, ${homeColor}22 100%)`,
+  };
+
   return (
     <Link
       href={`/games/${game.id}`}
-      className="rounded-xl border border-white/8 bg-[#141414] px-5 py-4 flex items-center gap-4 hover:border-[#00C8FF]/30 hover:bg-[#00C8FF]/3 transition-colors block"
+      className="rounded-xl border border-white/8 px-5 py-4 flex items-center gap-4 transition-colors block hover:border-white/20"
+      style={gradientStyle}
     >
       {/* Away */}
       <div className="flex-1 text-right">
@@ -118,7 +126,7 @@ function GameRow({ game }: { game: Game }) {
       <div className="text-center min-w-[100px]">
         {isCompleted ? (
           <p className="text-xl font-black tracking-tight">
-            <span className="font-black tracking-tight text-[32px]">
+            <span className="font-black tracking-tight text-[20px]">
               {game.away_score}
             </span>
             <span className="text-white/20 mx-1.5">–</span>
