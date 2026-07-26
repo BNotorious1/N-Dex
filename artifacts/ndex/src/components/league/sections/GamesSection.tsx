@@ -142,7 +142,7 @@ function GameRow({ game }: { game: Game }) {
               {game.away_score}
             </span>
             <span className="text-white/20 mx-1.5">–</span>
-            <span className={(game.home_score ?? 0) > (game.away_score ?? 0) ? "text-[#00C8FF]" : "text-white/45"}>
+            <span className="text-[color:var(--color-white)]">
               {game.home_score}
             </span>
           </p>
@@ -155,7 +155,7 @@ function GameRow({ game }: { game: Game }) {
       </div>
       {/* Home */}
       <div className="flex-1">
-        <p className={`font-bold text-[24px] text-center ${isCompleted && (game.home_score ?? 0) > (game.away_score ?? 0) ? "text-[#00C8FF]" : "text-white/60"}`}>
+        <p className="font-bold text-[24px] text-center text-[color:var(--color-white)]">
           {game.home_team_name ?? "TBD"}
         </p>
         <p className="text-white/30 text-[14px] text-center">Home</p>
