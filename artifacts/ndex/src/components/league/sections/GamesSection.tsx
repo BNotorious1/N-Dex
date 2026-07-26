@@ -106,7 +106,7 @@ function GameRow({ game }: { game: Game }) {
   const awayColor = game.away_team_color ?? "#333333";
   const homeColor = game.home_team_color ?? "#333333";
   const gradientStyle = {
-    background: `linear-gradient(to right, ${awayColor}22 0%, #141414 40%, #141414 60%, ${homeColor}22 100%)`,
+    background: `linear-gradient(to right, ${awayColor}66 0%, #141414 38%, #141414 62%, ${homeColor}66 100%)`,
   };
 
   return (
