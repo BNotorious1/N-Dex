@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
+import TeamLogo from "@/components/TeamLogo";
 
 interface Game {
   id: number; week: number; season: number; status: string;
   home_team_name?: string | null; away_team_name?: string | null;
   home_score?: number | null; away_score?: number | null;
   home_team_color?: string | null; away_team_color?: string | null;
+  home_team_abbreviation?: string | null; away_team_abbreviation?: string | null;
 }
 
 interface Props { games: Game[] }
@@ -106,7 +108,7 @@ function GameRow({ game }: { game: Game }) {
   const awayColor = game.away_team_color ?? "#333333";
   const homeColor = game.home_team_color ?? "#333333";
   const gradientStyle = {
-    background: `linear-gradient(to right, ${awayColor}66 0%, #141414 38%, #141414 62%, ${homeColor}66 100%)`,
+    background: `linear-gradient(to right, ${awayColor}99 0%, #141414 38%, #141414 62%, ${homeColor}99 100%)`,
   };
 
   return (
@@ -115,6 +117,16 @@ function GameRow({ game }: { game: Game }) {
       className="rounded-xl border border-white/8 px-5 py-4 flex items-center gap-4 transition-colors block hover:border-white/20"
       style={gradientStyle}
     >
+      {/* Away logo */}
+      {game.away_team_abbreviation && (
+        <TeamLogo
+          abbreviation={game.away_team_abbreviation}
+          primaryColor={game.away_team_color}
+          size="xl"
+          shape="circle"
+          noBg
+        />
+      )}
       {/* Away */}
       <div className="flex-1 text-right">
         <p className="font-bold text-white text-[24px] text-center">
@@ -148,6 +160,16 @@ function GameRow({ game }: { game: Game }) {
         </p>
         <p className="text-white/30 text-[14px] text-center">Home</p>
       </div>
+      {/* Home logo */}
+      {game.home_team_abbreviation && (
+        <TeamLogo
+          abbreviation={game.home_team_abbreviation}
+          primaryColor={game.home_team_color}
+          size="xl"
+          shape="circle"
+          noBg
+        />
+      )}
     </Link>
   );
 }

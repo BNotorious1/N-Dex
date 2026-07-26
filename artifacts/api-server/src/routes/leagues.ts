@@ -103,7 +103,7 @@ function formatTeam(team: typeof teamsTable.$inferSelect) {
   };
 }
 
-function formatGame(game: typeof gamesTable.$inferSelect, homeTeamName?: string | null, awayTeamName?: string | null, homeTeamColor?: string | null, awayTeamColor?: string | null) {
+function formatGame(game: typeof gamesTable.$inferSelect, homeTeamName?: string | null, awayTeamName?: string | null, homeTeamColor?: string | null, awayTeamColor?: string | null, homeTeamAbbr?: string | null, awayTeamAbbr?: string | null) {
   return {
     id: game.id,
     league_id: game.leagueId,
@@ -113,6 +113,8 @@ function formatGame(game: typeof gamesTable.$inferSelect, homeTeamName?: string 
     away_team_name: awayTeamName ?? null,
     home_team_color: homeTeamColor ?? null,
     away_team_color: awayTeamColor ?? null,
+    home_team_abbreviation: homeTeamAbbr ?? null,
+    away_team_abbreviation: awayTeamAbbr ?? null,
     home_score: game.homeScore,
     away_score: game.awayScore,
     week: game.week,
@@ -946,7 +948,7 @@ router.get("/:id/games", async (req, res) => {
   const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
   const teamMap = new Map(teams.map(t => [t.id, t]));
 
-  res.json(allGames.map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, teamMap.get(g.homeTeamId)?.primaryColor, teamMap.get(g.awayTeamId)?.primaryColor)));
+  res.json(allGames.map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, teamMap.get(g.homeTeamId)?.primaryColor, teamMap.get(g.awayTeamId)?.primaryColor, teamMap.get(g.homeTeamId)?.abbreviation, teamMap.get(g.awayTeamId)?.abbreviation)));
 });
 
 // POST /leagues/:id/games
