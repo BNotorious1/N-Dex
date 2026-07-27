@@ -416,7 +416,7 @@ function LeaderRow({ rank, p, value, isLast }: {
       className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors border-b border-white/5 opacity-[1]"
       style={rowGradient(p.team_color)}
     >
-      <span className="w-4 shrink-0 text-center text-[11px] font-black text-white/20 tabular-nums">{rank}</span>
+      <span className="w-4 shrink-0 text-center font-black tabular-nums text-[14px] text-[#ffffff]">{rank}</span>
       <div className="w-[42px] h-[42px] rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/10">
         {hasPortrait ? (
           <img
