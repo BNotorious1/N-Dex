@@ -653,7 +653,7 @@ function PlayerCell({ p }: { p: PlayerSeasonStats }) {
 
 function PosBadge({ pos }: { pos: string }) {
   return (
-    <span className="rounded border border-white/12 bg-white/5 px-1.5 py-0.5 font-bold text-white/55 text-[12px]">
+    <span className="rounded border border-white/12 bg-white/5 px-1.5 py-0.5 font-bold text-white/55 text-[14px]">
       {pos}
     </span>
   );
@@ -674,7 +674,7 @@ function PassingTab({ players }: { players: PlayerSeasonStats[] }) {
     { key: "pss_ints",  label: "INT",     title: "Interceptions",   align: "center", sortVal: p => n(p.pss_ints), render: p => n(p.pss_ints) > 0 ? <span className="font-bold text-[#ffffffb3]">{p.pss_ints}</span> : "—" },
     { key: "pss_sacks", label: "SCK",     title: "Times Sacked",    align: "center", sortVal: p => n(p.pss_sacks), render: p => d(n(p.pss_sacks)) },
     { key: "pss_lng",   label: "LNG",     title: "Long Pass",       align: "center", sortVal: p => n(p.pss_lng),  render: p => d(n(p.pss_lng)) },
-    { key: "pss_rating",label: "RTG",     title: "QB Rating",       align: "center", sortVal: p => n(p.pss_rating), render: p => <span className="font-bold">{rtg(n(p.pss_rating))}</span> },
+    { key: "pss_rating",label: "RTG",     title: "QB Rating",       align: "center", sortVal: p => n(p.pss_rating), render: p => <span className="font-normal">{rtg(n(p.pss_rating))}</span> },
   ];
   return (
     <SortableTable
