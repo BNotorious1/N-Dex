@@ -548,7 +548,7 @@ function SortableTable<T>({
               className="border-b border-white/5 transition-colors last:border-0"
               style={getRowStyle ? getRowStyle(row) : undefined}
             >
-              <td className="px-3 py-2 text-[11px] text-[#ffffff99]">{firstRank + i + 1}</td>
+              <td className="px-3 py-2 text-[#ffffff99] text-[16px]">{firstRank + i + 1}</td>
               {cols.map(col => (
                 <td
                   key={col.key}
