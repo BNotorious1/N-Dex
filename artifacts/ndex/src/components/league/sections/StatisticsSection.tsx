@@ -333,7 +333,7 @@ function LeagueLeadersTab({ data }: { data: LeaguePlayerStats }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Offensive Leaders */}
-        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
+        <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden font-bold">
           <div className="px-4 py-2.5 bg-[#0f0f0f] border-b border-white/8">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Offensive Leaders</p>
           </div>
@@ -352,7 +352,6 @@ function LeagueLeadersTab({ data }: { data: LeaguePlayerStats }) {
           <LeaderPanel label="Interceptions" unit="INT" color={C.defense} pool={data.defense} scoreOf={p => n(p.def_ints)}           display={p => d(n(p.def_ints))} />
         </div>
       </div>
-
       {/* Special Teams */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden">
@@ -414,11 +413,10 @@ function LeaderRow({ rank, p, value, isLast }: {
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors ${!isLast ? "border-b border-white/5" : ""}`}
+      className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors border-b border-white/5 opacity-[1]"
       style={rowGradient(p.team_color)}
     >
       <span className="w-4 shrink-0 text-center text-[11px] font-black text-white/20 tabular-nums">{rank}</span>
-
       <div className="w-[42px] h-[42px] rounded-full overflow-hidden shrink-0 bg-white/5 border border-white/10">
         {hasPortrait ? (
           <img
@@ -434,24 +432,22 @@ function LeaderRow({ rank, p, value, isLast }: {
           </div>
         )}
       </div>
-
       <div className="flex-1 min-w-0">
         <Link
           href={`/players/${p.player.id}`}
-          className="block font-bold text-[13px] text-white hover:text-[#00C8FF] transition-colors leading-tight truncate"
+          className="block font-bold text-white hover:text-[#00C8FF] transition-colors truncate text-[16px]"
         >
           {p.player.name}
         </Link>
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-[9px] font-bold text-white/30">{p.player.position}</span>
-          <span className="text-[9px] text-white/15">·</span>
-          <Link href={`/teams/${p.team_id}`} className="text-[9px] text-white/30 hover:text-[#00C8FF] transition-colors">
+        <div className="flex items-center gap-1 mt-0.5 text-[16px]">
+          <span className="font-bold text-white/30 text-[12px]">{p.player.position}</span>
+          <span className="text-white/15 text-[12px]">·</span>
+          <Link href={`/teams/${p.team_id}`} className="text-white/30 hover:text-[#00C8FF] transition-colors text-[12px] font-bold">
             {p.team_abbreviation}
           </Link>
         </div>
       </div>
-
-      <span className="shrink-0 font-black text-[15px] text-[#ffffffb3] tabular-nums">{value}</span>
+      <span className="shrink-0 font-black text-[#ffffffb3] tabular-nums text-[16px]">{value}</span>
     </div>
   );
 }
