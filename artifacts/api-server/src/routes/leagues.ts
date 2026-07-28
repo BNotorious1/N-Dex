@@ -992,6 +992,10 @@ async function loadTrade(tradeId: number, leagueId: number) {
   const teamA = teamMap.get(trade.teamAId)!;
   const teamB = teamMap.get(trade.teamBId)!;
 
+  const members = await db.select().from(membersTable)
+    .where(inArray(membersTable.teamId, [trade.teamAId, trade.teamBId]));
+  const memberByTeam = new Map(members.map(m => [m.teamId!, m]));
+
   const playersFromA = tps.filter(r => r.trade_players.fromTeamId === trade.teamAId).map(r => ({
     id: r.players.id, name: r.players.name, position: r.players.position,
     overall: r.players.overall, portrait_id: r.players.portraitId ?? null,
@@ -1001,14 +1005,27 @@ async function loadTrade(tradeId: number, leagueId: number) {
     overall: r.players.overall, portrait_id: r.players.portraitId ?? null,
   }));
 
+  const memberA = memberByTeam.get(trade.teamAId);
+  const memberB = memberByTeam.get(trade.teamBId);
+
   return {
     id: trade.id,
     league_id: trade.leagueId,
     season: trade.season,
     week: trade.week ?? null,
     status: trade.status,
-    team_a: { id: teamA.id, name: teamA.name, abbreviation: teamA.abbreviation, primary_color: teamA.primaryColor ?? null },
-    team_b: { id: teamB.id, name: teamB.name, abbreviation: teamB.abbreviation, primary_color: teamB.primaryColor ?? null },
+    team_a: {
+      id: teamA.id, name: teamA.name, abbreviation: teamA.abbreviation,
+      primary_color: teamA.primaryColor ?? null,
+      member_discord: memberA?.discordName ?? null,
+      member_gamertag: memberA?.gamerTag ?? null,
+    },
+    team_b: {
+      id: teamB.id, name: teamB.name, abbreviation: teamB.abbreviation,
+      primary_color: teamB.primaryColor ?? null,
+      member_discord: memberB?.discordName ?? null,
+      member_gamertag: memberB?.gamerTag ?? null,
+    },
     players_from_a: playersFromA,
     players_from_b: playersFromB,
     notes: trade.notes ?? null,

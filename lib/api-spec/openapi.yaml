@@ -2541,6 +2541,8 @@ components:
             name: { type: string }
             abbreviation: { type: string }
             primary_color: { type: ["string", "null"] }
+            member_discord: { type: ["string", "null"] }
+            member_gamertag: { type: ["string", "null"] }
         team_b:
           type: object
           required: [id, name, abbreviation]
@@ -2549,6 +2551,8 @@ components:
             name: { type: string }
             abbreviation: { type: string }
             primary_color: { type: ["string", "null"] }
+            member_discord: { type: ["string", "null"] }
+            member_gamertag: { type: ["string", "null"] }
         players_from_a:
           type: array
           items:

@@ -1,0 +1,355 @@
+import {Q as F, a as E} from "./QBreadcrumbs.e41b37c9.js";
+import {_ as R, u as U, L as x, bf as D, n as p, c as s, w as a, j as S, bZ as q, K as z, r as k, o as r, y as $, a as t, b_ as V, Q as j, O as P, z as i, x as g, D as h, E as I} from "./index.691d033d.js";
+import {Q as N, a as _} from "./QItem.3d2d195c.js";
+import {Q as v} from "./QItemLabel.fa2ef23a.js";
+import {Q as A} from "./QTd.53f6fc19.js";
+import {Q as B} from "./QBadge.96630e85.js";
+import {Q as K} from "./QTable.e75a31b9.js";
+import {Q as M} from "./QPage.9a875931.js";
+import {F as O} from "./FilterForm.d333d18e.js";
+import {i as Z, g as G, u as H} from "./parameters.37341641.js";
+import {u as J} from "./use-meta.cb0fd13e.js";
+import {F as L} from "./format.e5da0dd1.js";
+import {U as W} from "./UserProfileLink.fc1dd07b.js";
+import "./QList.34de7c68.js";
+import "./QMarkupTable.60b65b35.js";
+import "./QSelect.41ab247b.js";
+import "./QChip.64f10569.js";
+import "./QMenu.18679406.js";
+import "./position-engine.72e6daa2.js";
+import "./QLinearProgress.6283e5af.js";
+import "./use-fullscreen.d0a94916.js";
+import "./QScrollArea.56c9fb18.js";
+import "./QResizeObserver.800f5cfb.js";
+import "./QScrollObserver.0b482cc1.js";
+import "./QDrawer.611e9997.js";
+import "./QSpace.a80a1461.js";
+import "./ClosePopup.cd44778b.js";
+import "./Filters.017fb538.js";
+import "./leagueSeasonContext.a20c5884.js";
+import "./Madden.5f236acb.js";
+const X = [{
+    name: "approved",
+    align: "center",
+    label: "Status",
+    field: "approved",
+    sortable: !1
+}, {
+    name: "season",
+    align: "center",
+    label: "Season",
+    field: "season",
+    format: l => `${L.season(l)}`,
+    sortable: !0
+}, {
+    name: "teamA",
+    align: "left",
+    label: "Team A",
+    field: "teamA",
+    sortable: !1
+}, {
+    name: "teamB",
+    align: "left",
+    label: "Team B",
+    field: "teamB",
+    sortable: !1
+}, {
+    name: "created",
+    align: "center",
+    label: "Created",
+    field: "created",
+    format: l => `${L.dateTime(l)}`,
+    sortable: !0
+}]
+  , Y = {
+    components: {
+        FilterForm: O,
+        UserProfileLink: W
+    },
+    setup() {
+        J({
+            titleTemplate: f => `${f} - League Trades`
+        });
+        const l = S("api")
+          , u = U()
+          , y = x()
+          , o = D()
+          , w = y.params.abbrev
+          , Q = `/leagues/${w}/trades/`
+          , m = p(!0);
+        function d() {
+            return u.isLoggedIn() && u.isPermitted(w, q.CREATE_TRADE)
+        }
+        const n = p({
+            sortBy: null,
+            descending: !0,
+            page: 1,
+            rowsPerPage: 10,
+            rowsNumber: 10
+        })
+          , e = p([])
+          , c = p([{
+            type: "seasonIndex",
+            field: "seasonIndex",
+            value: null,
+            default: null,
+            force_number: !0
+        }, {
+            type: "teams",
+            field: "teamA",
+            value: null,
+            default: null,
+            label: "Team A"
+        }, {
+            type: "teams",
+            field: "teamB",
+            value: null,
+            default: null,
+            label: "Team B"
+        }]);
+        function T({pagination: f, filter: C}) {
+            m.value = !0,
+            l(G(Q, f, C)).then( ({data: b}) => {
+                n.value = f,
+                n.value.rowsNumber = parseInt(b.count),
+                e.value = b.results,
+                m.value = !1,
+                H(o, c.value, n.value)
+            }
+            ).catch(b => {
+                z(b),
+                m.value = !1
+            }
+            )
+        }
+        return Z(y, c.value, n.value),
+        T({
+            pagination: n.value,
+            filter: c.value
+        }),
+        {
+            serverData: e,
+            columns: X,
+            serverPagination: n,
+            filters: c,
+            loading: m,
+            request: T,
+            canCreate: d
+        }
+    }
+}
+  , ee = {
+    class: "q-pa-sm"
+}
+  , ae = ["src"]
+  , te = ["src"]
+  , re = {
+    key: 1,
+    class: "text-italic"
+}
+  , oe = ["src"]
+  , le = ["src"]
+  , se = {
+    key: 1
+};
+function ne(l, u, y, o, w, Q) {
+    const m = k("FilterForm")
+      , d = k("router-link")
+      , n = k("UserProfileLink");
+    return r(),
+    s(M, {
+        padding: ""
+    }, {
+        default: a( () => [$("div", ee, [t(E, null, {
+            default: a( () => [t(F, {
+                label: "Trades",
+                icon: "autorenew"
+            })]),
+            _: 1
+        })]), t(m, {
+            filters: o.filters
+        }, null, 8, ["filters"]), t(K, {
+            pagination: o.serverPagination,
+            "onUpdate:pagination": u[0] || (u[0] = e => o.serverPagination = e),
+            "rows-per-page-options": [10, 25, 50, 100],
+            title: "League Trades",
+            rows: o.serverData,
+            columns: o.columns,
+            filter: o.filters,
+            loading: o.loading,
+            separator: "none",
+            "binary-state-sort": "",
+            dense: "",
+            onRequest: o.request
+        }, V({
+            "body-cell-teamA": a(e => [t(A, {
+                key: "teamA",
+                props: e
+            }, {
+                default: a( () => [t(N, null, {
+                    default: a( () => [t(_, {
+                        avatar: ""
+                    }, {
+                        default: a( () => [e.row.teamA ? (r(),
+                        s(P, {
+                            key: 0
+                        }, {
+                            default: a( () => [e.row.teamA.logo ? (r(),
+                            i("img", {
+                                key: 0,
+                                src: e.row.teamA.logo
+                            }, null, 8, ae)) : (r(),
+                            i("img", {
+                                key: 1,
+                                src: "https://cdn.neonsportz.com/teamlogos/256/" + e.row.teamA.logoId + ".png"
+                            }, null, 8, te))]),
+                            _: 2
+                        }, 1024)) : g("", !0)]),
+                        _: 2
+                    }, 1024), t(_, null, {
+                        default: a( () => [t(v, null, {
+                            default: a( () => [e.row.teamA ? (r(),
+                            s(d, {
+                                key: 0,
+                                to: {
+                                    name: "Team",
+                                    params: {
+                                        abbrev: l.$route.params.abbrev,
+                                        abbrName: e.row.teamA.abbrName
+                                    }
+                                }
+                            }, {
+                                default: a( () => [h(I(e.row.teamA.displayName), 1)]),
+                                _: 2
+                            }, 1032, ["to"])) : g("", !0)]),
+                            _: 2
+                        }, 1024), t(v, {
+                            caption: ""
+                        }, {
+                            default: a( () => [e.row.teamA.leaguemember ? (r(),
+                            s(n, {
+                                key: 0,
+                                user: e.row.teamA.leaguemember.user
+                            }, null, 8, ["user"])) : (r(),
+                            i("span", re, "None"))]),
+                            _: 2
+                        }, 1024)]),
+                        _: 2
+                    }, 1024)]),
+                    _: 2
+                }, 1024)]),
+                _: 2
+            }, 1032, ["props"])]),
+            "body-cell-teamB": a(e => [t(A, {
+                key: "teamA",
+                props: e
+            }, {
+                default: a( () => [t(N, null, {
+                    default: a( () => [t(_, {
+                        avatar: ""
+                    }, {
+                        default: a( () => [e.row.teamB ? (r(),
+                        s(P, {
+                            key: 0
+                        }, {
+                            default: a( () => [e.row.teamB.logo ? (r(),
+                            i("img", {
+                                key: 0,
+                                src: e.row.teamB.logo
+                            }, null, 8, oe)) : (r(),
+                            i("img", {
+                                key: 1,
+                                src: "https://cdn.neonsportz.com/teamlogos/256/" + e.row.teamB.logoId + ".png"
+                            }, null, 8, le))]),
+                            _: 2
+                        }, 1024)) : g("", !0)]),
+                        _: 2
+                    }, 1024), t(_, null, {
+                        default: a( () => [t(v, null, {
+                            default: a( () => [e.row.teamB ? (r(),
+                            s(d, {
+                                key: 0,
+                                to: {
+                                    name: "Team",
+                                    params: {
+                                        abbrev: l.$route.params.abbrev,
+                                        abbrName: e.row.teamB.abbrName
+                                    }
+                                }
+                            }, {
+                                default: a( () => [h(I(e.row.teamB.displayName), 1)]),
+                                _: 2
+                            }, 1032, ["to"])) : g("", !0)]),
+                            _: 2
+                        }, 1024), t(v, {
+                            caption: ""
+                        }, {
+                            default: a( () => [e.row.teamB.leaguemember ? (r(),
+                            s(n, {
+                                key: 0,
+                                user: e.row.teamB.leaguemember.user
+                            }, null, 8, ["user"])) : (r(),
+                            i("span", se, "CPU"))]),
+                            _: 2
+                        }, 1024)]),
+                        _: 2
+                    }, 1024)]),
+                    _: 2
+                }, 1024)]),
+                _: 2
+            }, 1032, ["props"])]),
+            "body-cell-approved": a(e => [t(A, {
+                key: "approved",
+                props: e
+            }, {
+                default: a( () => [t(d, {
+                    to: {
+                        name: "LeagueTrade",
+                        params: {
+                            abbrev: l.$route.params.abbrev,
+                            tradeId: e.row.tradeId
+                        }
+                    }
+                }, {
+                    default: a( () => [e.row.approved === !0 ? (r(),
+                    s(B, {
+                        key: 0,
+                        color: "positive",
+                        label: "Approved"
+                    })) : e.row.approved === !1 ? (r(),
+                    s(B, {
+                        key: 1,
+                        color: "negative",
+                        label: "Denied"
+                    })) : (r(),
+                    s(B, {
+                        key: 2,
+                        color: "warning",
+                        "text-color": "dark",
+                        label: "Pending"
+                    }))]),
+                    _: 2
+                }, 1032, ["to"])]),
+                _: 2
+            }, 1032, ["props"])]),
+            _: 2
+        }, [o.canCreate() ? {
+            name: "top-right",
+            fn: a( () => [t(j, {
+                color: "positive",
+                label: "Create",
+                size: "sm",
+                to: {
+                    name: "LeagueTradeCreate",
+                    params: {
+                        abbrev: l.$route.params.abbrev
+                    }
+                }
+            }, null, 8, ["to"])]),
+            key: "0"
+        } : void 0]), 1032, ["pagination", "rows", "columns", "filter", "loading", "onRequest"])]),
+        _: 1
+    })
+}
+var Se = R(Y, [["render", ne]]);
+export {Se as default};

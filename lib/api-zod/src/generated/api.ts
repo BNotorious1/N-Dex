@@ -1174,13 +1174,17 @@ export const GetLeagueTradesResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "abbreviation": zod.string(),
-  "primary_color": zod.string().nullish()
+  "primary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 }),
   "team_b": zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "abbreviation": zod.string(),
-  "primary_color": zod.string().nullish()
+  "primary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 }),
   "players_from_a": zod.array(zod.object({
   "id": zod.number(),
@@ -1242,13 +1246,17 @@ export const UpdateLeagueTradeResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "abbreviation": zod.string(),
-  "primary_color": zod.string().nullish()
+  "primary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 }),
   "team_b": zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "abbreviation": zod.string(),
-  "primary_color": zod.string().nullish()
+  "primary_color": zod.string().nullish(),
+  "member_discord": zod.string().nullish(),
+  "member_gamertag": zod.string().nullish()
 }),
   "players_from_a": zod.array(zod.object({
   "id": zod.number(),

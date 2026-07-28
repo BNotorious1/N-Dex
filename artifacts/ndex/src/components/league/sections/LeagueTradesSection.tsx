@@ -31,6 +31,12 @@ function TeamLogo({ abbreviation, size = 28 }: { abbreviation: string; size?: nu
   );
 }
 
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
+    " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
 const PORTRAIT_BASE = "https://madden-assets-cdn.pulse.ea.com/madden26/portraits/75/";
 
 function TradeRow({ trade }: { trade: LeagueTrade }) {
@@ -39,11 +45,14 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
 
   const hasPlayers = trade.players_from_a.length > 0 || trade.players_from_b.length > 0;
 
+  const memberA = trade.team_a.member_gamertag ?? trade.team_a.member_discord ?? null;
+  const memberB = trade.team_b.member_gamertag ?? trade.team_b.member_discord ?? null;
+
   return (
     <div className="border border-white/8 rounded-xl overflow-hidden">
       <button
         onClick={() => hasPlayers && setExpanded(v => !v)}
-        className={`w-full grid grid-cols-[120px_70px_1fr_1fr_32px] gap-4 items-center px-5 py-4 text-left transition-colors ${
+        className={`w-full grid grid-cols-[120px_68px_1fr_1fr_160px_28px] gap-4 items-center px-5 py-4 text-left transition-colors ${
           hasPlayers ? "hover:bg-white/3" : "cursor-default"
         }`}
       >
@@ -63,7 +72,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
           <div className="min-w-0">
             <p className="text-sm font-bold text-white truncate">{trade.team_a.name}</p>
             <p className="text-[10px] text-white/35">
-              {trade.players_from_a.length} player{trade.players_from_a.length !== 1 ? "s" : ""} outgoing
+              {memberA ?? <span className="italic">None</span>}
             </p>
           </div>
         </div>
@@ -74,9 +83,14 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
           <div className="min-w-0">
             <p className="text-sm font-bold text-white truncate">{trade.team_b.name}</p>
             <p className="text-[10px] text-white/35">
-              {trade.players_from_b.length} player{trade.players_from_b.length !== 1 ? "s" : ""} outgoing
+              {memberB ?? "CPU"}
             </p>
           </div>
+        </div>
+
+        {/* Created */}
+        <div className="text-[11px] text-white/35 text-right">
+          {formatDateTime(trade.created_at)}
         </div>
 
         {/* Chevron */}
@@ -303,6 +317,7 @@ export default function LeagueTradesSection({ leagueId }: Props) {
                 <th className="text-left px-4 py-3 text-white font-black uppercase tracking-wider text-[10px] w-[80px]">Season</th>
                 <th className="text-left px-4 py-3 text-white font-black uppercase tracking-wider text-[10px]">Team A</th>
                 <th className="text-left px-4 py-3 text-white font-black uppercase tracking-wider text-[10px]">Team B</th>
+                <th className="text-right px-4 py-3 text-white font-black uppercase tracking-wider text-[10px] w-[170px]">Created</th>
                 <th className="w-8" />
               </tr>
             </thead>
