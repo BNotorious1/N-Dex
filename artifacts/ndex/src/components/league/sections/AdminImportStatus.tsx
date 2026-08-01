@@ -299,17 +299,25 @@ export default function AdminImportStatus({ leagueId }: Props) {
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 18 }, (_, i) => {
+              {Array.from({ length: 23 }, (_, i) => {
+                const isProBowl = i === 21;
                 const weekData = exportInfo.statistics[String(i)] as StatWeek | undefined;
                 const isNotYetPlayed = i >= currentWeek;
                 const isImportingThisWeek = importing === `week-${i}`;
+                const weekLabel = i === 18 ? "Wildcard Round"
+                  : i === 19 ? "Divisional Round"
+                  : i === 20 ? "Conference Championship"
+                  : i === 21 ? "Pro Bowl"
+                  : i === 22 ? "Super Bowl"
+                  : `Week ${i + 1}`;
+                const isPlayoff = i >= 18;
                 return (
-                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors">
+                  <tr key={i} className={`border-b border-white/5 last:border-0 transition-colors ${isProBowl ? "opacity-40" : "hover:bg-white/2"}`}>
                     <td className="px-2 py-1.5 text-center">
                       <button
                         onClick={() => void doWeekImport(i)}
-                        disabled={!isConnected || anyImporting || isNotYetPlayed}
-                        title={`Import Week ${i + 1} Stats`}
+                        disabled={!isConnected || anyImporting || isNotYetPlayed || isProBowl}
+                        title={isProBowl ? "Pro Bowl — no player stats" : `Import ${weekLabel} Stats`}
                         className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-[#00C8FF]/15 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                       >
                         {isImportingThisWeek
@@ -317,12 +325,16 @@ export default function AdminImportStatus({ leagueId }: Props) {
                           : <Download className="h-3 w-3 text-white/40 hover:text-[#00C8FF]" />}
                       </button>
                     </td>
-                    <td className="px-3 py-1.5 font-semibold text-white/70">Week {i + 1}</td>
+                    <td className="px-3 py-1.5 font-semibold">
+                      <span className={isPlayoff && !isProBowl ? "text-[#00C8FF]/80" : "text-white/70"}>{weekLabel}</span>
+                    </td>
                     {STAT_COLS.map((c) => {
                       const val = weekData?.[c.key] ?? null;
                       return (
                         <td key={c.key} className="px-3 py-1.5">
-                          {val ? (
+                          {isProBowl ? (
+                            <span className="text-white/20">N/A</span>
+                          ) : val ? (
                             <span className="text-emerald-400 font-mono">{timeAgo(val)}</span>
                           ) : isNotYetPlayed ? (
                             <span className="text-white/20">Not Played</span>

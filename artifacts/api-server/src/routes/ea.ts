@@ -905,9 +905,16 @@ router.post("/import-schedules", async (req, res) => {
     const season = league.season ?? 2025;
     let totalGames = 0;
 
-    // Import all 18 regular season weeks — both played (FINAL) and unplayed (SCHEDULED)
+    // Import all regular season + playoff weeks — both played (FINAL) and unplayed (SCHEDULED)
+    // weekIdx 0–17: Regular season (Weeks 1–18)
+    // weekIdx 18: Wildcard Round (Week 19)
+    // weekIdx 19: Divisional Round (Week 20)
+    // weekIdx 20: Conference Championship (Week 21)
+    // weekIdx 21: Pro Bowl — no games, skip
+    // weekIdx 22: Super Bowl (Week 23)
     // Blaze returns { scheduleInfoList: [...] } — flat array, NOT nested under .scheduleInfo
-    for (let weekIdx = 0; weekIdx < 18; weekIdx++) {
+    for (let weekIdx = 0; weekIdx < 23; weekIdx++) {
+      if (weekIdx === 21) continue; // Pro Bowl — no scheduled games
       try {
         const serviceId = BLAZE_SERVICE_ID[platform] ?? BLAZE_SERVICE_ID["ps5"];
         const schedParams = { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx };
@@ -1016,6 +1023,7 @@ router.post("/import-all-stats", async (req, res) => {
     const exportInfo = await updateExportInfo(leagueId, (info) => {
       const stats = (info["statistics"] as Record<string, Record<string, unknown>> | null) ?? {};
       for (let i = 0; i < currentWeek; i++) {
+        if (i === 21) continue; // Pro Bowl — no player stat data
         stats[String(i)] = { games: now, team: now, passing: now, rushing: now, receiving: now, kicking: now, punting: now, defense: now };
       }
       return { ...info, statistics: stats };
