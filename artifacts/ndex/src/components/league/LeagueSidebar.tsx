@@ -6,6 +6,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Plus, Star,
 } from "lucide-react";
 import { useState } from "react";
+import { getWeekLabelShort } from "@/lib/weekLabel";
 import { useLocation } from "wouter";
 import type { LeagueSection } from "@/pages/LeagueDetail";
 
@@ -117,7 +118,7 @@ export default function LeagueSidebar({ league, section, onSelect, collapsed, on
           <div className="ml-2 min-w-0">
             <p className="text-xs font-bold text-white truncate">{league.name}</p>
             <p className="text-[10px] text-white/35">
-              {league.platform} &bull; S{league.season} W{league.week}
+              {league.platform} &bull; S{league.season} {getWeekLabelShort(league.week)}
             </p>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import type { League } from "@workspace/api-client-react";
+import { getWeekLabel } from "@/lib/weekLabel";
 
 const platformColors: Record<string, string> = {
   PS5: "bg-[#00439c] text-white",
@@ -86,7 +87,7 @@ export default function LeagueCard({ league }: Props) {
             {phaseLabels[league.phase] ?? league.phase}
           </span>
           <span className="rounded bg-white/8 px-1.5 py-0.5 text-[10px] text-white/50">
-            Week {league.week}
+            {getWeekLabel(league.week)}
           </span>
         </div>
 

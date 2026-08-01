@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useGetLeagueTransactions, getGetLeagueTransactionsQueryKey, LeagueTransaction } from "@workspace/api-client-react";
+import { getWeekLabelShort } from "@/lib/weekLabel";
 import TeamLogo from "../../TeamLogo";
 import { Link } from "wouter";
 import { ArrowLeftRight } from "lucide-react";
@@ -275,7 +276,7 @@ function TxRow({ tx, odd }: { tx: LeagueTransaction; odd: boolean }) {
       {/* Week */}
       <td className="px-4 py-2.5 text-center">
         <span className="text-[11px] text-white/40 tabular-nums">
-          {tx.week != null ? `W${tx.week}` : "—"}
+          {tx.week != null ? getWeekLabelShort(tx.week) : "—"}
         </span>
       </td>
     </tr>

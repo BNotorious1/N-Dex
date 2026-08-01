@@ -1,3 +1,5 @@
+import { getWeekLabel } from "@/lib/weekLabel";
+
 interface League {
   id: number;
   name: string;
@@ -63,7 +65,7 @@ export default function LeagueBanner({ league, summary }: Props) {
             <div className="flex flex-wrap gap-2">
               <Chip label={phaseLabel[league.phase] ?? league.phase} cyan />
               <Chip label={`Season ${league.season}`} />
-              <Chip label={`Week ${league.week}`} />
+              <Chip label={getWeekLabel(league.week)} />
               <Chip label={`${league.member_count}/${league.max_members} Members`} />
             </div>
           </div>
@@ -71,7 +73,7 @@ export default function LeagueBanner({ league, summary }: Props) {
           <div className="flex gap-4 shrink-0">
             <Stat label="Teams" value={String(summary?.total_teams ?? "—")} />
             <Stat label="Played" value={String(summary?.total_games_played ?? "—")} />
-            <Stat label="Week" value={String(summary?.current_week ?? league.week)} />
+            <Stat label="Week" value={getWeekLabel(summary?.current_week ?? league.week)} />
           </div>
         </div>
       </div>

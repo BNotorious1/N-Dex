@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { ReactNode } from "react";
+import { getWeekLabel } from "@/lib/weekLabel";
 import { Link, useParams } from "wouter";
 import {
   useGetGame,
@@ -1406,7 +1407,7 @@ export default function GameDetail() {
                         {STATUS_LABELS[game.status] ?? game.status}
                       </p>
                       <p className="text-[10px] text-white/22 mt-1">
-                        Season {game.season} · Week {game.week}
+                        Season {game.season} · {getWeekLabel(game.week ?? 0)}
                       </p>
                     </div>
 

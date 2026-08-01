@@ -304,9 +304,9 @@ export default function AdminImportStatus({ leagueId }: Props) {
                 const weekData = exportInfo.statistics[String(i)] as StatWeek | undefined;
                 const isNotYetPlayed = i >= currentWeek;
                 const isImportingThisWeek = importing === `week-${i}`;
-                const weekLabel = i === 18 ? "Wildcard Round"
-                  : i === 19 ? "Divisional Round"
-                  : i === 20 ? "Conference Championship"
+                const weekLabel = i === 18 ? "Wildcard"
+                  : i === 19 ? "Divisional"
+                  : i === 20 ? "Conference"
                   : i === 21 ? "Pro Bowl"
                   : i === 22 ? "Super Bowl"
                   : `Week ${i + 1}`;

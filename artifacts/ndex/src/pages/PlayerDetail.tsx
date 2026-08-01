@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "wouter";
+import { getWeekLabelShort } from "@/lib/weekLabel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
@@ -620,7 +621,7 @@ function getColsForPosition(position: string): ColDef[] {
 }
 
 const STAGE_LABEL: Record<number, string> = {
-  2: "Wild Card", 3: "Divisional", 4: "Conf. Championship", 5: "Super Bowl",
+  2: "Wildcard", 3: "Divisional", 4: "Conference", 5: "Super Bowl",
 };
 
 function weekLabel(g: GameLogEntry): string {
@@ -1593,7 +1594,7 @@ function HistoryTab({ playerId, leagueId, teamColor }: { playerId: number; leagu
                           {label}
                         </span>
                         <span className="text-xs text-white/30 font-medium">
-                          S{tx.season}{tx.week != null ? ` · Wk ${tx.week}` : ""}
+                          S{tx.season}{tx.week != null ? ` · ${getWeekLabelShort(tx.week)}` : ""}
                         </span>
                       </div>
                       <button

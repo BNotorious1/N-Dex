@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { getWeekLabel } from "@/lib/weekLabel";
 import {
   useGetLeagueGameOfWeek,
   useCreateLeagueGameOfWeek,
@@ -90,7 +91,7 @@ export default function AdminGameOfWeekSection({ leagueId, currentWeek = 1, curr
                 {" vs "}
                 {gotw.home_team ? `${gotw.home_team.city} ${gotw.home_team.name}` : "TBD"}
               </p>
-              <p className="text-xs text-white/40 mt-0.5">Week {gotw.week} · Season {gotw.season}</p>
+              <p className="text-xs text-white/40 mt-0.5">{getWeekLabel(gotw.week)} · Season {gotw.season}</p>
               {gotw.headline && <p className="text-xs text-white/60 mt-1 italic">{gotw.headline}</p>}
             </div>
             <button

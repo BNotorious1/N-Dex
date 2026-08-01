@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "wouter";
+import { getWeekLabelShort } from "@/lib/weekLabel";
 import {
   useGetTeam,
   useGetTeamPlayers,
@@ -338,7 +339,7 @@ export default function TeamDetail() {
 
                     return (
                       <tr key={game.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
-                        <td className="px-4 py-2.5 text-white/40 font-bold tabular-nums">{game.week}</td>
+                        <td className="px-4 py-2.5 text-white/40 font-bold tabular-nums">{getWeekLabelShort(game.week)}</td>
                         <td className="px-3 py-2.5 text-[10px] text-white/30">{isHome ? "vs" : "@"}</td>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center gap-2">

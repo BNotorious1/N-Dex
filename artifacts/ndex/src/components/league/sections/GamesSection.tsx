@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import TeamLogo from "@/components/TeamLogo";
+import { getWeekLabel } from "@/lib/weekLabel";
 
 interface Game {
   id: number; week: number; season: number; status: string;
@@ -61,7 +62,7 @@ export default function GamesSection({ games }: Props) {
           className="bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[#00C8FF]/40"
         >
           <option value="all">All Weeks</option>
-          {weeks.map((w) => <option key={w} value={w}>Week {w}</option>)}
+          {weeks.map((w) => <option key={w} value={w}>{getWeekLabel(w)}</option>)}
         </select>
         <select
           value={statusFilter}
@@ -83,7 +84,7 @@ export default function GamesSection({ games }: Props) {
             .map(([week, weekGames]) => (
               <div key={week}>
                 <p className="font-bold uppercase tracking-widest text-white/40 mb-3 text-center text-[20px]">
-                  Week {week}
+                  {getWeekLabel(Number(week))}
                 </p>
                 <div className="space-y-2">
                   {weekGames.map((game) => (

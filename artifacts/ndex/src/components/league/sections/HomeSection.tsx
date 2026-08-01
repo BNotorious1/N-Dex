@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
 import TeamLogo from "@/components/TeamLogo";
+import { getWeekLabel } from "@/lib/weekLabel";
 import type { GameOfWeek, StatLeaders, StandingEntry, LeagueSummary, PlayerStatLine } from "@workspace/api-client-react";
 
 interface Props {
@@ -216,7 +217,7 @@ function GameOfWeekHero({ gotw }: { gotw: GameOfWeek }) {
           <div className="h-1.5 w-1.5 rounded-full bg-[#00C8FF] animate-pulse" />
           <span className="text-[9px] font-black uppercase tracking-widest text-[#00C8FF]">Game of the Week</span>
         </div>
-        <span className="text-[9px] text-white/30">WEEK {gotw.week} · SEASON {gotw.season}</span>
+        <span className="text-[9px] text-white/30">{getWeekLabel(gotw.week).toUpperCase()} · SEASON {gotw.season}</span>
       </div>
       <div className="relative px-4 py-5">
         {(homeTeam || awayTeam) ? (
@@ -312,7 +313,7 @@ function ScoreCard({ game }: { game: NonNullable<LeagueSummary["recent_games"]>[
   return (
     <div className="rounded-lg border border-white/8 bg-[#111] px-3 py-2.5 hover:border-[#00C8FF]/25 hover:bg-[#00C8FF]/3 transition-all">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[9px] font-bold text-white/25 uppercase tracking-wider">Week {game.week}</span>
+        <span className="text-[9px] font-bold text-white/25 uppercase tracking-wider">{getWeekLabel(game.week)}</span>
         <span className="text-[8px] px-1.5 py-0.5 rounded bg-white/6 text-white/30 font-bold uppercase">Final</span>
       </div>
       <div className="space-y-0.5">
