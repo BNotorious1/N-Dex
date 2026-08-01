@@ -29,11 +29,18 @@ interface StatRow {
   team_id: number;
   pss_yds?: number; rsh_yds?: number; rec_yds?: number;
 }
+interface TeamDefenseRow {
+  team_id: number;
+  pass_yds_allowed: number;
+  rush_yds_allowed: number;
+  total_yds_allowed: number;
+}
 interface StatsResponse {
   passing: StatRow[];
   rushing: StatRow[];
   receiving: StatRow[];
   defense: StatRow[];
+  team_defense?: TeamDefenseRow[];
 }
 
 interface Props {
@@ -212,8 +219,17 @@ export default function TeamHomeTab({ team, players, games }: Props) {
   const offPassRank = sortedByPassYds.findIndex(t => t.teamId === team.id) + 1 || 0;
   const offRushRank = sortedByRushYds.findIndex(t => t.teamId === team.id) + 1 || 0;
 
-  // Defense yards ranks (opponents' yards against this team — approximate from all teams' rushing/passing)
-  // For now mirror offense ranks (true def yds would need opp stats)
+  // Defense yards ranks — derived from team_defense (yards allowed per team)
+  const teamDefense = leagueStats?.team_defense ?? [];
+  const sortedByTotalYdsAllowed = [...teamDefense].sort((a, b) => a.total_yds_allowed - b.total_yds_allowed);
+  const sortedByPassYdsAllowed  = [...teamDefense].sort((a, b) => a.pass_yds_allowed - b.pass_yds_allowed);
+  const sortedByRushYdsAllowed  = [...teamDefense].sort((a, b) => a.rush_yds_allowed - b.rush_yds_allowed);
+  const thisTeamDef = teamDefense.find(t => t.team_id === team.id);
+
+  const defYdsRank  = sortedByTotalYdsAllowed.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const defPassRank = sortedByPassYdsAllowed.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const defRushRank = sortedByRushYdsAllowed.findIndex(t => t.team_id === team.id) + 1 || 0;
+
   const n = allTeams.length || 32;
 
   return (
@@ -263,7 +279,9 @@ export default function TeamHomeTab({ team, players, games }: Props) {
             </div>
             <div className="p-4 flex items-center gap-4">
               {defPtsRank > 0 && <StatBlock label="PTS" value={thisStanding?.points_against ?? "—"} rank={defPtsRank} total={n} />}
-              {/* Defense yardage ranks need opponent-level stats */}
+              {defYdsRank > 0 && <StatBlock label="YDS" value={thisTeamDef?.total_yds_allowed ?? "—"} rank={defYdsRank} total={teamDefense.length} />}
+              {defPassRank > 0 && <StatBlock label="P.YDS" value={thisTeamDef?.pass_yds_allowed ?? "—"} rank={defPassRank} total={teamDefense.length} />}
+              {defRushRank > 0 && <StatBlock label="R.YDS" value={thisTeamDef?.rush_yds_allowed ?? "—"} rank={defRushRank} total={teamDefense.length} />}
             </div>
           </div>
         </div>

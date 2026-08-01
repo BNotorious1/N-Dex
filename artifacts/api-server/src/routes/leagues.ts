@@ -672,14 +672,61 @@ router.get("/:id/stats/players", async (req, res) => {
     punt_in20:  Number(row.punt_in20),
   });
 
+  // Compute yards allowed per team by inverting opponent offensive yards.
+  // Use raw SQL with the `pgs` alias — do NOT inject Drizzle column refs from the
+  // outer query (they render as "player_game_stats"."week" which is invalid once
+  // the table is aliased). Build the phase clause as a plain SQL fragment instead.
+  const defPhaseClause =
+    phase === "postseason"
+      ? sql`AND pgs.week >= 19`
+      : phase === "all"
+        ? sql``
+        : sql`AND pgs.week <= 18`;
+
+  const defSeasonClause =
+    season !== null && !isNaN(season) ? sql`AND pgs.season = ${season}` : sql``;
+  const defWeekClause =
+    week !== null && !isNaN(week) ? sql`AND pgs.week = ${week}` : sql``;
+
+  const defYdsRows = await db.execute<{
+    defending_team_id: number;
+    pass_yds_allowed: string;
+    rush_yds_allowed: string;
+  }>(sql`
+    SELECT
+      CASE
+        WHEN p.team_id = g.home_team_id THEN g.away_team_id
+        ELSE g.home_team_id
+      END AS defending_team_id,
+      COALESCE(SUM(pgs.pss_yds), 0) AS pass_yds_allowed,
+      COALESCE(SUM(pgs.rsh_yds), 0) AS rush_yds_allowed
+    FROM player_game_stats pgs
+    JOIN players p ON pgs.player_id = p.id
+    JOIN games g ON pgs.game_id = g.id
+    WHERE pgs.league_id = ${id}
+      AND pgs.game_id IS NOT NULL
+      ${defPhaseClause}
+      ${defSeasonClause}
+      ${defWeekClause}
+    GROUP BY defending_team_id
+  `);
+
+  const teamDefense = defYdsRows.rows.map(r => ({
+    team_id: Number(r.defending_team_id),
+    pass_yds_allowed: Number(r.pass_yds_allowed),
+    rush_yds_allowed: Number(r.rush_yds_allowed),
+    total_yds_allowed: Number(r.pass_yds_allowed) + Number(r.rush_yds_allowed),
+  }));
+
   const all = rows.map(fmt);
   res.json({
-    passing:   all.filter(p => p.pss_att > 0),
-    rushing:   all.filter(p => p.rsh_att > 0),
-    receiving: all.filter(p => p.rec_catches > 0 || p.rec_tgts > 0),
-    defense:   all.filter(p => p.def_total_tackles > 0 || p.def_sacks > 0 || p.def_ints > 0 || p.def_pd > 0 || p.def_ff > 0),
-    kicking:   all.filter(p => p.fg_att > 0 || p.xp_att > 0),
-    punting:   all.filter(p => p.punt_att > 0),
+    passing:      all.filter(p => p.pss_att > 0),
+    rushing:      all.filter(p => p.rsh_att > 0),
+    receiving:    all.filter(p => p.rec_catches > 0 || p.rec_tgts > 0),
+    defense:      all.filter(p => p.def_total_tackles > 0 || p.def_sacks > 0 || p.def_ints > 0 || p.def_pd > 0 || p.def_ff > 0),
+    kicking:      all.filter(p => p.fg_att > 0 || p.xp_att > 0),
+    punting:      all.filter(p => p.punt_att > 0),
+    team_defense: teamDefense,
   });
 });
 
