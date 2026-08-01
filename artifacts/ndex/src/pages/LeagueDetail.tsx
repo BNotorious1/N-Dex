@@ -123,7 +123,7 @@ export default function LeagueDetail() {
           <LeagueBanner league={league} summary={summary} />
           <div className="px-6 py-6">
             {section === "home" && (
-              <HomeSection summary={summary} statLeaders={statLeaders} standings={standings} gotw={gotw} onNavigate={setSection as (s: string) => void} />
+              <HomeSection summary={summary} leagueId={leagueId} statLeaders={statLeaders} standings={standings} gotw={gotw} onNavigate={setSection as (s: string) => void} />
             )}
             {section === "teams" && <TeamsSection teams={teams ?? []} leagueId={leagueId} />}
             {(section === "players" || section === "players-search") && <PlayersSection leagueId={leagueId} />}

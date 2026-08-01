@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { getWeekLabel } from "@/lib/weekLabel";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
@@ -69,12 +70,12 @@ function rowGradient(color: string | null | undefined): React.CSSProperties {
 export default function StatisticsSection({ leagueId }: { leagueId: number }) {
   const [subTab, setSubTab] = useState<SubTab>("leaders");
 
-  const [filterSeason,        setFilterSeason]        = useState<number | null>(null);
-  const [filterWeek,          setFilterWeek]          = useState<number | null>(null);
-  const [filterTeam,          setFilterTeam]          = useState<string>("");
-  const [filterPos,           setFilterPos]           = useState<string>("");
-  const [filterRegularSeason, setFilterRegularSeason] = useState<boolean>(true);
-  const [filterRookiesOnly,   setFilterRookiesOnly]   = useState<boolean>(false);
+  const [filterSeason,      setFilterSeason]      = useState<number | null>(null);
+  const [filterWeek,        setFilterWeek]        = useState<number | null>(null);
+  const [filterTeam,        setFilterTeam]        = useState<string>("");
+  const [filterPos,         setFilterPos]         = useState<string>("");
+  const [phase,             setPhase]             = useState<"regular" | "postseason" | "all">("regular");
+  const [filterRookiesOnly, setFilterRookiesOnly] = useState<boolean>(false);
 
   const { data: statsMeta } = useGetLeagueStatsMeta(leagueId, {
     query: { queryKey: getGetLeagueStatsMetaQueryKey(leagueId) },
@@ -84,12 +85,12 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
   });
 
   const { data: playerStats, isLoading } = useQuery<LeaguePlayerStats>({
-    queryKey: ["league-player-stats", leagueId, filterSeason, filterWeek, filterRegularSeason],
+    queryKey: ["league-player-stats", leagueId, filterSeason, filterWeek, phase],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filterSeason !== null) params.set("season", String(filterSeason));
       if (filterWeek   !== null) params.set("week",   String(filterWeek));
-      if (!filterRegularSeason)  params.set("regularSeason", "false");
+      params.set("phase", phase);
       const qs = params.toString();
       const res = await fetch(`/api/leagues/${leagueId}/stats/players${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error("Failed to fetch player stats");
@@ -100,8 +101,11 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
 
   const availableWeeks = useMemo(() => {
     if (!statsMeta || filterSeason === null) return [];
-    return statsMeta.weeks_by_season[String(filterSeason)] ?? [];
-  }, [statsMeta, filterSeason]);
+    const allWeeks = statsMeta.weeks_by_season[String(filterSeason)] ?? [];
+    if (phase === "regular")    return allWeeks.filter(w => w <= 18);
+    if (phase === "postseason") return allWeeks.filter(w => w >= 19);
+    return allWeeks;
+  }, [statsMeta, filterSeason, phase]);
 
   const allTeams = useMemo(() => {
     if (!playerStats) return [];
@@ -183,7 +187,7 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
           disabled={filterSeason === null || availableWeeks.length === 0}
         >
           {availableWeeks.map(w => (
-            <option key={w} value={w}>Week {w}</option>
+            <option key={w} value={w}>{getWeekLabel(w)}</option>
           ))}
         </FilterSelect>
 
@@ -222,9 +226,23 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
-        <FilterToggle active={filterRegularSeason} onClick={() => setFilterRegularSeason(v => !v)}>
-          Regular Season
-        </FilterToggle>
+        {/* Phase selector */}
+        <div className="flex rounded border border-white/10 overflow-hidden text-[11px] font-bold">
+          {(["regular", "all", "postseason"] as const).map((p, i) => (
+            <button
+              key={p}
+              onClick={() => { setPhase(p); setFilterWeek(null); }}
+              className={`px-2.5 py-1 transition-colors ${i > 0 ? "border-l border-white/10" : ""} ${
+                phase === p
+                  ? "bg-[#00C8FF]/15 text-[#00C8FF]"
+                  : "text-white/35 hover:text-white/70 hover:bg-white/5"
+              }`}
+            >
+              {p === "regular" ? "Reg Season" : p === "all" ? "All" : "Postseason"}
+            </button>
+          ))}
+        </div>
+
         <FilterToggle active={filterRookiesOnly} onClick={() => setFilterRookiesOnly(v => !v)}>
           Rookies Only
         </FilterToggle>

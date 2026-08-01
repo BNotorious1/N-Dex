@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable, joinRequestsTable, gameOfWeekTable } from "@workspace/db";
-import { eq, like, and, sql, desc, isNotNull, or, inArray } from "drizzle-orm";
+import { eq, like, and, sql, desc, isNotNull, or, inArray, lte, gte } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
   CreateLeagueBody,
@@ -373,7 +373,17 @@ router.get("/:id/stats/leaders", async (req, res) => {
     typeof playerGameStatsTable.recYds | typeof playerGameStatsTable.defTotalTackles |
     typeof playerGameStatsTable.defSacks | typeof playerGameStatsTable.defInts;
 
+  const phase = typeof req.query.phase === "string" ? req.query.phase : "regular";
+  const phaseCondition = phase === "postseason"
+    ? gte(playerGameStatsTable.week, 19)
+    : phase === "all"
+      ? undefined
+      : lte(playerGameStatsTable.week, 18); // default: regular
+
   const getLeaders = async (col: ColRef, label: string) => {
+    const whereClause = phaseCondition
+      ? and(eq(playerGameStatsTable.leagueId, leagueId), phaseCondition)
+      : eq(playerGameStatsTable.leagueId, leagueId);
     const rows = await db
       .select({
         player: playersTable,
@@ -383,7 +393,7 @@ router.get("/:id/stats/leaders", async (req, res) => {
       .from(playerGameStatsTable)
       .innerJoin(playersTable, eq(playerGameStatsTable.playerId, playersTable.id))
       .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
-      .where(eq(playerGameStatsTable.leagueId, leagueId))
+      .where(whereClause)
       .groupBy(playersTable.id, teamsTable.id)
       .orderBy(desc(sql`COALESCE(SUM(${col}), 0)`))
       .limit(10);
@@ -541,10 +551,16 @@ router.get("/:id/stats/players", async (req, res) => {
 
   const season = req.query.season !== undefined ? Number(req.query.season) : null;
   const week = req.query.week !== undefined ? Number(req.query.week) : null;
-  const regularSeasonOnly = req.query.regularSeason !== "false";
+  const phase = typeof req.query.phase === "string" ? req.query.phase : "regular"; // "regular" | "postseason" | "all"
 
-  const baseWhere = regularSeasonOnly
-    ? and(eq(playerGameStatsTable.leagueId, id), eq(playerGameStatsTable.stageIndex, 1))
+  const phaseCondition = phase === "postseason"
+    ? gte(playerGameStatsTable.week, 19)
+    : phase === "all"
+      ? undefined
+      : lte(playerGameStatsTable.week, 18); // default: regular season
+
+  const baseWhere = phaseCondition
+    ? and(eq(playerGameStatsTable.leagueId, id), phaseCondition)
     : eq(playerGameStatsTable.leagueId, id);
   const withSeason = season !== null && !isNaN(season)
     ? and(baseWhere, eq(playerGameStatsTable.season, season))

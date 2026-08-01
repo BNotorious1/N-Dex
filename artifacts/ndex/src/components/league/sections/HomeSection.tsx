@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
 import TeamLogo from "@/components/TeamLogo";
@@ -7,6 +8,7 @@ import type { GameOfWeek, StatLeaders, StandingEntry, LeagueSummary, PlayerStatL
 
 interface Props {
   summary?: LeagueSummary;
+  leagueId?: number;
   statLeaders?: StatLeaders;
   standings?: StandingEntry[];
   gotw?: GameOfWeek | null;
@@ -65,7 +67,7 @@ function computeSeeds(entries: StandingEntry[]): SeedEntry[] {
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export default function HomeSection({ summary, statLeaders, standings, gotw, onNavigate }: Props) {
+export default function HomeSection({ summary, leagueId, statLeaders, standings, gotw, onNavigate }: Props) {
   const afcEntries = standings?.filter(s => s.conference === "AFC") ?? [];
   const nfcEntries = standings?.filter(s => s.conference === "NFC") ?? [];
   const afcSeeds = computeSeeds(afcEntries);
@@ -75,6 +77,21 @@ export default function HomeSection({ summary, statLeaders, standings, gotw, onN
     ? [...standings].sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.points_for - a.points_for)
     : [];
   const top10 = sortedAll.slice(0, 10);
+
+  const [leadersPhase, setLeadersPhase] = useState<"regular" | "postseason">("regular");
+
+  const { data: filteredLeaders } = useQuery<StatLeaders>({
+    queryKey: ["stat-leaders", leagueId, leadersPhase],
+    queryFn: async () => {
+      const res = await fetch(`/api/leagues/${leagueId}/stats/leaders?phase=${leadersPhase}`);
+      if (!res.ok) throw new Error("Failed to fetch leaders");
+      return res.json() as Promise<StatLeaders>;
+    },
+    enabled: !!leagueId,
+  });
+
+  // Use fetched leaders if available, fall back to prop for initial render
+  const leaders = filteredLeaders ?? statLeaders;
 
   return (
     <div className="grid grid-cols-[1fr_2fr_1fr] gap-5 min-h-0">
@@ -98,8 +115,26 @@ export default function HomeSection({ summary, statLeaders, standings, gotw, onN
       {/* ── RIGHT ── */}
       <div className="flex flex-col gap-4">
         <PlayoffRace conf="NFC" seeds={nfcSeeds} />
-        <OffenseLeaders leaders={statLeaders} onNavigate={onNavigate} />
-        <DefenseLeaders leaders={statLeaders} onNavigate={onNavigate} />
+
+        {/* Phase toggle for leaders */}
+        <div className="flex rounded border border-white/10 overflow-hidden text-[10px] font-bold self-start">
+          {(["regular", "postseason"] as const).map((p, i) => (
+            <button
+              key={p}
+              onClick={() => setLeadersPhase(p)}
+              className={`px-3 py-1 transition-colors ${i > 0 ? "border-l border-white/10" : ""} ${
+                leadersPhase === p
+                  ? "bg-[#00C8FF]/15 text-[#00C8FF]"
+                  : "text-white/35 hover:text-white/60 hover:bg-white/5"
+              }`}
+            >
+              {p === "regular" ? "Regular Season" : "Postseason"}
+            </button>
+          ))}
+        </div>
+
+        <OffenseLeaders leaders={leaders} onNavigate={onNavigate} />
+        <DefenseLeaders leaders={leaders} onNavigate={onNavigate} />
       </div>
     </div>
   );
