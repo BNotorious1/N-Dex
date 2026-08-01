@@ -17,16 +17,18 @@ import type { TeamPlayer } from "@/components/team/types";
 import TeamHomeTab from "@/components/team/TeamHomeTab";
 import TeamRosterTab from "@/components/team/TeamRosterTab";
 import TeamDepthChartTab from "@/components/team/TeamDepthChartTab";
+import TeamScheduleTab from "@/components/team/TeamScheduleTab";
 import TeamStatisticsTab from "@/components/team/TeamStatisticsTab";
 import TeamContractsTab from "@/components/team/TeamContractsTab";
 
-type TabKey = "home" | "roster" | "depth" | "stats" | "contracts";
+type TabKey = "home" | "roster" | "depth" | "schedule" | "stats" | "contracts";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "home", label: "Home" },
-  { key: "roster", label: "Roster" },
-  { key: "depth", label: "Depth Chart" },
-  { key: "stats", label: "Statistics" },
+  { key: "home",      label: "Home" },
+  { key: "roster",    label: "Roster" },
+  { key: "depth",     label: "Depth Chart" },
+  { key: "schedule",  label: "Schedule" },
+  { key: "stats",     label: "Statistics" },
   { key: "contracts", label: "Contracts" },
 ];
 
@@ -52,7 +54,6 @@ export default function TeamDetail() {
     },
   });
 
-  // Cast to extended type (teams API returns these fields after our expansion)
   const players = (rawPlayers ?? []) as TeamPlayer[];
 
   if (teamLoading) {
@@ -79,6 +80,8 @@ export default function TeamDetail() {
   }
 
   const primaryColor = team.primary_color ?? "#333333";
+
+  // Regular-season record (wins/losses/ties from API already filtered to reg season)
   const gp = team.wins + team.losses + team.ties;
   const winPct = gp > 0 ? ((team.wins + team.ties * 0.5) / gp).toFixed(3) : "—";
 
@@ -90,6 +93,9 @@ export default function TeamDetail() {
     week: 0,
     phase: "—",
   };
+
+  // user_name may come from team response (we added it to formatTeam)
+  const teamWithUserName = team as typeof team & { user_name?: string | null };
 
   return (
     <div className="h-screen flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
@@ -119,10 +125,7 @@ export default function TeamDetail() {
             />
             <div className="relative mx-auto max-w-6xl px-4 py-8">
               <div className="flex items-center gap-6">
-                <div
-                  className="shrink-0 shadow-2xl"
-                  style={{ filter: `drop-shadow(0 0 16px ${primaryColor}50)` }}
-                >
+                <div className="shrink-0 shadow-2xl" style={{ filter: `drop-shadow(0 0 16px ${primaryColor}50)` }}>
                   <TeamLogo
                     abbreviation={team.abbreviation}
                     primaryColor={primaryColor}
@@ -157,7 +160,7 @@ export default function TeamDetail() {
                       </span>
                     )}
                   </div>
-                  {/* Record */}
+                  {/* Regular Season Record */}
                   <div className="flex items-center gap-4 mt-3">
                     {[
                       { val: team.wins, label: "Wins" },
@@ -168,7 +171,7 @@ export default function TeamDetail() {
                       <div key={s.label} className="flex items-center gap-4">
                         {i > 0 && <div className="w-px h-8 bg-white/10" />}
                         <div className="text-center">
-                          <p className={`text-2xl font-black tabular-nums ${s.muted ? "text-white/50" : "text-white"}`}>
+                          <p className={`text-2xl font-black tabular-nums [font-family:'Lora',serif] ${s.muted ? "text-white/50" : "text-white"}`}>
                             {s.val}
                           </p>
                           <p className="text-[9px] uppercase tracking-widest text-white/30 font-bold">{s.label}</p>
@@ -207,7 +210,7 @@ export default function TeamDetail() {
           <div className="mx-auto max-w-6xl px-4 py-6">
             {tab === "home" && (
               <TeamHomeTab
-                team={team}
+                team={{ ...teamWithUserName, user_name: teamWithUserName.user_name ?? null }}
                 players={players}
                 games={games ?? []}
               />
@@ -217,6 +220,9 @@ export default function TeamDetail() {
             )}
             {tab === "depth" && (
               <TeamDepthChartTab team={team} players={players} />
+            )}
+            {tab === "schedule" && (
+              <TeamScheduleTab team={team} games={games ?? []} />
             )}
             {tab === "stats" && (
               <TeamStatisticsTab team={team} leagueId={team.league_id} />

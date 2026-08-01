@@ -71,6 +71,7 @@ export interface TeamPlayer {
   contract_years_left: number | null;
   cap_hit: number | null;
   depth_chart_order: number | null;
+  trade_block: boolean;
 }
 
 export const DEV_LABEL: Record<number, string> = {

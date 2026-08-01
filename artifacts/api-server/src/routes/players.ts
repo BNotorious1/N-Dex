@@ -41,6 +41,7 @@ router.get("/:id", async (req, res) => {
         primaryColor: teamsTable.primaryColor,
         secondaryColor: teamsTable.secondaryColor,
         leagueId: teamsTable.leagueId,
+        userName: teamsTable.userName,
       },
     })
     .from(playersTable)
@@ -171,6 +172,8 @@ router.get("/:id", async (req, res) => {
     dl_spin_trait: player.dlSpinTrait,
     dl_swim_trait: player.dlSwimTrait,
     lb_style_trait: player.lbStyleTrait,
+    trade_block: player.tradeBlock,
+    team_user_name: team.userName ?? null,
     abilities: abilities.map(a => ({
       slot_index: a.slotIndex,
       title: a.title,
@@ -464,6 +467,37 @@ router.delete("/:id/transactions/:transactionId", async (req, res) => {
     .returning();
   if (!deleted.length) { res.status(404).json({ error: "Transaction not found" }); return; }
   res.status(204).end();
+});
+
+// PATCH /players/:id/trade-block
+router.patch("/:id/trade-block", async (req, res) => {
+  const id = Number(req.params["id"]);
+  if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!req.session.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  // Get the player + team to verify ownership
+  const rows = await db
+    .select({ player: playersTable, team: teamsTable })
+    .from(playersTable)
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(eq(playersTable.id, id))
+    .limit(1);
+
+  if (!rows.length) { res.status(404).json({ error: "Player not found" }); return; }
+  const { player, team } = rows[0]!;
+
+  // Only the team's assigned user can toggle
+  if (team.userName && team.userName !== req.session.user.username) {
+    res.status(403).json({ error: "Not your team" }); return;
+  }
+
+  const [updated] = await db
+    .update(playersTable)
+    .set({ tradeBlock: !player.tradeBlock })
+    .where(eq(playersTable.id, id))
+    .returning({ tradeBlock: playersTable.tradeBlock });
+
+  res.json({ trade_block: updated!.tradeBlock });
 });
 
 // PATCH /players/:id

@@ -129,8 +129,17 @@ export async function upsertTeamRoster(
 
   await db.delete(playersTable).where(eq(playersTable.teamId, teamId));
 
-  function ni(p: RawPlayer, key: string): number | null {
-    return typeof p[key] === "number" ? (p[key] as number) : null;
+  function ni(p: RawPlayer, key: string, ...fallbackKeys: string[]): number | null {
+    const keys = [key, ...fallbackKeys];
+    for (const k of keys) {
+      const v = p[k];
+      if (typeof v === "number") return Math.round(v);
+      if (typeof v === "string" && v.trim() !== "") {
+        const n = parseFloat(v);
+        if (!isNaN(n)) return Math.round(n);
+      }
+    }
+    return null;
   }
 
   function deriveYearsPro(p: RawPlayer): number | null {
@@ -262,6 +271,7 @@ export async function upsertTeamRoster(
       contractYearsLeft: ni(p, "contractYearsLeft"),
       capHit: ni(p, "capHit"),
       depthChartOrder: ni(p, "depthChartOrder"),
+      tradeBlock: false,
     }));
 
   const insertedPlayers = rows.length > 0

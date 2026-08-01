@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { teamsTable } from "./teams";
@@ -133,6 +133,7 @@ export const playersTable = pgTable("players", {
   contractYearsLeft: integer("contract_years_left"),
   capHit: integer("cap_hit"),
   depthChartOrder: integer("depth_chart_order"),
+  tradeBlock: boolean("trade_block").notNull().default(false),
 });
 
 export const insertPlayerSchema = createInsertSchema(playersTable).omit({ id: true });

@@ -29,6 +29,7 @@ function formatTeam(team: typeof teamsTable.$inferSelect) {
     is_user_team: team.isUserTeam,
     primary_color: team.primaryColor,
     secondary_color: team.secondaryColor,
+    user_name: team.userName ?? null,
   };
 }
 
@@ -106,6 +107,7 @@ function formatPlayer(player: typeof playersTable.$inferSelect) {
     contract_years_left: player.contractYearsLeft,
     cap_hit: player.capHit,
     depth_chart_order: player.depthChartOrder,
+    trade_block: player.tradeBlock,
   };
 }
 
@@ -134,6 +136,8 @@ router.get("/:id", async (req, res) => {
   let wins = 0, losses = 0, ties = 0;
   for (const g of games) {
     if (!isCompleted(g.status)) continue;
+    // Only count regular season games (stageIndex = 1); skip postseason
+    if (g.stageIndex != null && g.stageIndex !== 1) continue;
     const h = g.homeScore ?? 0;
     const a = g.awayScore ?? 0;
     const isHome = g.homeTeamId === teamId;

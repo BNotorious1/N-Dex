@@ -125,6 +125,8 @@ interface PlayerDetail {
   dl_spin_trait: number | null;
   dl_swim_trait: number | null;
   lb_style_trait: number | null;
+  trade_block: boolean;
+  team_user_name: string | null;
   abilities: Array<{
     slot_index: number;
     title: string;
@@ -1747,6 +1749,54 @@ function AbilitiesTab({ player }: { player: PlayerDetail }) {
   );
 }
 
+// ─── Trade Block Toggle ───────────────────────────────────────────────────────
+
+interface AuthUser { username: string }
+
+function TradeBlockToggle({ player, teamColor }: { player: PlayerDetail; teamColor: string }) {
+  const { data: authUser } = useQuery<AuthUser>({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const isOwner = !!authUser && authUser.username === player.team_user_name;
+  if (!isOwner) return null;
+
+  async function handleToggle() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/players/${player.id}/trade-block`, { method: "PATCH" });
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ["player", player.id] });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const onBlock = player.trade_block;
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide border transition-colors disabled:opacity-50"
+      style={onBlock
+        ? { color: "#facc15", backgroundColor: "#facc1518", borderColor: "#facc1540" }
+        : { color: "rgba(255,255,255,0.35)", backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.12)" }}
+    >
+      🔄 {onBlock ? "On the Block" : "Put on Block"}
+    </button>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PlayerDetail() {
@@ -1834,8 +1884,9 @@ export default function PlayerDetail() {
             <div className="absolute inset-0 opacity-[0.07]" style={{ background: `radial-gradient(ellipse at 70% 50%, ${teamColor} 0%, transparent 60%)` }} />
 
             <div className="relative px-8 py-8 pl-10 mt-[0px] mb-[0px]">
-              {/* OVR badge row */}
-              <div className="flex justify-end mb-6">
+              {/* OVR badge row + trade block */}
+              <div className="flex items-center justify-between mb-6">
+                <TradeBlockToggle player={player} teamColor={teamColor} />
                 <span
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-black tracking-wider border"
                   style={{ color: ovrColor(player.overall), backgroundColor: `${ovrColor(player.overall)}18`, borderColor: `${ovrColor(player.overall)}30` }}
