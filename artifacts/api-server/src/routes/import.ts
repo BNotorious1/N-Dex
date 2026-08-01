@@ -251,6 +251,17 @@ export async function upsertTeamRoster(
       dlSpinTrait: ni(p, "dLSpinTrait"),
       dlSwimTrait: ni(p, "dLSwimTrait"),
       lbStyleTrait: ni(p, "lBStyleTrait"),
+      // Body measurements
+      height: ni(p, "height"),
+      weight: ni(p, "weight"),
+      college: typeof p["college"] === "string" ? (p["college"] as string).trim() || null : null,
+      // Contract
+      contractSalary: ni(p, "contractSalary"),
+      contractBonus: ni(p, "contractBonus"),
+      contractLength: ni(p, "contractLength"),
+      contractYearsLeft: ni(p, "contractYearsLeft"),
+      capHit: ni(p, "capHit"),
+      depthChartOrder: ni(p, "depthChartOrder"),
     }));
 
   const insertedPlayers = rows.length > 0

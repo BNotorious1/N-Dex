@@ -120,6 +120,19 @@ export const playersTable = pgTable("players", {
   dlSpinTrait: integer("dl_spin_trait"),
   dlSwimTrait: integer("dl_swim_trait"),
   lbStyleTrait: integer("lb_style_trait"),
+
+  // ── Body measurements ────────────────────────────────────────────────────
+  height: integer("height"),
+  weight: integer("weight"),
+  college: text("college"),
+
+  // ── Contract ─────────────────────────────────────────────────────────────
+  contractSalary: integer("contract_salary"),
+  contractBonus: integer("contract_bonus"),
+  contractLength: integer("contract_length"),
+  contractYearsLeft: integer("contract_years_left"),
+  capHit: integer("cap_hit"),
+  depthChartOrder: integer("depth_chart_order"),
 });
 
 export const insertPlayerSchema = createInsertSchema(playersTable).omit({ id: true });
