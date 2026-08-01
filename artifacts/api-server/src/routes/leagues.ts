@@ -730,6 +730,90 @@ router.get("/:id/stats/players", async (req, res) => {
   });
 });
 
+// GET /leagues/:id/stats/teams — team-level offensive & defensive yard totals
+router.get("/:id/stats/teams", async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const phase = typeof req.query.phase === "string" ? req.query.phase : "regular";
+  const phaseWhere = phase === "postseason"
+    ? "AND pgs.week >= 19"
+    : phase === "all"
+      ? ""
+      : "AND pgs.week <= 18";
+
+  // Offensive totals: group player stats by player's team
+  const offRows = await db.execute(sql.raw(`
+    SELECT
+      p.team_id                                   AS team_id,
+      COALESCE(SUM(pgs.pss_yds), 0)              AS pass_yds,
+      COALESCE(SUM(pgs.rsh_yds), 0)              AS rush_yds,
+      COALESCE(SUM(pgs.pss_yds), 0)
+        + COALESCE(SUM(pgs.rsh_yds), 0)          AS total_yds
+    FROM player_game_stats pgs
+    JOIN players p ON pgs.player_id = p.id
+    WHERE pgs.league_id = ${id}
+    ${phaseWhere}
+    GROUP BY p.team_id
+  `));
+
+  // Defensive totals: join on (league_id, week_index, stage_index, team_id)
+  // rather than game_id — most imported rows have game_id = NULL because stats
+  // were ingested before the schedule existed. The schedule join here is by
+  // matching week/stage and the player's team being either home or away.
+  const defRows = await db.execute(sql.raw(`
+    SELECT
+      CASE
+        WHEN p.team_id = g.home_team_id THEN g.away_team_id
+        ELSE g.home_team_id
+      END                                           AS team_id,
+      COALESCE(SUM(pgs.pss_yds), 0)               AS pass_yds_allowed,
+      COALESCE(SUM(pgs.rsh_yds), 0)               AS rush_yds_allowed,
+      COALESCE(SUM(pgs.pss_yds), 0)
+        + COALESCE(SUM(pgs.rsh_yds), 0)           AS total_yds_allowed
+    FROM player_game_stats pgs
+    JOIN players p ON pgs.player_id = p.id
+    JOIN games g
+      ON  g.league_id    = pgs.league_id
+      AND g.week_index   = pgs.week_index
+      AND g.stage_index  = pgs.stage_index
+      AND (g.home_team_id = p.team_id OR g.away_team_id = p.team_id)
+    WHERE pgs.league_id = ${id}
+    ${phaseWhere}
+    GROUP BY
+      CASE
+        WHEN p.team_id = g.home_team_id THEN g.away_team_id
+        ELSE g.home_team_id
+      END
+  `));
+
+  // Merge into a map keyed by team_id
+  const map = new Map<number, Record<string, number>>();
+
+  for (const r of offRows.rows) {
+    const tid = Number(r.team_id);
+    map.set(tid, {
+      team_id: tid,
+      pass_yds: Number(r.pass_yds),
+      rush_yds: Number(r.rush_yds),
+      total_yds: Number(r.total_yds),
+      pass_yds_allowed: 0,
+      rush_yds_allowed: 0,
+      total_yds_allowed: 0,
+    });
+  }
+  for (const r of defRows.rows) {
+    const tid = Number(r.team_id);
+    const existing = map.get(tid) ?? { team_id: tid, pass_yds: 0, rush_yds: 0, total_yds: 0, pass_yds_allowed: 0, rush_yds_allowed: 0, total_yds_allowed: 0 };
+    existing.pass_yds_allowed = Number(r.pass_yds_allowed);
+    existing.rush_yds_allowed = Number(r.rush_yds_allowed);
+    existing.total_yds_allowed = Number(r.total_yds_allowed);
+    map.set(tid, existing);
+  }
+
+  res.json(Array.from(map.values()));
+});
+
 const OFF_POSITIONS = ["QB","HB","FB","WR","TE","LT","LG","C","RG","RT"];
 const DEF_POSITIONS = ["LE","RE","DT","LOLB","MLB","ROLB","CB","FS","SS"];
 

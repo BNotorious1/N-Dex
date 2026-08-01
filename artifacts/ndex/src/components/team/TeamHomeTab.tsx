@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,29 +18,20 @@ const posColor: Record<string, string> = {
   WR: "bg-purple-900/30 text-purple-400",
   TE: "bg-yellow-900/30 text-yellow-400",
   LT: "bg-orange-900/30 text-orange-400", LG: "bg-orange-900/30 text-orange-400",
-  C: "bg-orange-900/30 text-orange-400", RG: "bg-orange-900/30 text-orange-400", RT: "bg-orange-900/30 text-orange-400",
+  C:  "bg-orange-900/30 text-orange-400", RG: "bg-orange-900/30 text-orange-400", RT: "bg-orange-900/30 text-orange-400",
   DL: "bg-red-900/30 text-red-400", DT: "bg-red-900/30 text-red-400", DE: "bg-red-900/30 text-red-400",
   LB: "bg-red-900/30 text-red-400", MLB: "bg-red-900/30 text-red-400", LOLB: "bg-red-900/30 text-red-400", ROLB: "bg-red-900/30 text-red-400",
   CB: "bg-blue-900/30 text-blue-400", SS: "bg-blue-900/30 text-blue-400", FS: "bg-blue-900/30 text-blue-400",
 };
 
-interface StatRow {
-  player: { id: number; name: string; position: string; overall: number };
+interface TeamStats {
   team_id: number;
-  pss_yds?: number; rsh_yds?: number; rec_yds?: number;
-}
-interface TeamDefenseRow {
-  team_id: number;
+  pass_yds: number;
+  rush_yds: number;
+  total_yds: number;
   pass_yds_allowed: number;
   rush_yds_allowed: number;
   total_yds_allowed: number;
-}
-interface StatsResponse {
-  passing: StatRow[];
-  rushing: StatRow[];
-  receiving: StatRow[];
-  defense: StatRow[];
-  team_defense?: TeamDefenseRow[];
 }
 
 interface Props {
@@ -120,24 +111,24 @@ function MiniContractTable({ players, primaryColor, emptyMessage }: { players: T
   );
 }
 
-// Rank badge: e.g. "#3"
-function RankBadge({ rank, total }: { rank: number; total: number }) {
+function RankBadge({ rank }: { rank: number }) {
   const color = rank <= 5 ? "#4ade80" : rank <= 16 ? "#facc15" : "#F44336";
-  return (
-    <span className="text-[10px] font-black tabular-nums" style={{ color }}>
-      #{rank}
-    </span>
-  );
+  return <span className="text-[10px] font-black tabular-nums" style={{ color }}>#{rank}</span>;
 }
 
-function StatBlock({ label, value, rank, total }: { label: string; value: string | number; rank: number; total: number }) {
+function StatBlock({ label, value, rank }: { label: string; value: string | number; rank: number }) {
   return (
     <div className="flex-1 min-w-[70px] text-center">
       <p className="text-[9px] uppercase tracking-widest text-white/35 font-bold mb-0.5">{label}</p>
       <p className="text-lg font-black text-white tabular-nums [font-family:'Lora',serif]">{value}</p>
-      <RankBadge rank={rank} total={total} />
+      {rank > 0 && <RankBadge rank={rank} />}
     </div>
   );
+}
+
+function fmtYds(n: number) {
+  if (n === 0) return "—";
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 }
 
 export default function TeamHomeTab({ team, players, games }: Props) {
@@ -147,10 +138,10 @@ export default function TeamHomeTab({ team, players, games }: Props) {
     query: { enabled: !!team.league_id, queryKey: getGetLeagueStandingsQueryKey(team.league_id) },
   });
 
-  const { data: leagueStats } = useQuery<StatsResponse>({
-    queryKey: ["home-tab-stats", team.league_id],
+  const { data: teamStats } = useQuery<TeamStats[]>({
+    queryKey: ["home-tab-team-stats", team.league_id],
     queryFn: async () => {
-      const res = await fetch(`/api/leagues/${team.league_id}/stats/players?phase=regular`);
+      const res = await fetch(`/api/leagues/${team.league_id}/stats/teams?phase=regular`);
       return res.json();
     },
     enabled: !!team.league_id,
@@ -178,65 +169,42 @@ export default function TeamHomeTab({ team, players, games }: Props) {
     .slice(0, 10);
   const noContractData = players.every(p => p.cap_hit == null);
 
-  // ── Offense / Defense ranks from standings + league stats ──
+  // ── Rankings from standings + team stats ──
   const allTeams = standings ?? [];
+  const n = allTeams.length || 32;
 
-  // PTS ranks from standings
-  const sortedByPtsFor = [...allTeams].sort((a, b) => (b.points_for ?? 0) - (a.points_for ?? 0));
-  const offPtsRank = sortedByPtsFor.findIndex(s => s.team.id === team.id) + 1 || 0;
+  // Points ranks from standings
+  const sortedByPtsFor     = useMemo(() => [...allTeams].sort((a, b) => (b.points_for ?? 0) - (a.points_for ?? 0)), [allTeams]);
+  const sortedByPtsAgainst = useMemo(() => [...allTeams].sort((a, b) => (a.points_against ?? 0) - (b.points_against ?? 0)), [allTeams]);
   const thisStanding = allTeams.find(s => s.team.id === team.id);
-
-  const sortedByPtsAgainst = [...allTeams].sort((a, b) => (a.points_against ?? 0) - (b.points_against ?? 0));
+  const offPtsRank = sortedByPtsFor.findIndex(s => s.team.id === team.id) + 1 || 0;
   const defPtsRank = sortedByPtsAgainst.findIndex(s => s.team.id === team.id) + 1 || 0;
 
-  // YDS ranks from player stats
-  type TeamYds = { teamId: number; passYds: number; rushYds: number; totalYds: number };
-  const teamYdsMap = new Map<number, TeamYds>();
+  // Yardage ranks from team stats endpoint
+  const statsArr = teamStats ?? [];
+  const thisTeamStats = statsArr.find(t => t.team_id === team.id);
 
-  const allPassing = leagueStats?.passing ?? [];
-  const allRushing = leagueStats?.rushing ?? [];
+  const sortedByOffTotalYds = useMemo(() => [...statsArr].sort((a, b) => b.total_yds - a.total_yds), [statsArr]);
+  const sortedByOffPassYds  = useMemo(() => [...statsArr].sort((a, b) => b.pass_yds - a.pass_yds), [statsArr]);
+  const sortedByOffRushYds  = useMemo(() => [...statsArr].sort((a, b) => b.rush_yds - a.rush_yds), [statsArr]);
+  // Defense: lower yards allowed = better rank
+  const sortedByDefTotalYds = useMemo(() => [...statsArr].sort((a, b) => a.total_yds_allowed - b.total_yds_allowed), [statsArr]);
+  const sortedByDefPassYds  = useMemo(() => [...statsArr].sort((a, b) => a.pass_yds_allowed - b.pass_yds_allowed), [statsArr]);
+  const sortedByDefRushYds  = useMemo(() => [...statsArr].sort((a, b) => a.rush_yds_allowed - b.rush_yds_allowed), [statsArr]);
 
-  for (const r of allPassing) {
-    const existing = teamYdsMap.get(r.team_id) ?? { teamId: r.team_id, passYds: 0, rushYds: 0, totalYds: 0 };
-    existing.passYds += (r.pss_yds ?? 0);
-    teamYdsMap.set(r.team_id, existing);
-  }
-  for (const r of allRushing) {
-    const existing = teamYdsMap.get(r.team_id) ?? { teamId: r.team_id, passYds: 0, rushYds: 0, totalYds: 0 };
-    existing.rushYds += (r.rsh_yds ?? 0);
-    teamYdsMap.set(r.team_id, existing);
-  }
-  for (const [, v] of teamYdsMap) {
-    v.totalYds = v.passYds + v.rushYds;
-  }
+  const offYdsRank  = sortedByOffTotalYds.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const offPassRank = sortedByOffPassYds.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const offRushRank = sortedByOffRushYds.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const defYdsRank  = sortedByDefTotalYds.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const defPassRank = sortedByDefPassYds.findIndex(t => t.team_id === team.id) + 1 || 0;
+  const defRushRank = sortedByDefRushYds.findIndex(t => t.team_id === team.id) + 1 || 0;
 
-  const sortedByTotalYds = [...teamYdsMap.values()].sort((a, b) => b.totalYds - a.totalYds);
-  const sortedByPassYds  = [...teamYdsMap.values()].sort((a, b) => b.passYds - a.passYds);
-  const sortedByRushYds  = [...teamYdsMap.values()].sort((a, b) => b.rushYds - a.rushYds);
-  const teamYds = teamYdsMap.get(team.id);
-
-  const offYdsRank  = sortedByTotalYds.findIndex(t => t.teamId === team.id) + 1 || 0;
-  const offPassRank = sortedByPassYds.findIndex(t => t.teamId === team.id) + 1 || 0;
-  const offRushRank = sortedByRushYds.findIndex(t => t.teamId === team.id) + 1 || 0;
-
-  // Defense yards ranks — derived from team_defense (yards allowed per team)
-  const teamDefense = leagueStats?.team_defense ?? [];
-  const sortedByTotalYdsAllowed = [...teamDefense].sort((a, b) => a.total_yds_allowed - b.total_yds_allowed);
-  const sortedByPassYdsAllowed  = [...teamDefense].sort((a, b) => a.pass_yds_allowed - b.pass_yds_allowed);
-  const sortedByRushYdsAllowed  = [...teamDefense].sort((a, b) => a.rush_yds_allowed - b.rush_yds_allowed);
-  const thisTeamDef = teamDefense.find(t => t.team_id === team.id);
-
-  const defYdsRank  = sortedByTotalYdsAllowed.findIndex(t => t.team_id === team.id) + 1 || 0;
-  const defPassRank = sortedByPassYdsAllowed.findIndex(t => t.team_id === team.id) + 1 || 0;
-  const defRushRank = sortedByRushYdsAllowed.findIndex(t => t.team_id === team.id) + 1 || 0;
-
-  const n = allTeams.length || 32;
+  const hasRankData = offPtsRank > 0 || offYdsRank > 0 || defPtsRank > 0 || defYdsRank > 0;
 
   return (
     <div className="space-y-5">
       {/* ── Top row: Details + Cap Info ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Details */}
         <Card header="Details" primaryColor={primaryColor}>
           <InfoRow label="Division" value={`${team.conference} ${team.division}`} />
           {team.user_name && <InfoRow label="Member" value={<span style={{ color: primaryColor }}>@{team.user_name}</span>} />}
@@ -246,29 +214,34 @@ export default function TeamHomeTab({ team, players, games }: Props) {
           <InfoRow label="Injury Count" value={0} />
         </Card>
 
-        {/* Cap Information */}
         <Card header="Cap Information" primaryColor={primaryColor}>
           <InfoRow label="Cap Spent" value={<span style={{ color: primaryColor }}>{capSpent > 0 ? fmtMoney(capSpent) : "—"}</span>} />
-          <InfoRow label="Available" value={capSpent > 0 ? "—" : "—"} />
-          <div className="py-2 text-[10px] text-white/20">
-            Re-import rosters to update cap data.
-          </div>
+          <InfoRow label="Available" value="—" />
+          <div className="py-2 text-[10px] text-white/20">Re-import rosters to update cap data.</div>
         </Card>
       </div>
 
       {/* ── Offense / Defense Ranks ── */}
-      {allTeams.length > 0 && (offPtsRank > 0 || offYdsRank > 0) && (
+      {hasRankData && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Offense */}
           <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
             <div className="px-4 py-2.5" style={{ backgroundColor: primaryColor }}>
               <span className="text-xs font-black uppercase tracking-widest text-white">Offense</span>
             </div>
-            <div className="p-4 flex items-center gap-4">
-              {offPtsRank > 0 && <StatBlock label="PTS" value={thisStanding?.points_for ?? "—"} rank={offPtsRank} total={n} />}
-              {offYdsRank > 0 && <StatBlock label="YDS" value={teamYds?.totalYds ?? "—"} rank={offYdsRank} total={n} />}
-              {offPassRank > 0 && <StatBlock label="P.YDS" value={teamYds?.passYds ?? "—"} rank={offPassRank} total={n} />}
-              {offRushRank > 0 && <StatBlock label="R.YDS" value={teamYds?.rushYds ?? "—"} rank={offRushRank} total={n} />}
+            <div className="p-4 flex items-start gap-2 flex-wrap">
+              {offPtsRank > 0 && (
+                <StatBlock label="PTS" value={thisStanding?.points_for ?? "—"} rank={offPtsRank} />
+              )}
+              {offYdsRank > 0 && (
+                <StatBlock label="YDS" value={fmtYds(thisTeamStats?.total_yds ?? 0)} rank={offYdsRank} />
+              )}
+              {offPassRank > 0 && (
+                <StatBlock label="P.YDS" value={fmtYds(thisTeamStats?.pass_yds ?? 0)} rank={offPassRank} />
+              )}
+              {offRushRank > 0 && (
+                <StatBlock label="R.YDS" value={fmtYds(thisTeamStats?.rush_yds ?? 0)} rank={offRushRank} />
+              )}
             </div>
           </div>
 
@@ -277,11 +250,19 @@ export default function TeamHomeTab({ team, players, games }: Props) {
             <div className="px-4 py-2.5" style={{ backgroundColor: primaryColor }}>
               <span className="text-xs font-black uppercase tracking-widest text-white">Defense</span>
             </div>
-            <div className="p-4 flex items-center gap-4">
-              {defPtsRank > 0 && <StatBlock label="PTS" value={thisStanding?.points_against ?? "—"} rank={defPtsRank} total={n} />}
-              {defYdsRank > 0 && <StatBlock label="YDS" value={thisTeamDef?.total_yds_allowed ?? "—"} rank={defYdsRank} total={teamDefense.length} />}
-              {defPassRank > 0 && <StatBlock label="P.YDS" value={thisTeamDef?.pass_yds_allowed ?? "—"} rank={defPassRank} total={teamDefense.length} />}
-              {defRushRank > 0 && <StatBlock label="R.YDS" value={thisTeamDef?.rush_yds_allowed ?? "—"} rank={defRushRank} total={teamDefense.length} />}
+            <div className="p-4 flex items-start gap-2 flex-wrap">
+              {defPtsRank > 0 && (
+                <StatBlock label="PTS" value={thisStanding?.points_against ?? "—"} rank={defPtsRank} />
+              )}
+              {defYdsRank > 0 && (
+                <StatBlock label="YDS" value={fmtYds(thisTeamStats?.total_yds_allowed ?? 0)} rank={defYdsRank} />
+              )}
+              {defPassRank > 0 && (
+                <StatBlock label="P.YDS" value={fmtYds(thisTeamStats?.pass_yds_allowed ?? 0)} rank={defPassRank} />
+              )}
+              {defRushRank > 0 && (
+                <StatBlock label="R.YDS" value={fmtYds(thisTeamStats?.rush_yds_allowed ?? 0)} rank={defRushRank} />
+              )}
             </div>
           </div>
         </div>
