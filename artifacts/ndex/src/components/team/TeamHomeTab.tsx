@@ -92,7 +92,7 @@ function MiniContractTable({ players, primaryColor, emptyMessage }: { players: T
           {players.map(p => (
             <tr key={p.id} className="border-b border-white/5 hover:bg-white/3">
               <td className="px-3 py-2">
-                <Link href={`/players/${p.id}`} className="font-semibold hover:underline [font-family:'Lora',serif]" style={{ color: primaryColor }}>
+                <Link href={`/players/${p.id}`} className="font-semibold hover:underline [font-family:'Lora',serif] text-[color:var(--color-white)]" style={{ color: primaryColor }}>
                   {p.name}
                 </Link>
               </td>
