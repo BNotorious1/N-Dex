@@ -8,7 +8,7 @@
 
 export interface LeagueInput {
   name: string;
-  commissioner_name: string;
+  commissioner_name?: string;
   platform: string;
   difficulty: string;
   category: string;

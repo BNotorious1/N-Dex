@@ -1239,7 +1239,6 @@ components:
       type: object
       required:
         - name
-        - commissioner_name
         - platform
         - difficulty
         - category

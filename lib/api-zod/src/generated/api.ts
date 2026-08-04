@@ -57,7 +57,7 @@ export const ListLeaguesResponse = zod.array(ListLeaguesResponseItem)
  */
 export const CreateLeagueBody = zod.object({
   "name": zod.string(),
-  "commissioner_name": zod.string(),
+  "commissioner_name": zod.string().optional(),
   "platform": zod.string(),
   "difficulty": zod.string(),
   "category": zod.string(),
