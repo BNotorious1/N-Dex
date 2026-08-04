@@ -1579,6 +1579,7 @@ export const GetPlayerResponse = zod.object({
   "ea_player_id": zod.string().nullish(),
   "presentation_id": zod.number().nullish().describe('EA presentation ID (player identity key)'),
   "portrait_id": zod.number().nullish().describe('EA portrait CDN ID (used in portrait image URLs)'),
+  "custom_portrait_url": zod.string().nullish().describe('Custom portrait object path uploaded by admin (overrides EA portrait)'),
   "birth_year": zod.number().nullish(),
   "birth_month": zod.number().nullish(),
   "birth_day": zod.number().nullish(),
@@ -1978,6 +1979,49 @@ export const UpdateGameResponse = zod.object({
   "week": zod.number(),
   "season": zod.number(),
   "status": zod.string().describe('SCHEDULED, IN_PROGRESS, COMPLETED')
+})
+
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+metadata here, then uploads the file directly to the returned URL.
+
+ * @summary Request a presigned URL for file upload
+ */
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string(),
+  "size": zod.number(),
+  "contentType": zod.string()
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().describe('Presigned GCS URL for PUT upload.'),
+  "objectPath": zod.string().describe('Normalized object path (e.g. \/objects\/uploads\/uuid).'),
+  "metadata": zod.object({
+  "name": zod.string().optional(),
+  "size": zod.number().optional(),
+  "contentType": zod.string().optional()
+}).optional()
+})
+
+
+/**
+ * @summary Save custom portrait object path for a player
+ */
+export const SetPlayerPortraitParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SetPlayerPortraitBody = zod.object({
+  "object_path": zod.string()
+})
+
+
+/**
+ * @summary Reset player portrait to EA default
+ */
+export const DeletePlayerPortraitParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 

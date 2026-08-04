@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, playersTable, teamsTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, playerAwardsTable, AWARD_TYPES, playerTransactionsTable, TRANSACTION_TYPES } from "@workspace/db";
+import { db, playersTable, teamsTable, leaguesTable, playerAbilitiesTable, playerGameStatsTable, gamesTable, playerAwardsTable, AWARD_TYPES, playerTransactionsTable, TRANSACTION_TYPES } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { GetPlayerParams, UpdatePlayerParams, UpdatePlayerBody, GetPlayerAwardsParams, AddPlayerAwardParams, AddPlayerAwardBody, DeletePlayerAwardParams, GetPlayerTransactionsParams, AddPlayerTransactionParams, AddPlayerTransactionBody, DeletePlayerTransactionParams } from "@workspace/api-zod";
@@ -174,6 +174,7 @@ router.get("/:id", async (req, res) => {
     lb_style_trait: player.lbStyleTrait,
     trade_block: player.tradeBlock,
     team_user_name: team.userName ?? null,
+    custom_portrait_url: player.customPortraitUrl ?? null,
     abilities: abilities.map(a => ({
       slot_index: a.slotIndex,
       title: a.title,
@@ -498,6 +499,70 @@ router.patch("/:id/trade-block", async (req, res) => {
     .returning({ tradeBlock: playersTable.tradeBlock });
 
   res.json({ trade_block: updated!.tradeBlock });
+});
+
+// ─── Portrait upload/reset (commissioner only) ────────────────────────────────
+
+async function getPlayerWithLeague(id: number) {
+  const rows = await db
+    .select({
+      player: playersTable,
+      team: teamsTable,
+      league: leaguesTable,
+    })
+    .from(playersTable)
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .innerJoin(leaguesTable, eq(teamsTable.leagueId, leaguesTable.id))
+    .where(eq(playersTable.id, id))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+// PATCH /players/:id/portrait — save custom portrait object path
+router.patch("/:id/portrait", async (req, res) => {
+  const id = Number(req.params["id"]);
+  if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!req.session.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  const { object_path } = req.body;
+  if (!object_path || typeof object_path !== "string") {
+    res.status(400).json({ error: "object_path is required" }); return;
+  }
+
+  const row = await getPlayerWithLeague(id);
+  if (!row) { res.status(404).json({ error: "Player not found" }); return; }
+
+  if (row.league.commissionerName !== req.session.user.username) {
+    res.status(403).json({ error: "Only the league commissioner can change player portraits" }); return;
+  }
+
+  await db
+    .update(playersTable)
+    .set({ customPortraitUrl: object_path })
+    .where(eq(playersTable.id, id));
+
+  res.json({ custom_portrait_url: object_path });
+});
+
+// DELETE /players/:id/portrait — reset to EA portrait
+router.delete("/:id/portrait", async (req, res) => {
+  const id = Number(req.params["id"]);
+  if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!req.session.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  const row = await getPlayerWithLeague(id);
+  if (!row) { res.status(404).json({ error: "Player not found" }); return; }
+
+  if (row.league.commissionerName !== req.session.user.username) {
+    res.status(403).json({ error: "Only the league commissioner can reset player portraits" }); return;
+  }
+
+  await db
+    .update(playersTable)
+    .set({ customPortraitUrl: null })
+    .where(eq(playersTable.id, id));
+
+  res.json({ custom_portrait_url: null });
 });
 
 // PATCH /players/:id

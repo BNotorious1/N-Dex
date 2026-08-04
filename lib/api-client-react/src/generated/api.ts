@@ -54,13 +54,16 @@ import type {
   PlayerTransaction,
   PlayerTransactionInput,
   PlayerUpdate,
+  SetPlayerPortraitBody,
   StandingEntry,
   StatLeaders,
   Team,
   TeamGame,
   TeamInput,
   TeamUpdate,
-  UpdateLeagueTradeInput
+  UpdateLeagueTradeInput,
+  UploadUrlRequest,
+  UploadUrlResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -3812,5 +3815,221 @@ export const useUpdateGame = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateGameMutationOptions(options));
+    }
+
+export const getRequestUploadUrlUrl = () => {
+
+
+
+
+  return `/api/storage/uploads/request-url`
+}
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+metadata here, then uploads the file directly to the returned URL.
+
+ * @summary Request a presigned URL for file upload
+ */
+export const requestUploadUrl = async (uploadUrlRequest: UploadUrlRequest, options?: RequestInit): Promise<UploadUrlResponse> => {
+
+  return customFetch<UploadUrlResponse>(getRequestUploadUrlUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      uploadUrlRequest,)
+  }
+);}
+
+
+
+
+export const getRequestUploadUrlMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext> => {
+
+const mutationKey = ['requestUploadUrl'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestUploadUrl>>, {data: BodyType<UploadUrlRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestUploadUrl(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof requestUploadUrl>>>
+    export type RequestUploadUrlMutationBody = BodyType<UploadUrlRequest>
+    export type RequestUploadUrlMutationError = ErrorType<void>
+
+    /**
+ * @summary Request a presigned URL for file upload
+ */
+export const useRequestUploadUrl = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestUploadUrl>>,
+        TError,
+        {data: BodyType<UploadUrlRequest>},
+        TContext
+      > => {
+      return useMutation(getRequestUploadUrlMutationOptions(options));
+    }
+
+export const getSetPlayerPortraitUrl = (id: number,) => {
+
+
+
+
+  return `/api/players/${id}/portrait`
+}
+
+/**
+ * @summary Save custom portrait object path for a player
+ */
+export const setPlayerPortrait = async (id: number,
+    setPlayerPortraitBody: SetPlayerPortraitBody, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getSetPlayerPortraitUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      setPlayerPortraitBody,)
+  }
+);}
+
+
+
+
+export const getSetPlayerPortraitMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPlayerPortrait>>, TError,{id: number;data: BodyType<SetPlayerPortraitBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setPlayerPortrait>>, TError,{id: number;data: BodyType<SetPlayerPortraitBody>}, TContext> => {
+
+const mutationKey = ['setPlayerPortrait'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setPlayerPortrait>>, {id: number;data: BodyType<SetPlayerPortraitBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setPlayerPortrait(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetPlayerPortraitMutationResult = NonNullable<Awaited<ReturnType<typeof setPlayerPortrait>>>
+    export type SetPlayerPortraitMutationBody = BodyType<SetPlayerPortraitBody>
+    export type SetPlayerPortraitMutationError = ErrorType<void>
+
+    /**
+ * @summary Save custom portrait object path for a player
+ */
+export const useSetPlayerPortrait = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPlayerPortrait>>, TError,{id: number;data: BodyType<SetPlayerPortraitBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setPlayerPortrait>>,
+        TError,
+        {id: number;data: BodyType<SetPlayerPortraitBody>},
+        TContext
+      > => {
+      return useMutation(getSetPlayerPortraitMutationOptions(options));
+    }
+
+export const getDeletePlayerPortraitUrl = (id: number,) => {
+
+
+
+
+  return `/api/players/${id}/portrait`
+}
+
+/**
+ * @summary Reset player portrait to EA default
+ */
+export const deletePlayerPortrait = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeletePlayerPortraitUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeletePlayerPortraitMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlayerPortrait>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePlayerPortrait>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deletePlayerPortrait'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlayerPortrait>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deletePlayerPortrait(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePlayerPortraitMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlayerPortrait>>>
+
+    export type DeletePlayerPortraitMutationError = ErrorType<void>
+
+    /**
+ * @summary Reset player portrait to EA default
+ */
+export const useDeletePlayerPortrait = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlayerPortrait>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deletePlayerPortrait>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeletePlayerPortraitMutationOptions(options));
     }
 

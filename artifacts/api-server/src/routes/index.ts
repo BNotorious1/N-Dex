@@ -8,11 +8,13 @@ import importRouter from "./import";
 import eaRouter from "./ea";
 import proxyRouter from "./proxy";
 import authRouter from "./auth";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use(storageRouter);
 router.use("/leagues", leaguesRouter);
 router.use("/leagues/:id/ea", eaRouter);
 router.use("/teams", teamsRouter);

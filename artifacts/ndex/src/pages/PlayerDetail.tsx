@@ -6,8 +6,8 @@ import Navbar from "@/components/Navbar";
 import TeamLogo from "@/components/TeamLogo";
 import { useGetPlayerGameLog, useGetPlayerAwards, useAddPlayerAward, useDeletePlayerAward, getGetPlayerAwardsQueryKey, useGetPlayerTransactions, useAddPlayerTransaction, useDeletePlayerTransaction, getGetPlayerTransactionsQueryKey, useGetLeagueSummary, getGetLeagueSummaryQueryKey } from "@workspace/api-client-react";
 import LeagueSidebar from "@/components/league/LeagueSidebar";
-import type { GameLogEntry } from "@workspace/api-client-react";
-import { ArrowRight, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus } from "lucide-react";
+import type { GameLogEntry, LeagueSummary } from "@workspace/api-client-react";
+import { ArrowRight, User, Zap, Star, ShieldAlert, Activity, BarChart3, Trophy, Clock, BookOpen, UserCircle2, Check, X, Plus, Camera } from "lucide-react";
 import devTraitNormal from "@assets/Normal_1781202579092.png";
 import devTraitStar from "@assets/Star_1781202579092.png";
 import devTraitSuperstar from "@assets/Superstar_1781202579092.png";
@@ -127,6 +127,7 @@ interface PlayerDetail {
   lb_style_trait: number | null;
   trade_block: boolean;
   team_user_name: string | null;
+  custom_portrait_url: string | null;
   abilities: Array<{
     slot_index: number;
     title: string;
@@ -1749,6 +1750,115 @@ function AbilitiesTab({ player }: { player: PlayerDetail }) {
   );
 }
 
+// ─── Portrait Upload Button ───────────────────────────────────────────────────
+
+function PortraitUploadButton({
+  player,
+  leagueSummary,
+}: {
+  player: PlayerDetail;
+  leagueSummary: LeagueSummary | undefined;
+}) {
+  const queryClient = useQueryClient();
+  const { data: authUser } = useQuery<{ user: { username: string } } | null>({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const commissionerName = leagueSummary?.league?.commissioner_name;
+  const isCommissioner = !!authUser?.user && authUser.user.username === commissionerName;
+  if (!isCommissioner) return null;
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    setError(null);
+    try {
+      // 1. Get presigned upload URL
+      const urlRes = await fetch("/api/storage/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+        credentials: "include",
+      });
+      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+      const { uploadURL, objectPath } = await urlRes.json();
+
+      // 2. Upload directly to GCS
+      const putRes = await fetch(uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!putRes.ok) throw new Error("Upload failed");
+
+      // 3. Save objectPath to player
+      const saveRes = await fetch(`/api/players/${player.id}/portrait`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ object_path: objectPath }),
+        credentials: "include",
+      });
+      if (!saveRes.ok) throw new Error("Failed to save portrait");
+
+      queryClient.invalidateQueries({ queryKey: ["player", player.id] });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleReset() {
+    setUploading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/players/${player.id}/portrait`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to reset portrait");
+      queryClient.invalidateQueries({ queryKey: ["player", player.id] });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Reset failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1 mt-1.5">
+      <label className={`flex items-center gap-1 text-[10px] font-bold cursor-pointer transition-colors ${uploading ? "opacity-40 pointer-events-none" : "text-white/30 hover:text-white/70"}`}>
+        <Camera className="w-3 h-3" />
+        {uploading ? "Uploading…" : "Change Photo"}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+          disabled={uploading}
+        />
+      </label>
+      {player.custom_portrait_url && !uploading && (
+        <button
+          onClick={handleReset}
+          className="text-[9px] text-white/20 hover:text-white/50 transition-colors"
+        >
+          Reset to EA photo
+        </button>
+      )}
+      {error && <p className="text-[9px] text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 // ─── Trade Block Toggle ───────────────────────────────────────────────────────
 
 interface AuthUser { username: string }
@@ -1822,7 +1932,10 @@ export default function PlayerDetail() {
 
   const teamColor = player?.team_primary_color ?? "#00C8FF";
   const [firstName, lastName] = player ? splitName(player.name) : ["", ""];
-  const showPortrait = !!player?.portrait_id && !portraitError;
+  const customPortraitSrc = player?.custom_portrait_url
+    ? `/api/storage${player.custom_portrait_url}`
+    : null;
+  const showPortrait = !!customPortraitSrc || (!!player?.portrait_id && !portraitError);
 
   const devInfo = player?.dev_trait != null
     ? DEV_TRAIT[player.dev_trait] ?? DEV_TRAIT[0]!
@@ -1900,33 +2013,36 @@ export default function PlayerDetail() {
               <div className="flex items-end gap-7">
 
                 {/* Portrait */}
-                <div
-                  className="shrink-0 relative rounded-2xl overflow-hidden border border-white/10"
-                  style={{
-                    width: 140,
-                    height: 140,
-                    background: `linear-gradient(160deg, ${teamColor}22 0%, #111 100%)`,
-                    boxShadow: `0 0 32px ${teamColor}25`,
-                  }}
-                >
-                  {showPortrait ? (
-                    <img
-                      src={portraitUrl(player.portrait_id!)}
-                      alt={player.name}
-                      onError={() => setPortraitError(true)}
-                      className="w-full h-full object-cover object-top scale-125 origin-top mt-[-35px] mb-[-35px]"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-end justify-center pb-2">
-                      <UserCircle2 className="h-24 w-24 text-white/10" />
-                    </div>
-                  )}
+                <div className="shrink-0 flex flex-col items-center gap-0">
                   <div
-                    className="absolute bottom-0 left-0 right-0 py-1 text-center text-[11px] font-black tracking-wider"
-                    style={{ backgroundColor: `${teamColor}cc`, color: "#fff" }}
+                    className="relative rounded-2xl overflow-hidden border border-white/10"
+                    style={{
+                      width: 140,
+                      height: 140,
+                      background: `linear-gradient(160deg, ${teamColor}22 0%, #111 100%)`,
+                      boxShadow: `0 0 32px ${teamColor}25`,
+                    }}
                   >
-                    {player.position} · {player.overall}
+                    {showPortrait ? (
+                      <img
+                        src={customPortraitSrc ?? portraitUrl(player.portrait_id!)}
+                        alt={player.name}
+                        onError={customPortraitSrc ? undefined : () => setPortraitError(true)}
+                        className="w-full h-full object-cover object-top scale-125 origin-top mt-[-35px] mb-[-35px]"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-end justify-center pb-2">
+                        <UserCircle2 className="h-24 w-24 text-white/10" />
+                      </div>
+                    )}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 py-1 text-center text-[11px] font-black tracking-wider"
+                      style={{ backgroundColor: `${teamColor}cc`, color: "#fff" }}
+                    >
+                      {player.position} · {player.overall}
+                    </div>
                   </div>
+                  <PortraitUploadButton player={player} leagueSummary={leagueSummary} />
                 </div>
 
                 {/* Info */}

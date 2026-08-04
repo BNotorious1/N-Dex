@@ -18,6 +18,7 @@ export const playersTable = pgTable("players", {
   eaPlayerId: text("ea_player_id"),
   presentationId: integer("presentation_id"),
   portraitId: integer("portrait_id"),
+  customPortraitUrl: text("custom_portrait_url"),
   birthYear: integer("birth_year"),
   birthMonth: integer("birth_month"),
   birthDay: integer("birth_day"),

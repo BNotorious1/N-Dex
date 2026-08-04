@@ -355,6 +355,11 @@ export interface PlayerDetail {
      * @nullable
      */
   portrait_id?: number | null;
+  /**
+     * Custom portrait object path uploaded by admin (overrides EA portrait)
+     * @nullable
+     */
+  custom_portrait_url?: string | null;
   /** @nullable */
   birth_year?: number | null;
   /** @nullable */
@@ -1074,6 +1079,26 @@ export interface LeagueDraftEntry {
   team_color?: string | null;
 }
 
+export interface UploadUrlRequest {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export type UploadUrlResponseMetadata = {
+  name?: string;
+  size?: number;
+  contentType?: string;
+};
+
+export interface UploadUrlResponse {
+  /** Presigned GCS URL for PUT upload. */
+  uploadURL: string;
+  /** Normalized object path (e.g. /objects/uploads/uuid). */
+  objectPath: string;
+  metadata?: UploadUrlResponseMetadata;
+}
+
 export type ListLeaguesParams = {
 platform?: string;
 difficulty?: string;
@@ -1082,5 +1107,9 @@ skill_level?: string;
 is_cross_play?: boolean;
 is_money_league?: boolean;
 search?: string;
+};
+
+export type SetPlayerPortraitBody = {
+  object_path: string;
 };
 

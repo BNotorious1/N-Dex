@@ -39,6 +39,11 @@ export interface PlayerDetail {
      * @nullable
      */
   portrait_id?: number | null;
+  /**
+     * Custom portrait object path uploaded by admin (overrides EA portrait)
+     * @nullable
+     */
+  custom_portrait_url?: string | null;
   /** @nullable */
   birth_year?: number | null;
   /** @nullable */
