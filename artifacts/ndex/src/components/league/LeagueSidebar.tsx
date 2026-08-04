@@ -44,6 +44,7 @@ const NAV: NavItem[] = [
     sub: [
       { key: "games" as LeagueSection, label: "Schedule", icon: Calendar },
       { key: "games-gotw" as LeagueSection, label: "Game of Week", icon: Star },
+      { key: "games-playoff" as LeagueSection, label: "Playoff Machine", icon: TrendingUp },
     ],
   },
   { key: "statistics", label: "Statistics", icon: BarChart3 },
@@ -85,7 +86,7 @@ export default function LeagueSidebar({ league, section, onSelect, collapsed, on
   if (["trades", "trades-create", "trades-league", "trades-counts"].includes(section)) {
     initialExpanded.add("trades");
   }
-  if (["games", "games-gotw"].includes(section)) {
+  if (["games", "games-gotw", "games-playoff"].includes(section)) {
     initialExpanded.add("games");
   }
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);

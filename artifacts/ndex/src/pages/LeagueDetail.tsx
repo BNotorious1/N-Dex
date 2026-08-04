@@ -23,6 +23,7 @@ import TeamsSection from "@/components/league/sections/TeamsSection";
 import PlayersSection from "@/components/league/sections/PlayersSection";
 import StandingsSection from "@/components/league/sections/StandingsSection";
 import GamesSection from "@/components/league/sections/GamesSection";
+import PlayoffMachineSection from "@/components/league/sections/PlayoffMachineSection";
 import StatisticsSection from "@/components/league/sections/StatisticsSection";
 import RankingsSection from "@/components/league/sections/RankingsSection";
 import PlaceholderSection from "@/components/league/sections/PlaceholderSection";
@@ -40,7 +41,7 @@ import TradeCountsSection from "@/components/league/sections/TradeCountsSection"
 
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "players-search" | "suspensions"
-  | "games" | "games-gotw" | "statistics" | "standings" | "transactions" | "draft"
+  | "games" | "games-gotw" | "games-playoff" | "statistics" | "standings" | "transactions" | "draft"
   | "rankings" | "trades" | "trades-create" | "trades-league" | "trades-counts" | "awards"
   | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
   | "admin-members" | "admin-requests" | "admin-invite" | "admin-advance";
@@ -59,12 +60,12 @@ export default function LeagueDetail() {
   });
   const { data: standings } = useGetLeagueStandings(leagueId, {
     query: {
-      enabled: !!leagueId && (section === "standings" || section === "rankings" || section === "home"),
+      enabled: !!leagueId && (section === "standings" || section === "rankings" || section === "home" || section === "games-playoff"),
       queryKey: getGetLeagueStandingsQueryKey(leagueId),
     },
   });
   const { data: games } = useGetLeagueGames(leagueId, {
-    query: { enabled: !!leagueId && section === "games", queryKey: getGetLeagueGamesQueryKey(leagueId) },
+    query: { enabled: !!leagueId && (section === "games" || section === "games-playoff"), queryKey: getGetLeagueGamesQueryKey(leagueId) },
   });
   const { data: statLeaders } = useGetLeagueStatLeaders(leagueId, {
     query: {
@@ -131,6 +132,9 @@ export default function LeagueDetail() {
             {section === "games" && <GamesSection games={games ?? []} />}
             {section === "games-gotw" && (
               <AdminGameOfWeekSection leagueId={leagueId} currentWeek={summary?.current_week} currentSeason={summary?.league?.season} />
+            )}
+            {section === "games-playoff" && (
+              <PlayoffMachineSection games={games ?? []} standings={standings ?? []} />
             )}
             {section === "statistics" && <StatisticsSection leagueId={leagueId} />}
             {section === "rankings" && <RankingsSection standings={standings ?? []} />}
