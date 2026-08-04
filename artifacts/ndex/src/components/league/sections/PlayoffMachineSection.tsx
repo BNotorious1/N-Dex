@@ -258,7 +258,7 @@ function SeedCard({
         <span className="text-[10px] text-white/40 tabular-nums [font-family:'Lora',serif]">{RecordStr(rec)}</span>
       </div>
       <span
-        className="text-[9px] font-black tabular-nums"
+        className="font-black tabular-nums text-[color:var(--color-white)] text-[12px]"
         style={{ color }}
       >
         {((winPct(rec)) * 100).toFixed(0)}%
@@ -389,7 +389,7 @@ function GameToggle({
               {awayInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.away_score != null && (
-              <p className={`text-[10px] tabular-nums [font-family:'Lora',serif] ${awayWon ? "" : "text-white/30"}`}
+              <p className="text-[10px] tabular-nums [font-family:'Lora',serif] text-[color:var(--color-white)]"
                 style={awayWon ? { color: awayColor } : {}}>
                 {game.away_score}
               </p>
@@ -424,7 +424,7 @@ function GameToggle({
               {homeInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.home_score != null && (
-              <p className={`text-[10px] tabular-nums [font-family:'Lora',serif] text-right ${homeWon ? "" : "text-white/30"}`}
+              <p className="text-[10px] tabular-nums [font-family:'Lora',serif] text-right border-t-[color:var(--color-white)] border-r-[color:var(--color-white)] border-b-[color:var(--color-white)] border-l-[color:var(--color-white)] text-[#ffffff]"
                 style={homeWon ? { color: homeColor } : {}}>
                 {game.home_score}
               </p>
