@@ -13,7 +13,6 @@ import { useAuth } from "@/context/AuthContext";
 
 const schema = z.object({
   name: z.string().min(1, "League name is required"),
-  commissioner_name: z.string().min(1, "Commissioner name is required"),
   platform: z.string().min(1),
   difficulty: z.string().min(1),
   category: z.string().min(1),
@@ -37,7 +36,6 @@ export default function NewLeague() {
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
-      commissioner_name: "",
       platform: "PS5",
       difficulty: "ALL_MADDEN",
       category: "REGULAR",
