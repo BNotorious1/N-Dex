@@ -140,7 +140,7 @@ function SortTh({ colKey, label, sort, onSort }: {
   return (
     <th
       onClick={() => onSort(colKey)}
-      className="px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-wider cursor-pointer select-none w-10 whitespace-nowrap hover:text-white transition-colors"
+      className="px-2 py-2.5 text-center font-bold uppercase tracking-wider cursor-pointer select-none w-10 whitespace-nowrap hover:text-white transition-colors text-[12px]"
       style={{ color: active ? "white" : "rgba(255,255,255,0.35)" }}
     >
       {label}
@@ -174,9 +174,9 @@ function GroupTable({ label, players, attrs, primaryColor }: GroupTableProps) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-white/10" style={{ backgroundColor: `${primaryColor}25` }}>
-              <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider min-w-[140px]"
+              <th className="px-4 py-2.5 text-left font-bold uppercase tracking-wider min-w-[140px] text-[12px]"
                   style={{ color: "rgba(255,255,255,0.5)" }}>Player</th>
-              <th className="px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-wider text-white/40 w-12">POS</th>
+              <th className="px-2 py-2.5 text-center font-bold uppercase tracking-wider text-white/40 w-12 text-[12px]">POS</th>
               <SortTh colKey="dev_trait" label="DEV" sort={sort} onSort={handleSort} />
               <SortTh colKey="overall"   label="OVR" sort={sort} onSort={handleSort} />
               <SortTh colKey="age"       label="AGE" sort={sort} onSort={handleSort} />
@@ -193,22 +193,22 @@ function GroupTable({ label, players, attrs, primaryColor }: GroupTableProps) {
               return (
                 <tr key={p.id} className={`border-b border-white/5 hover:bg-white/3 transition-colors ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
                   <td className="px-4 py-2 min-w-[140px]">
-                    <Link href={`/players/${p.id}`} className="font-semibold text-[11px] hover:underline [font-family:'Lora',serif]" style={{ color: primaryColor }}>
+                    <Link href={`/players/${p.id}`} className="font-semibold hover:underline [font-family:'Lora',serif] text-[14px]" style={{ color: primaryColor }}>
                       {p.name}
                     </Link>
                   </td>
                   <td className="px-2 py-2 text-center w-12">
-                    <span className="text-[10px] font-bold text-white/50">{p.position}</span>
+                    <span className="font-bold text-white/50 text-[12px]">{p.position}</span>
                   </td>
-                  <td className="px-2 py-2 text-center w-18 text-[10px] font-bold text-[#ffffff80]">{devLabel}</td>
-                  <td className="px-2 py-2 text-center w-10 text-[11px] font-black tabular-nums text-white [font-family:'Lora',serif]">{p.overall}</td>
-                  <td className="px-2 py-2 text-center w-10 text-[11px] tabular-nums text-white/50 [font-family:'Lora',serif]">{p.age}</td>
-                  <td className="px-2 py-2 text-center w-14 text-[11px] tabular-nums text-white/50 [font-family:'Lora',serif]">{fmtHeight(p.height)}</td>
-                  <td className="px-2 py-2 text-center w-14 text-[11px] tabular-nums text-white/50 [font-family:'Lora',serif]">{p.weight != null ? p.weight : "—"}</td>
+                  <td className="px-2 py-2 text-center w-18 font-bold text-[#ffffff80] text-[12px]">{devLabel}</td>
+                  <td className="px-2 py-2 text-center w-10 font-black tabular-nums text-white [font-family:'Lora',serif] text-[14px]">{p.overall}</td>
+                  <td className="px-2 py-2 text-center w-10 tabular-nums [font-family:'Lora',serif] text-[14px] text-[#ffffffb3]">{p.age}</td>
+                  <td className="px-2 py-2 text-center w-14 tabular-nums [font-family:'Lora',serif] text-[14px] text-[#ffffffb3]">{fmtHeight(p.height)}</td>
+                  <td className="px-2 py-2 text-center w-14 tabular-nums [font-family:'Lora',serif] text-[14px] text-[#ffffffb3]">{p.weight != null ? p.weight : "—"}</td>
                   {BASE_PHYS.map(a => {
                     const v = attrVal(p, a.key);
                     return (
-                      <td key={String(a.key)} className="px-2 py-2 text-center tabular-nums text-[11px] text-white/70 w-10 [font-family:'Lora',serif]">
+                      <td key={String(a.key)} className="px-2 py-2 text-center tabular-nums text-white/70 w-10 [font-family:'Lora',serif] text-[14px]">
                         {v ?? "—"}
                       </td>
                     );
@@ -216,7 +216,7 @@ function GroupTable({ label, players, attrs, primaryColor }: GroupTableProps) {
                   {attrs.map(a => {
                     const v = attrVal(p, a.key);
                     return (
-                      <td key={String(a.key)} className="px-2 py-2 text-center tabular-nums text-[11px] text-white/70 w-10 [font-family:'Lora',serif]">
+                      <td key={String(a.key)} className="px-2 py-2 text-center tabular-nums text-white/70 w-10 [font-family:'Lora',serif] text-[14px]">
                         {v ?? "—"}
                       </td>
                     );
