@@ -170,15 +170,21 @@ router.get("/", async (req, res) => {
 
 // POST /leagues
 router.post("/", async (req, res) => {
+  if (!req.session?.user) {
+    res.status(401).json({ error: "You must be logged in to create a league" });
+    return;
+  }
   const parseResult = CreateLeagueBody.safeParse(req.body);
   if (!parseResult.success) {
     res.status(400).json({ error: "Invalid body" });
     return;
   }
   const data = parseResult.data;
+  // Always use the authenticated Discord username as commissioner — ignore any client-supplied value
+  const commissionerName = req.session.user.username;
   const [league] = await db.insert(leaguesTable).values({
     name: data.name,
-    commissionerName: data.commissioner_name,
+    commissionerName,
     platform: data.platform ?? "PS5",
     difficulty: data.difficulty ?? "ALL_MADDEN",
     category: data.category ?? "REGULAR",
@@ -189,6 +195,12 @@ router.post("/", async (req, res) => {
     isMoneyLeague: data.is_money_league ?? false,
     description: data.description,
   }).returning();
+  // Insert commissioner as the first member of the league
+  await db.insert(membersTable).values({
+    leagueId: league.id,
+    discordName: commissionerName,
+    permissions: 1,
+  });
   res.status(201).json(formatLeague(league));
 });
 

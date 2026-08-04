@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "wouter";
+import { useAuth } from "@/context/AuthContext";
 import {
   useGetLeagueSummary,
   useGetLeagueStandings,
@@ -49,6 +50,7 @@ export type LeagueSection =
 export default function LeagueDetail() {
   const params = useParams<{ id: string }>();
   const leagueId = Number(params.id);
+  const { user } = useAuth();
   const [section, setSection] = useState<LeagueSection>(() => {
     const s = new URLSearchParams(window.location.search).get("section");
     return (s as LeagueSection) ?? "home";
@@ -98,6 +100,8 @@ export default function LeagueDetail() {
   }
 
   const league = summary?.league;
+  const isAdmin = !!user && !!league && user.username === league.commissioner_name;
+
   if (!league) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
@@ -116,9 +120,14 @@ export default function LeagueDetail() {
         <LeagueSidebar
           league={league}
           section={section}
-          onSelect={setSection}
+          onSelect={(s) => {
+            // Block non-admins from navigating into admin sections
+            if (!isAdmin && (s as string).startsWith("admin")) return;
+            setSection(s);
+          }}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((v) => !v)}
+          isAdmin={isAdmin}
         />
         <main className="flex-1 overflow-y-auto">
           <LeagueBanner league={league} summary={summary} />

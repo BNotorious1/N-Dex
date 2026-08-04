@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/context/AuthContext";
 
 const schema = z.object({
   name: z.string().min(1, "League name is required"),
@@ -30,6 +31,7 @@ export default function NewLeague() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const createLeague = useCreateLeague();
+  const { user, loading, login } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -59,6 +61,36 @@ export default function NewLeague() {
       }
     );
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="h-6 w-48 bg-white/5 rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-white/60 text-sm">You must be logged in to create a league.</p>
+            <button
+              onClick={login}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#5865F2] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#4752C4] transition-colors"
+            >
+              Login with Discord
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -94,24 +126,16 @@ export default function NewLeague() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="commissioner_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs text-white/60 uppercase tracking-wider">Commissioner Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="your_gamertag"
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#00C8FF]/40"
-                        data-testid="input-commissioner-name"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-1.5">
+                <p className="text-xs text-white/60 uppercase tracking-wider font-medium">Commissioner</p>
+                <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                  {user.avatar && (
+                    <img src={user.avatar} alt="" className="h-5 w-5 rounded-full" />
+                  )}
+                  <span className="text-sm text-white">{user.username}</span>
+                  <span className="ml-auto text-[10px] text-white/30 uppercase tracking-wider">You</span>
+                </div>
+              </div>
 
               <FormField
                 control={form.control}

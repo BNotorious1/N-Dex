@@ -18,6 +18,8 @@ interface Props {
   onToggle: () => void;
   /** When provided the sidebar renders navigation links instead of local section callbacks */
   navLeagueId?: number;
+  /** Only commissioners see the Administration section */
+  isAdmin?: boolean;
 }
 
 interface NavItem {
@@ -81,7 +83,7 @@ const ADMIN_KEYS: LeagueSection[] = [
   "games-gotw",
 ];
 
-export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle, navLeagueId }: Props) {
+export default function LeagueSidebar({ league, section, onSelect, collapsed, onToggle, navLeagueId, isAdmin = false }: Props) {
   const initialExpanded = new Set(["players", "admin"]);
   if (["trades", "trades-create", "trades-league", "trades-counts"].includes(section)) {
     initialExpanded.add("trades");
@@ -144,7 +146,7 @@ export default function LeagueSidebar({ league, section, onSelect, collapsed, on
           }
         </button>
 
-        {NAV.map((item) => {
+        {NAV.filter((item) => item.key !== "admin" || isAdmin).map((item) => {
           const Icon = item.icon;
           const isActive = section === item.key;
           const hasSubActive = item.sub?.some((s) => s.key === section);
