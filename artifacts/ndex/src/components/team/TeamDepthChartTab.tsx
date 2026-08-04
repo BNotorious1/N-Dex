@@ -200,7 +200,7 @@ function GroupTable({ label, players, attrs, primaryColor }: GroupTableProps) {
                   <td className="px-2 py-2 text-center w-12">
                     <span className="text-[10px] font-bold text-white/50">{p.position}</span>
                   </td>
-                  <td className={`px-2 py-2 text-center w-18 text-[10px] font-bold ${devColor}`}>{devLabel}</td>
+                  <td className="px-2 py-2 text-center w-18 text-[10px] font-bold text-[#ffffff80]">{devLabel}</td>
                   <td className="px-2 py-2 text-center w-10 text-[11px] font-black tabular-nums text-white [font-family:'Lora',serif]">{p.overall}</td>
                   <td className="px-2 py-2 text-center w-10 text-[11px] tabular-nums text-white/50 [font-family:'Lora',serif]">{p.age}</td>
                   <td className="px-2 py-2 text-center w-14 text-[11px] tabular-nums text-white/50 [font-family:'Lora',serif]">{fmtHeight(p.height)}</td>
