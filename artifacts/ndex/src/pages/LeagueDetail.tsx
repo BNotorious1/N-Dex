@@ -8,12 +8,14 @@ import {
   useGetLeagueStatLeaders,
   useGetLeagueTeams,
   useGetLeagueGameOfWeek,
+  useGetLeagueMembers,
   getGetLeagueSummaryQueryKey,
   getGetLeagueStandingsQueryKey,
   getGetLeagueGamesQueryKey,
   getGetLeagueStatLeadersQueryKey,
   getGetLeagueTeamsQueryKey,
   getGetLeagueGameOfWeekQueryKey,
+  getGetLeagueMembersQueryKey,
 } from "@workspace/api-client-react";
 
 import Navbar from "@/components/Navbar";
@@ -84,6 +86,9 @@ export default function LeagueDetail() {
       queryKey: getGetLeagueGameOfWeekQueryKey(leagueId),
     },
   });
+  const { data: members = [] } = useGetLeagueMembers(leagueId, {
+    query: { enabled: !!leagueId, queryKey: getGetLeagueMembersQueryKey(leagueId) },
+  });
 
   if (isLoading) {
     return (
@@ -101,6 +106,7 @@ export default function LeagueDetail() {
 
   const league = summary?.league;
   const isAdmin = !!user && !!league && user.username === league.commissioner_name;
+  const isMember = isAdmin || (!!user && members.some((m: { discord_name: string }) => m.discord_name === user.username));
 
   if (!league) {
     return (
@@ -130,7 +136,7 @@ export default function LeagueDetail() {
           isAdmin={isAdmin}
         />
         <main className="flex-1 overflow-y-auto">
-          <LeagueBanner league={league} summary={summary} />
+          <LeagueBanner league={league} summary={summary} currentUsername={user?.username ?? null} isMember={isMember} />
           <div className="px-6 py-6">
             {section === "home" && (
               <HomeSection summary={summary} leagueId={leagueId} statLeaders={statLeaders} standings={standings} gotw={gotw} onNavigate={setSection as (s: string) => void} />

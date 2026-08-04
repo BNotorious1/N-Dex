@@ -16,12 +16,20 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
+interface MyLeague {
+  id: number;
+  name: string;
+  platform: string;
+}
+
 export default function Navbar() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user, loading, login, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [myLeagues, setMyLeagues] = useState<MyLeague[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -31,6 +39,15 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Fetch my leagues when dropdown opens and user is logged in
+  useEffect(() => {
+    if (!dropdownOpen || !user) return;
+    fetch("/api/leagues/my", { credentials: "include" })
+      .then(r => r.json())
+      .then((data: MyLeague[]) => setMyLeagues(Array.isArray(data) ? data : []))
+      .catch(() => setMyLeagues([]));
+  }, [dropdownOpen, user]);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md">
@@ -85,7 +102,8 @@ export default function Navbar() {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 rounded-xl bg-[#141414] border border-white/10 shadow-2xl overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-60 rounded-xl bg-[#141414] border border-white/10 shadow-2xl overflow-hidden z-50">
+                {/* User identity */}
                 <div className="px-4 py-3 border-b border-white/8">
                   <div className="flex items-center gap-2.5">
                     {user.avatar ? (
@@ -101,6 +119,30 @@ export default function Navbar() {
                     </div>
                   </div>
                 </div>
+
+                {/* My Leagues */}
+                {myLeagues.length > 0 && (
+                  <div className="border-b border-white/8">
+                    <p className="px-4 pt-2.5 pb-1 text-[9px] font-bold uppercase tracking-widest text-white/30">
+                      My Leagues
+                    </p>
+                    {myLeagues.map(league => (
+                      <button
+                        key={league.id}
+                        onClick={() => { navigate(`/leagues/${league.id}`); setDropdownOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-white/70 hover:text-white hover:bg-white/5 transition-colors text-left"
+                      >
+                        <div className="h-5 w-5 rounded bg-[#00C8FF]/15 border border-[#00C8FF]/25 flex items-center justify-center shrink-0">
+                          <span className="text-[7px] font-black text-[#00C8FF]">ND</span>
+                        </div>
+                        <span className="truncate flex-1">{league.name}</span>
+                        <span className="text-[10px] text-white/25 shrink-0">{league.platform}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Sign out */}
                 <div className="p-1.5">
                   <button
                     onClick={() => { logout(); setDropdownOpen(false); }}

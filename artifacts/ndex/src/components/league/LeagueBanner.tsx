@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { getWeekLabel } from "@/lib/weekLabel";
+import { useCreateLeagueJoinRequest } from "@workspace/api-client-react";
+import { UserPlus, Check, Loader2 } from "lucide-react";
 
 interface League {
   id: number;
@@ -24,6 +27,10 @@ interface Summary {
 interface Props {
   league: League;
   summary?: Summary;
+  /** Logged-in Discord username, or null if not logged in */
+  currentUsername?: string | null;
+  /** Whether the current user is already a member or the commissioner */
+  isMember?: boolean;
 }
 
 const phaseLabel: Record<string, string> = {
@@ -33,7 +40,21 @@ const phaseLabel: Record<string, string> = {
   SUPER_BOWL: "Super Bowl",
 };
 
-export default function LeagueBanner({ league, summary }: Props) {
+export default function LeagueBanner({ league, summary, currentUsername, isMember }: Props) {
+  const createJoinRequest = useCreateLeagueJoinRequest();
+  const [requested, setRequested] = useState(false);
+
+  const handleRequestJoin = () => {
+    if (!currentUsername) return;
+    createJoinRequest.mutate(
+      { id: league.id, data: { discord_name: currentUsername } },
+      { onSuccess: () => setRequested(true) }
+    );
+  };
+
+  const showJoinButton = !!currentUsername && !isMember && !requested;
+  const showRequested = requested;
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-[#0d1a2a] to-[#0a0a0a] border-b border-white/8">
       {/* Background grid lines */}
@@ -62,11 +83,30 @@ export default function LeagueBanner({ league, summary }: Props) {
             <p className="text-xs text-white/40 mb-3">
               Commissioner: @{league.commissioner_name} &bull; {league.platform} &bull; {league.difficulty.replace(/_/g, " ")}
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Chip label={phaseLabel[league.phase] ?? league.phase} cyan />
               <Chip label={`Season ${league.season}`} />
               <Chip label={getWeekLabel(league.week)} />
               <Chip label={`${league.member_count}/${league.max_members} Members`} />
+
+              {/* Request to Join button */}
+              {showJoinButton && (
+                <button
+                  onClick={handleRequestJoin}
+                  disabled={createJoinRequest.isPending}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#00C8FF] px-3 py-1 text-[11px] font-bold text-black hover:bg-[#00b3e0] transition-colors disabled:opacity-60 shadow-[0_0_12px_rgba(0,200,255,0.3)]"
+                >
+                  {createJoinRequest.isPending
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <UserPlus className="h-3 w-3" />}
+                  Request to Join
+                </button>
+              )}
+              {showRequested && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00C8FF]/40 bg-[#00C8FF]/10 px-3 py-1 text-[11px] font-bold text-[#00C8FF]">
+                  <Check className="h-3 w-3" /> Request Sent
+                </span>
+              )}
             </div>
           </div>
 

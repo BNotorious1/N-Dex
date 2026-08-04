@@ -132,10 +132,12 @@ export const UpdateLeagueParams = zod.object({
 
 export const UpdateLeagueBody = zod.object({
   "name": zod.string().optional(),
+  "platform": zod.string().optional(),
   "difficulty": zod.string().optional(),
   "category": zod.string().optional(),
   "skill_level": zod.string().optional(),
   "advance_time_hours": zod.number().optional(),
+  "max_members": zod.number().optional(),
   "week": zod.number().optional(),
   "season": zod.number().optional(),
   "phase": zod.string().optional(),

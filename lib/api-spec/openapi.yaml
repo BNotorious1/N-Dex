@@ -1274,6 +1274,8 @@ components:
       properties:
         name:
           type: string
+        platform:
+          type: string
         difficulty:
           type: string
         category:
@@ -1281,6 +1283,8 @@ components:
         skill_level:
           type: string
         advance_time_hours:
+          type: integer
+        max_members:
           type: integer
         week:
           type: integer

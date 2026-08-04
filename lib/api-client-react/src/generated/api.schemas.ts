@@ -51,10 +51,12 @@ export interface LeagueInput {
 
 export interface LeagueUpdate {
   name?: string;
+  platform?: string;
   difficulty?: string;
   category?: string;
   skill_level?: string;
   advance_time_hours?: number;
+  max_members?: number;
   week?: number;
   season?: number;
   phase?: string;

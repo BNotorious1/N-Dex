@@ -606,7 +606,11 @@ function PlayerStatRow({ player, color, mirror }: { player: GamePlayerStat; colo
     .slice(0, 2)
     .toUpperCase();
   const pos = getPosLabel(player);
-  const showPortrait = !!player.portrait_id && !portraitErr;
+  const customSrc = (player as any).custom_portrait_url
+    ? `/api/storage${(player as any).custom_portrait_url}`
+    : null;
+  const portraitSrc = customSrc ?? (player.portrait_id ? eaPortraitUrl(player.portrait_id) : null);
+  const showPortrait = !!portraitSrc && !portraitErr;
 
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 13, marginBottom: 16, flexDirection: mirror ? "row-reverse" : "row" }}>
@@ -627,7 +631,7 @@ function PlayerStatRow({ player, color, mirror }: { player: GamePlayerStat; colo
         {showPortrait ? (
           // No CSS transform — use absolute positioning + overflow:hidden for zoom effect
           (<img
-            src={eaPortraitUrl(player.portrait_id!)}
+            src={portraitSrc!}
             alt={player.player_name}
             onError={() => setPortraitErr(true)}
             style={{

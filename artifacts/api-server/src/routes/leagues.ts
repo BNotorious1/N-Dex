@@ -204,6 +204,21 @@ router.post("/", async (req, res) => {
   res.status(201).json(formatLeague(league));
 });
 
+// GET /leagues/my — leagues the current session user is a member of
+router.get("/my", async (req, res) => {
+  if (!req.session?.user) {
+    res.json([]);
+    return;
+  }
+  const username = req.session.user.username;
+  const rows = await db
+    .select({ league: leaguesTable })
+    .from(membersTable)
+    .innerJoin(leaguesTable, eq(membersTable.leagueId, leaguesTable.id))
+    .where(eq(membersTable.discordName, username));
+  res.json(rows.map(r => formatLeague(r.league)));
+});
+
 // GET /leagues/featured
 router.get("/featured", async (_req, res) => {
   const leagues = await db
@@ -255,6 +270,8 @@ router.patch("/:id", async (req, res) => {
   if (data.is_cross_play !== undefined) updates.isCrossPlay = data.is_cross_play;
   if (data.is_money_league !== undefined) updates.isMoneyLeague = data.is_money_league;
   if (data.description !== undefined) updates.description = data.description;
+  if (data.platform !== undefined) updates.platform = data.platform;
+  if (data.max_members !== undefined) updates.maxMembers = data.max_members;
 
   const [league] = await db
     .update(leaguesTable)
