@@ -75,11 +75,7 @@ export default function TeamRosterTab({ team, players }: Props) {
             {(["Name", "Pos", "Age", "Ht", "Wt", "Exp", "College", "Salary"] as const).map((h, i, arr) => (
               <th
                 key={h}
-                className={`py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/60 ${
-                  i === 0                ? "px-4 text-left"  :
-                  i === arr.length - 1  ? "px-4 text-right" :
-                                          "px-2 text-center"
-                }`}
+                className={h === "Name" ? "py-2.5 font-bold uppercase tracking-wider text-white/60 px-4 text-left text-[14px]" : "py-2.5 font-bold uppercase tracking-wider text-white/60 px-2 text-center text-[12px]"}
               >
                 {h}
               </th>
@@ -104,41 +100,41 @@ export default function TeamRosterTab({ team, players }: Props) {
                   className={`border-b border-white/5 hover:bg-white/3 transition-colors ${i % 2 !== 0 ? "bg-white/[0.015]" : ""}`}
                 >
                   {/* Name */}
-                  <td className="px-4 py-2.5">
+                  <td className="px-4 py-2.5 text-left pl-[10px] pr-[10px]">
                     <Link
                       href={`/players/${p.id}`}
-                      className="font-semibold hover:underline [font-family:'Lora',serif]"
+                      className="font-semibold hover:underline [font-family:'Lora',serif] text-[16px]"
                       style={{ color: primaryColor }}
                     >
                       {p.name}
                     </Link>
                   </td>
                   {/* Pos */}
-                  <td className="px-2 py-2.5 text-center">
-                    <span className="text-[10px] font-bold text-white/60">{p.position}</span>
+                  <td className="px-2 py-2.5 text-center text-[14px]">
+                    <span className="font-bold text-white/60 text-[14px]">{p.position}</span>
                   </td>
                   {/* Age */}
-                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif]">
+                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif] text-[14px]">
                     {p.age}
                   </td>
                   {/* Ht */}
-                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif]">
+                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif] text-[14px]">
                     {fmtHeight(p.height)}
                   </td>
                   {/* Wt */}
-                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif]">
+                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif] text-[14px]">
                     {p.weight != null ? `${p.weight}` : "—"}
                   </td>
                   {/* Exp */}
-                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif]">
+                  <td className="px-2 py-2.5 text-center tabular-nums text-white/60 [font-family:'Lora',serif] text-[14px]">
                     {fmtExp(p.years_pro)}
                   </td>
                   {/* College */}
-                  <td className="px-2 py-2.5 text-white/50 [font-family:'Lora',serif] truncate max-w-0">
+                  <td className="px-2 py-2.5 text-white/50 [font-family:'Lora',serif] truncate max-w-0 text-[14px] text-left pl-[8px] pr-[8px]">
                     {p.college ?? "—"}
                   </td>
                   {/* Salary */}
-                  <td className="px-4 py-2.5 text-right tabular-nums text-white/70 [font-family:'Lora',serif]">
+                  <td className="px-4 py-2.5 text-right tabular-nums text-white/70 [font-family:'Lora',serif] text-[14px]">
                     {fmtMoney(p.contract_salary) !== "—" ? fmtMoney(p.contract_salary) : fmtMoney(p.cap_hit)}
                   </td>
                 </tr>
