@@ -2144,6 +2144,8 @@ components:
           type: ["string", "null"]
         permissions:
           type: integer
+        discord_avatar_url:
+          type: ["string", "null"]
         date_joined:
           type: ["string", "null"]
 

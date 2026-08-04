@@ -1029,6 +1029,7 @@ export const GetLeagueMembersResponseItem = zod.object({
   "discord_name": zod.string(),
   "gamer_tag": zod.string().nullish(),
   "permissions": zod.number().optional(),
+  "discord_avatar_url": zod.string().nullish(),
   "date_joined": zod.string().nullish()
 })
 export const GetLeagueMembersResponse = zod.array(GetLeagueMembersResponseItem)
@@ -1071,6 +1072,7 @@ export const UpdateLeagueMemberResponse = zod.object({
   "discord_name": zod.string(),
   "gamer_tag": zod.string().nullish(),
   "permissions": zod.number().optional(),
+  "discord_avatar_url": zod.string().nullish(),
   "date_joined": zod.string().nullish()
 })
 

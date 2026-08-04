@@ -576,6 +576,8 @@ export interface Member {
   gamer_tag?: string | null;
   permissions?: number;
   /** @nullable */
+  discord_avatar_url?: string | null;
+  /** @nullable */
   date_joined?: string | null;
 }
 

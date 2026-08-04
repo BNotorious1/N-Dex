@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { logger } from "../lib/logger";
+import { db, membersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -115,6 +117,14 @@ router.get("/discord/callback", async (req, res) => {
         : null,
       email: user.email,
     };
+
+    // Backfill avatar URL on any member rows matching this username
+    if (req.session.user.avatar) {
+      db.update(membersTable)
+        .set({ discordAvatarUrl: req.session.user.avatar })
+        .where(eq(membersTable.discordName, user.username))
+        .catch((err) => logger.warn({ err }, "Failed to backfill member avatar"));
+    }
 
     req.session.save((err) => {
       if (err) {

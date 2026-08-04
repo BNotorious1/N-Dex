@@ -9,6 +9,7 @@ export const membersTable = pgTable("members", {
   discordName: text("discord_name").notNull(),
   gamerTag: text("gamer_tag"),
   permissions: integer("permissions").notNull().default(0),
+  discordAvatarUrl: text("discord_avatar_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

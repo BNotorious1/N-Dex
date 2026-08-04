@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useUpdateLeague } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetLeagueSummaryQueryKey } from "@workspace/api-client-react";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, Pencil, X, Copy } from "lucide-react";
 
 interface League {
   id: number; name: string; commissioner_name: string;
@@ -24,7 +24,12 @@ const PHASE_LABEL: Record<string, string> = {
 };
 
 const PLATFORMS = ["PS5", "Xbox", "PC"];
-const DIFFICULTIES = ["ALL_MADDEN", "ADVANCED", "PRO", "VETERAN", "ROOKIE"];
+const DIFFICULTIES: { value: string; label: string }[] = [
+  { value: "ROOKIE",    label: "Rookie"    },
+  { value: "PRO",       label: "Pro"       },
+  { value: "ALL_PRO",   label: "All-Pro"   },
+  { value: "ALL_MADDEN",label: "All-Madden"},
+];
 const CATEGORIES = ["REGULAR", "FANTASY"];
 const SKILL_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 
@@ -151,7 +156,7 @@ export default function AdminSettingsSection({ league }: Props) {
           </EditRow>
           <EditRow label="Difficulty" editing={editing}>
             <select value={form.difficulty} onChange={e => set("difficulty", e.target.value)} className={selectCls}>
-              {DIFFICULTIES.map(v => <option key={v} value={v}>{v.replace(/_/g, " ")}</option>)}
+              {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
           </EditRow>
           <EditRow label="Category" editing={editing}>
@@ -217,7 +222,7 @@ export default function AdminSettingsSection({ league }: Props) {
 
       {/* Technical */}
       <SettingsCard title="Technical">
-        <Field label="League ID" value={String(league.id)} mono />
+        <LeagueIdField id={league.id} />
         <p className="text-[10px] text-white/25 mt-3 px-4 pb-3">
           Use this ID to connect external tools or the EA Companion app to this league.
         </p>
@@ -259,6 +264,37 @@ function Field({
     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0">
       <span className="text-xs text-white/40">{label}</span>
       <span className={`text-xs font-semibold ${valueColor} ${mono ? "font-mono" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+function LeagueIdField({ id }: { id: number }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(String(id)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  };
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0 gap-3">
+      <span className="text-xs text-white/40">League ID</span>
+      <div className="flex items-center gap-2">
+        <input
+          readOnly
+          value={id}
+          onFocus={e => e.target.select()}
+          className="w-24 rounded-md bg-white/5 border border-white/10 px-2.5 py-1 text-xs text-white font-mono text-right focus:border-[#00C8FF]/40 focus:outline-none cursor-text select-all"
+        />
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[10px] text-white/50 hover:text-white hover:border-white/25 transition-colors"
+          title="Copy to clipboard"
+        >
+          {copied ? <Check className="h-3 w-3 text-[#00C8FF]" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -29,7 +29,19 @@ function toggleFlag(permissions: number | undefined, flag: number): number {
   return ((permissions ?? 0) ^ flag);
 }
 
-function DiscordAvatar({ name, size = 32 }: { name: string; size?: number }) {
+function DiscordAvatar({ name, avatarUrl, size = 32 }: { name: string; avatarUrl?: string | null; size?: number }) {
+  const [imgErr, setImgErr] = useState(false);
+  if (avatarUrl && !imgErr) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        onError={() => setImgErr(true)}
+        className="rounded-full object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <div
       className="rounded-full bg-[#5865F2]/20 border border-[#5865F2]/30 flex items-center justify-center font-bold text-[#5865F2] shrink-0"
@@ -432,7 +444,7 @@ export default function AdminMembersSection({ leagueId }: Props) {
                   {/* Name */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
-                      <DiscordAvatar name={m.discord_name} size={30} />
+                      <DiscordAvatar name={m.discord_name} avatarUrl={(m as any).discord_avatar_url} size={30} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-semibold text-white truncate">{m.discord_name}</p>
@@ -474,7 +486,6 @@ export default function AdminMembersSection({ leagueId }: Props) {
                         <PermToggle
                           checked={hasFlag(m.permissions, c.flag)}
                           onChange={() => handlePermToggle(m, c.flag)}
-                          disabled={owner}
                           pending={isPerm}
                         />
                       </div>

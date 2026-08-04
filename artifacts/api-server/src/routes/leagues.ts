@@ -911,6 +911,7 @@ router.get("/:id/members", async (req, res) => {
     discord_name: m.discordName,
     gamer_tag: m.gamerTag ?? null,
     permissions: m.permissions,
+    discord_avatar_url: m.discordAvatarUrl ?? null,
     date_joined: m.createdAt.toISOString(),
   })));
 });
@@ -942,6 +943,7 @@ router.post("/:id/members", async (req, res) => {
     discord_name: member.discordName,
     gamer_tag: member.gamerTag ?? null,
     permissions: member.permissions,
+    discord_avatar_url: member.discordAvatarUrl ?? null,
     date_joined: member.createdAt.toISOString(),
   });
 });
@@ -984,6 +986,7 @@ router.patch("/:id/members/:memberId", async (req, res) => {
     discord_name: member.discordName,
     gamer_tag: member.gamerTag ?? null,
     permissions: member.permissions,
+    discord_avatar_url: member.discordAvatarUrl ?? null,
     date_joined: member.createdAt.toISOString(),
   });
 });
