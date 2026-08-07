@@ -244,7 +244,7 @@ function SeedCard({
         isDivWinner ? "border-amber-500/30 bg-amber-500/5" : "border-white/8 bg-white/3"
       } ${isModified ? "ring-1 ring-[#00C8FF]/30" : ""}`}
     >
-      <span className="w-4 text-center text-[10px] font-black text-white/30 tabular-nums shrink-0">{seed}</span>
+      <span className="w-4 text-center font-black tabular-nums shrink-0 text-[16px] text-[#ffffff]">{seed}</span>
       <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="xs" shape="circle" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
