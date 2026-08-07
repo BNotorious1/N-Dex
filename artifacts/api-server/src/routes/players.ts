@@ -82,6 +82,20 @@ router.get("/:id", async (req, res) => {
     birth_year: player.birthYear,
     birth_month: player.birthMonth,
     birth_day: player.birthDay,
+    // Bio
+    height: player.height ?? null,
+    weight: player.weight ?? null,
+    years_pro: player.yearsPro ?? null,
+    rookie_year: player.rookieYear ?? null,
+    draft_round: player.draftRound ?? null,
+    draft_pick: player.draftPick ?? null,
+    college: player.college ?? null,
+    // Contract
+    contract_salary: player.contractSalary ?? null,
+    contract_bonus: player.contractBonus ?? null,
+    contract_length: player.contractLength ?? null,
+    contract_years_left: player.contractYearsLeft ?? null,
+    cap_hit: player.capHit ?? null,
     // Physical
     speed: player.speed,
     acceleration: player.acceleration,

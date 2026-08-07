@@ -28,6 +28,20 @@ interface PlayerDetail {
   birth_year: number | null;
   birth_month: number | null;
   birth_day: number | null;
+  // Bio
+  height: number | null;
+  weight: number | null;
+  years_pro: number | null;
+  rookie_year: number | null;
+  draft_round: number | null;
+  draft_pick: number | null;
+  college: string | null;
+  // Contract
+  contract_salary: number | null;
+  contract_bonus: number | null;
+  contract_length: number | null;
+  contract_years_left: number | null;
+  cap_hit: number | null;
   team_id: number;
   team_name: string;
   team_city: string;
@@ -205,6 +219,79 @@ function portraitUrl(portraitId: number): string {
 }
 
 // ─── Small components ─────────────────────────────────────────────────────────
+
+function fmtHeightIn(inches: number): string {
+  return `${Math.floor(inches / 12)}'${inches % 12}"`;
+}
+
+function fmtMoney(v: number | null | undefined): string {
+  if (v == null || v === 0) return "—";
+  const m = v / 1_000_000;
+  if (m >= 0.1) return `$${parseFloat(m.toFixed(2))}M`;
+  const k = v / 1_000;
+  if (k >= 1) return `$${parseFloat(k.toFixed(1))}K`;
+  return `$${v}`;
+}
+
+function BioPill({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/4 px-2 py-0.5">
+      <span className="text-[10px] text-white/35 uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-semibold text-white/70">{value}</span>
+    </span>
+  );
+}
+
+function ContractCard({ player, teamColor }: { player: PlayerDetail; teamColor: string }) {
+  const hasSalary   = player.contract_salary != null;
+  const hasCapHit   = player.cap_hit != null;
+  const hasBonus    = player.contract_bonus != null && player.contract_bonus > 0;
+  const hasLength   = player.contract_length != null;
+  const hasYearsLeft = player.contract_years_left != null;
+
+  if (!hasSalary && !hasCapHit && !hasLength) return null;
+
+  return (
+    <div className="rounded-xl border border-white/8 bg-[#141414] overflow-hidden mb-5">
+      <div className="px-4 py-2.5" style={{ backgroundColor: teamColor }}>
+        <span className="text-xs font-black uppercase tracking-widest text-white">Contract</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-white/5">
+        {hasSalary && (
+          <div className="px-4 py-3">
+            <p className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">Salary</p>
+            <p className="text-sm font-black text-white">{fmtMoney(player.contract_salary)}</p>
+          </div>
+        )}
+        {hasCapHit && (
+          <div className="px-4 py-3">
+            <p className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">Cap Hit</p>
+            <p className="text-sm font-black text-white">{fmtMoney(player.cap_hit)}</p>
+          </div>
+        )}
+        {hasBonus && (
+          <div className="px-4 py-3">
+            <p className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">Bonus</p>
+            <p className="text-sm font-black text-white">{fmtMoney(player.contract_bonus)}</p>
+          </div>
+        )}
+        {hasLength && (
+          <div className="px-4 py-3">
+            <p className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">Length</p>
+            <p className="text-sm font-black text-white">
+              {player.contract_length} yr{(player.contract_length ?? 1) !== 1 ? "s" : ""}
+              {hasYearsLeft && (
+                <span className="text-white/35 font-normal text-[11px] ml-1">
+                  ({player.contract_years_left} left)
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function RatingRow({ label, value, max = 99 }: { label: string; value: number | null | undefined; max?: number }) {
   if (value == null) return null;
@@ -391,15 +478,18 @@ function AttributesTab({ player, teamColor }: { player: PlayerDetail; teamColor:
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      {groups.map(g => (
-        <AttrCard key={g.title} title={g.title} teamColor={teamColor}>
-          {g.rows.map(r => (
-            <RatingRow key={r.label} label={r.label} value={r.value} />
-          ))}
-        </AttrCard>
-      ))}
-    </div>
+    <>
+      <ContractCard player={player} teamColor={teamColor} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {groups.map(g => (
+          <AttrCard key={g.title} title={g.title} teamColor={teamColor}>
+            {g.rows.map(r => (
+              <RatingRow key={r.label} label={r.label} value={r.value} />
+            ))}
+          </AttrCard>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -2071,10 +2161,15 @@ export default function PlayerDetail() {
                         <span className="text-xs font-bold uppercase tracking-wide">{devInfo.label}</span>
                       </span>
                     )}
-                    <span className="text-xs text-white/35">
-                      Age <span className="text-white/60 font-semibold">{player.age}</span>
-                    </span>
-                    {birthStr && <span className="text-xs text-white/25">· Born {birthStr}</span>}
+                    <BioPill label="Age" value={String(player.age)} />
+                    {player.height && <BioPill label="Ht" value={fmtHeightIn(player.height)} />}
+                    {player.weight && <BioPill label="Wt" value={`${player.weight} lbs`} />}
+                    {player.years_pro != null && <BioPill label="Exp" value={player.years_pro === 0 ? "Rookie" : `${player.years_pro} yr${player.years_pro !== 1 ? "s" : ""}`} />}
+                    {player.college && <BioPill label="College" value={player.college} />}
+                    {player.draft_round != null && player.draft_pick != null && (
+                      <BioPill label="Draft" value={`Rd ${player.draft_round}, Pk ${player.draft_pick}`} />
+                    )}
+                    {player.rookie_year != null && <BioPill label="Class" value={String(player.rookie_year)} />}
                   </div>
                 </div>
               </div>

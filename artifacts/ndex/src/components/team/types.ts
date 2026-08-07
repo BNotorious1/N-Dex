@@ -60,6 +60,9 @@ export interface TeamPlayer {
   man_coverage: number | null;
   zone_coverage: number | null;
   press: number | null;
+  // Special teams
+  kick_power: number | null;
+  kick_accuracy: number | null;
   // Body measurements
   height: number | null;
   weight: number | null;

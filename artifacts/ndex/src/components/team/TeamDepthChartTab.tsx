@@ -62,7 +62,7 @@ const DEPTH_GROUPS: Array<{ label: string; positions: string[]; extra: AttrCol[]
     ],
   },
   {
-    label: "Defensive Line", positions: ["DE", "DT", "DL"],
+    label: "Defensive Line", positions: ["DE", "DT", "DL", "LEDGE", "REDGE"],
     extra: [
       { key: "tackling", label: "TAK" }, { key: "hit_power", label: "HIT" },
       { key: "pursuit", label: "PUR" }, { key: "block_shed", label: "BSH" },
@@ -93,7 +93,16 @@ const DEPTH_GROUPS: Array<{ label: string; positions: string[]; extra: AttrCol[]
       { key: "pursuit", label: "PUR" }, { key: "jumping", label: "JMP" },
     ],
   },
-  { label: "Special Teams", positions: ["K", "P"], extra: [] },
+  {
+    label: "Kickers", positions: ["K"],
+    extra: [
+      { key: "kick_power", label: "KPW" }, { key: "kick_accuracy", label: "KAC" },
+    ],
+  },
+  {
+    label: "Punters", positions: ["P"],
+    extra: [],
+  },
 ];
 
 function attrVal(player: TeamPlayer, key: AttrKey): number | null {

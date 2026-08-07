@@ -96,6 +96,9 @@ function formatPlayer(player: typeof playersTable.$inferSelect) {
     man_coverage: player.manCoverage,
     zone_coverage: player.zoneCoverage,
     press: player.press,
+    // Special teams
+    kick_power: player.kickPower,
+    kick_accuracy: player.kickAccuracy,
     // Body measurements
     height: player.height,
     weight: player.weight,
