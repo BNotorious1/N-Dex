@@ -1104,13 +1104,12 @@ function RecapTab({
 
               {/* Team info */}
               <div
-                style={{ flex: 1, minWidth: 0, textAlign: "right" }}
-                className="text-[36px]">
+                style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
                 <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}
                   className="text-[14px]">{homeCity}</div>
                 <div
                   style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}
-                  className="text-[14px]">
+                  className="text-[36px]">
                   {homeName}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 7, marginTop: 6 }}>
@@ -1120,7 +1119,8 @@ function RecapTab({
                     {fmtRecord(homeWins, homeLosses, homeTies)}
                   </div>
                   <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}
+                    className="text-[14px]">
                     {homeDiscord ?? "—"}
                   </div>
                 </div>
