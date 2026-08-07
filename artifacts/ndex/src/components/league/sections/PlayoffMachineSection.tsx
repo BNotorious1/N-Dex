@@ -240,24 +240,21 @@ function SeedCard({
   if (!info || !rec) return null;
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg px-3 py-2 border transition-all ${
+      className={`flex items-center gap-2 rounded px-2 py-1.5 border transition-all ${
         isDivWinner ? "border-amber-500/30 bg-amber-500/5" : "border-white/8 bg-white/3"
       } ${isModified ? "ring-1 ring-[#00C8FF]/30" : ""}`}
     >
-      <span className="w-5 text-center text-[11px] font-black text-white/30 tabular-nums">{seed}</span>
-      <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="sm" shape="circle" />
+      <span className="w-4 text-center text-[10px] font-black text-white/30 tabular-nums shrink-0">{seed}</span>
+      <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="xs" shape="circle" />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-white truncate">{info.city} {info.name}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] font-bold text-white truncate">{info.city} {info.name}</span>
           {isDivWinner && (
-            <span className="text-[8px] font-black text-amber-400 uppercase tracking-wider">DIV</span>
+            <span className="text-[7px] font-black text-amber-400 uppercase tracking-wider shrink-0">DIV</span>
           )}
         </div>
-        <span className="text-[10px] text-white/40 tabular-nums [font-family:'Lora',serif]">{RecordStr(rec)}</span>
+        <span className="text-[9px] text-white/40 tabular-nums [font-family:'Lora',serif]">{RecordStr(rec)}</span>
       </div>
-      <span className="font-black tabular-nums text-white/70 text-[12px]">
-        {((winPct(rec)) * 100).toFixed(0)}%
-      </span>
     </div>
   );
 }
@@ -273,51 +270,45 @@ function ConferenceBracket({
   color: string;
 }) {
   return (
-    <div className="flex-1 min-w-[240px]">
-      <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
-        <div className="px-4 py-2.5" style={{ backgroundColor: color }}>
-          <span className="text-xs font-black uppercase tracking-widest text-white">{conference}</span>
-        </div>
-        <div className="p-2 space-y-1.5">
-          {seeds.length === 0 ? (
-            <p className="py-6 text-center text-xs text-white/25">No data</p>
-          ) : (
-            <>
-              {seeds.map(s => (
-                <SeedCard
-                  key={s.teamId}
-                  seed={s.seed}
-                  teamId={s.teamId}
-                  isDivWinner={s.isDivWinner}
-                  records={records}
-                  teamInfoMap={teamInfoMap}
-                  isModified={modifiedTeamIds.has(s.teamId)}
-                />
-              ))}
-            </>
-          )}
-        </div>
-        <div className="px-3 pb-3">
-          <div className="border-t border-white/8 pt-2 mt-1 space-y-1">
-            {/* Out of playoffs */}
-            {(() => {
-              const seededIds = new Set(seeds.map(s => s.teamId));
-              const confTeams = [...records.values()]
-                .filter(r => teamInfoMap.get(r.teamId)?.conference === conference && !seededIds.has(r.teamId));
-              const sorted = sortTeams(confTeams);
-              return sorted.slice(0, 3).map(r => {
-                const info = teamInfoMap.get(r.teamId);
-                if (!info) return null;
-                return (
-                  <div key={r.teamId} className="flex items-center gap-2 px-1 py-0.5 opacity-35">
-                    <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color} size="xs" shape="circle" />
-                    <span className="text-[10px] text-white/50 flex-1 truncate">{info.abbreviation}</span>
-                    <span className="text-[9px] text-white/30 tabular-nums [font-family:'Lora',serif]">{RecordStr(r)}</span>
-                  </div>
-                );
-              });
-            })()}
-          </div>
+    <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
+      <div className="px-3 py-2" style={{ backgroundColor: color }}>
+        <span className="text-[11px] font-black uppercase tracking-widest text-white">{conference}</span>
+      </div>
+      <div className="p-1.5 space-y-1">
+        {seeds.length === 0 ? (
+          <p className="py-4 text-center text-xs text-white/25">No data</p>
+        ) : (
+          seeds.map(s => (
+            <SeedCard
+              key={s.teamId}
+              seed={s.seed}
+              teamId={s.teamId}
+              isDivWinner={s.isDivWinner}
+              records={records}
+              teamInfoMap={teamInfoMap}
+              isModified={modifiedTeamIds.has(s.teamId)}
+            />
+          ))
+        )}
+      </div>
+      <div className="px-2 pb-2">
+        <div className="border-t border-white/8 pt-1.5 space-y-0.5">
+          {(() => {
+            const seededIds = new Set(seeds.map(s => s.teamId));
+            const confTeams = [...records.values()]
+              .filter(r => teamInfoMap.get(r.teamId)?.conference === conference && !seededIds.has(r.teamId));
+            return sortTeams(confTeams).slice(0, 3).map(r => {
+              const info = teamInfoMap.get(r.teamId);
+              if (!info) return null;
+              return (
+                <div key={r.teamId} className="flex items-center gap-1.5 px-1 py-0.5 opacity-35">
+                  <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color} size="xs" shape="circle" />
+                  <span className="text-[10px] text-white/50 flex-1 truncate">{info.abbreviation}</span>
+                  <span className="text-[9px] text-white/30 tabular-nums [font-family:'Lora',serif]">{RecordStr(r)}</span>
+                </div>
+              );
+            });
+          })()}
         </div>
       </div>
     </div>
@@ -364,66 +355,62 @@ function GameToggle({
   }
 
   return (
-    <div className={`rounded-lg border transition-all ${isModified ? "border-[#00C8FF]/30 bg-[#00C8FF]/4" : "border-white/6 bg-white/[0.02]"}`}>
-      <div className="flex items-stretch overflow-hidden rounded-lg">
+    <div className={`rounded border transition-all ${isModified ? "border-[#00C8FF]/30 bg-[#00C8FF]/4" : "border-white/6 bg-white/[0.02]"}`}>
+      <div className="flex items-stretch overflow-hidden rounded">
         {/* Away team */}
         <button
           onClick={() => handleClick("away")}
-          className={`flex-1 flex items-center gap-2 px-3 py-2.5 transition-all text-left hover:bg-white/5 ${awayWon ? "opacity-100" : "opacity-40"}`}
+          className={`flex-1 flex items-center gap-1.5 px-2 py-1.5 transition-all text-left hover:bg-white/5 ${awayWon ? "opacity-100" : "opacity-35"}`}
         >
           <TeamLogo
             abbreviation={awayInfo?.abbreviation ?? "?"}
             primaryColor={awayInfo?.primary_color ?? "#555"}
-            size="sm"
+            size="xs"
             shape="circle"
           />
           <div className="flex-1 min-w-0">
-            <p className={`text-xs font-bold truncate ${awayWon ? "text-white" : "text-white/60"}`}>
+            <p className={`text-[11px] font-bold truncate ${awayWon ? "text-white" : "text-white/60"}`}>
               {awayInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.away_score != null && (
-              <p className={`text-[10px] tabular-nums [font-family:'Lora',serif] ${awayWon ? "text-white" : "text-white/40"}`}>
+              <p className={`text-[9px] tabular-nums [font-family:'Lora',serif] ${awayWon ? "text-white/80" : "text-white/30"}`}>
                 {game.away_score}
               </p>
             )}
           </div>
-          {awayWon && (
-            <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
-          )}
+          {awayWon && <div className="w-1 h-1 rounded-full bg-white/50 shrink-0" />}
         </button>
 
         {/* Center */}
-        <div className="flex flex-col items-center justify-center px-2 py-1.5 shrink-0">
-          <span className="text-[9px] font-bold text-white/20 uppercase">@</span>
+        <div className="flex flex-col items-center justify-center px-1.5 shrink-0">
+          <span className="text-[8px] font-bold text-white/15 uppercase">@</span>
           {isModified && (
-            <span className="text-[7px] font-black text-[#00C8FF] uppercase tracking-wider mt-0.5">MOD</span>
+            <span className="text-[6px] font-black text-[#00C8FF] uppercase tracking-wider">MOD</span>
           )}
         </div>
 
         {/* Home team */}
         <button
           onClick={() => handleClick("home")}
-          className={`flex-1 flex items-center gap-2 px-3 py-2.5 transition-all text-right flex-row-reverse hover:bg-white/5 ${homeWon ? "opacity-100" : "opacity-40"}`}
+          className={`flex-1 flex items-center gap-1.5 px-2 py-1.5 transition-all flex-row-reverse hover:bg-white/5 ${homeWon ? "opacity-100" : "opacity-35"}`}
         >
           <TeamLogo
             abbreviation={homeInfo?.abbreviation ?? "?"}
             primaryColor={homeInfo?.primary_color ?? "#555"}
-            size="sm"
+            size="xs"
             shape="circle"
           />
           <div className="flex-1 min-w-0">
-            <p className={`text-xs font-bold truncate text-right ${homeWon ? "text-white" : "text-white/60"}`}>
+            <p className={`text-[11px] font-bold truncate text-right ${homeWon ? "text-white" : "text-white/60"}`}>
               {homeInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.home_score != null && (
-              <p className={`text-[10px] tabular-nums [font-family:'Lora',serif] text-right ${homeWon ? "text-white" : "text-white/40"}`}>
+              <p className={`text-[9px] tabular-nums [font-family:'Lora',serif] text-right ${homeWon ? "text-white/80" : "text-white/30"}`}>
                 {game.home_score}
               </p>
             )}
           </div>
-          {homeWon && (
-            <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-white/60" />
-          )}
+          {homeWon && <div className="w-1 h-1 rounded-full bg-white/50 shrink-0" />}
         </button>
       </div>
     </div>
@@ -566,73 +553,49 @@ export default function PlayoffMachineSection({ games, standings }: Props) {
         })}
       </div>
 
-      {/* Playoff Picture — AFC & NFC side by side */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Playoff Picture</span>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded border border-amber-500/40 bg-amber-500/10" />
-              <span className="text-[9px] text-white/30">Div winner</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded border border-white/12 bg-white/4" />
-              <span className="text-[9px] text-white/30">Wild card</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded border border-[#00C8FF]/30 bg-[#00C8FF]/8" />
-              <span className="text-[9px] text-white/30">Changed</span>
-            </div>
-            <span className="text-[9px] text-white/25">7 seeds per conf.</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <ConferenceBracket
-            conference="AFC"
-            seeds={afcSeeds}
-            records={simRecords}
-            teamInfoMap={teamInfoMap}
-            modifiedTeamIds={modifiedTeamIds}
-            color="#C8102E"
-          />
-          <ConferenceBracket
-            conference="NFC"
-            seeds={nfcSeeds}
-            records={simRecords}
-            teamInfoMap={teamInfoMap}
-            modifiedTeamIds={modifiedTeamIds}
-            color="#013369"
-          />
-        </div>
-      </div>
+      {/* Three-column layout: AFC | Games | NFC */}
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-3 items-start">
+        {/* AFC */}
+        <ConferenceBracket
+          conference="AFC"
+          seeds={afcSeeds}
+          records={simRecords}
+          teamInfoMap={teamInfoMap}
+          modifiedTeamIds={modifiedTeamIds}
+          color="#C8102E"
+        />
 
-      {/* Games */}
-      {groupedGames.length === 0 ? (
-        <div className="rounded-xl border border-white/8 bg-[#111] py-16 text-center text-white/25 text-sm">
-          No games to display.
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {groupedGames.map(([week, wGames]) => (
-            <div key={week}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-1">
-                {week <= 18 ? `Week ${week}` : week === 19 ? "Wild Card" : week === 20 ? "Divisional" : week === 21 ? "Conference" : "Super Bowl"}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {wGames.map(g => (
-                  <GameToggle
-                    key={g.id}
-                    game={g}
-                    override={overrides.get(g.id)}
-                    onOverride={handleOverride}
-                    teamInfoMap={teamInfoMap}
-                  />
-                ))}
-              </div>
+        {/* Games */}
+        <div className="space-y-1">
+          {groupedGames.length === 0 ? (
+            <div className="rounded border border-white/8 py-10 text-center text-white/25 text-xs">
+              No games to display.
             </div>
-          ))}
+          ) : (
+            groupedGames.flatMap(([, wGames]) =>
+              wGames.map(g => (
+                <GameToggle
+                  key={g.id}
+                  game={g}
+                  override={overrides.get(g.id)}
+                  onOverride={handleOverride}
+                  teamInfoMap={teamInfoMap}
+                />
+              ))
+            )
+          )}
         </div>
-      )}
+
+        {/* NFC */}
+        <ConferenceBracket
+          conference="NFC"
+          seeds={nfcSeeds}
+          records={simRecords}
+          teamInfoMap={teamInfoMap}
+          modifiedTeamIds={modifiedTeamIds}
+          color="#013369"
+        />
+      </div>
     </div>
   );
 }
