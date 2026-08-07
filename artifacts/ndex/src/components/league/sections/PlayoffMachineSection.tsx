@@ -272,7 +272,7 @@ function ConferenceBracket({
   return (
     <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
       <div className="px-3 py-2" style={{ backgroundColor: color }}>
-        <span className="text-[11px] font-black uppercase tracking-widest text-white">{conference}</span>
+        <span className="font-black uppercase tracking-widest text-white text-left text-[16px]">{conference}</span>
       </div>
       <div className="p-1.5 space-y-1">
         {seeds.length === 0 ? (
