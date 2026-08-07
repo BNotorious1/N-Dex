@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, gamesTable, teamsTable, playerGameStatsTable, playersTable, membersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, lte, or } from "drizzle-orm";
 import { UpdateGameParams, UpdateGameBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -19,10 +19,38 @@ router.get("/:id", async (req, res) => {
     return;
   }
 
-  const [homeTeam] = await db.select().from(teamsTable).where(eq(teamsTable.id, game.homeTeamId));
-  const [awayTeam] = await db.select().from(teamsTable).where(eq(teamsTable.id, game.awayTeamId));
-  const [homeMember] = await db.select().from(membersTable).where(eq(membersTable.teamId, game.homeTeamId));
-  const [awayMember] = await db.select().from(membersTable).where(eq(membersTable.teamId, game.awayTeamId));
+  const [homeTeam, awayTeam, homeMember, awayMember, completedGames] = await Promise.all([
+    db.select().from(teamsTable).where(eq(teamsTable.id, game.homeTeamId)).then(r => r[0]),
+    db.select().from(teamsTable).where(eq(teamsTable.id, game.awayTeamId)).then(r => r[0]),
+    db.select().from(membersTable).where(eq(membersTable.teamId, game.homeTeamId)).then(r => r[0]),
+    db.select().from(membersTable).where(eq(membersTable.teamId, game.awayTeamId)).then(r => r[0]),
+    db.select().from(gamesTable).where(
+      and(
+        eq(gamesTable.leagueId, game.leagueId),
+        eq(gamesTable.season, game.season),
+        lte(gamesTable.week, game.week ?? 99),
+        or(eq(gamesTable.status, "COMPLETED"), eq(gamesTable.status, "FINAL")),
+      )
+    ),
+  ]);
+
+  function computeRecord(teamId: number) {
+    let wins = 0, losses = 0, ties = 0;
+    for (const g of completedGames) {
+      const isHome = g.homeTeamId === teamId;
+      const isAway = g.awayTeamId === teamId;
+      if (!isHome && !isAway) continue;
+      const h = g.homeScore ?? 0;
+      const a = g.awayScore ?? 0;
+      if (h === a) { ties++; }
+      else if (isHome) { h > a ? wins++ : losses++; }
+      else { a > h ? wins++ : losses++; }
+    }
+    return { wins, losses, ties };
+  }
+
+  const homeRecord = computeRecord(game.homeTeamId);
+  const awayRecord = computeRecord(game.awayTeamId);
 
   const stats = await db
     .select({
@@ -146,10 +174,12 @@ router.get("/:id", async (req, res) => {
     away_team_color: awayTeam?.primaryColor ?? null,
     home_team_city: homeTeam?.city ?? null,
     away_team_city: awayTeam?.city ?? null,
-    home_team_wins: homeTeam?.wins ?? null,
-    away_team_wins: awayTeam?.wins ?? null,
-    home_team_losses: homeTeam?.losses ?? null,
-    away_team_losses: awayTeam?.losses ?? null,
+    home_team_wins: homeRecord.wins,
+    away_team_wins: awayRecord.wins,
+    home_team_losses: homeRecord.losses,
+    away_team_losses: awayRecord.losses,
+    home_team_ties: homeRecord.ties,
+    away_team_ties: awayRecord.ties,
     home_member_discord: homeMember?.discordName ?? null,
     away_member_discord: awayMember?.discordName ?? null,
     home_score: game.homeScore,

@@ -756,10 +756,16 @@ interface RecapTabProps {
   homeCity: string;
   awayWins: number;
   awayLosses: number;
+  awayTies: number;
   homeWins: number;
   homeLosses: number;
+  homeTies: number;
   awayDiscord: string | null;
   homeDiscord: string | null;
+}
+
+function fmtRecord(w: number, l: number, t: number): string {
+  return t > 0 ? `${w}–${l}–${t}` : `${w}–${l}`;
 }
 
 function RecapTab({
@@ -781,8 +787,10 @@ function RecapTab({
   homeCity,
   awayWins,
   awayLosses,
+  awayTies,
   homeWins,
   homeLosses,
+  homeTies,
   awayDiscord,
   homeDiscord,
 }: RecapTabProps) {
@@ -1006,7 +1014,7 @@ function RecapTab({
                   </div>
                   <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
                   <div style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>
-                    {awayWins}–{awayLosses}
+                    {fmtRecord(awayWins, awayLosses, awayTies)}
                   </div>
                 </div>
               </div>
@@ -1092,7 +1100,7 @@ function RecapTab({
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 7, marginTop: 6 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>
-                    {homeWins}–{homeLosses}
+                    {fmtRecord(homeWins, homeLosses, homeTies)}
                   </div>
                   <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
                   <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}>
@@ -1477,8 +1485,10 @@ export default function GameDetail() {
                     homeCity={game.home_team_city ?? ""}
                     awayWins={game.away_team_wins ?? 0}
                     awayLosses={game.away_team_losses ?? 0}
+                    awayTies={(game as any).away_team_ties ?? 0}
                     homeWins={game.home_team_wins ?? 0}
                     homeLosses={game.home_team_losses ?? 0}
+                    homeTies={(game as any).home_team_ties ?? 0}
                     awayDiscord={game.away_member_discord ?? null}
                     homeDiscord={game.home_member_discord ?? null}
                   />
