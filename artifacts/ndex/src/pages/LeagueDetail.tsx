@@ -36,6 +36,7 @@ import AdminImportStatus from "@/components/league/sections/AdminImportStatus";
 import AdminMembersSection from "@/components/league/sections/AdminMembersSection";
 import AdminJoinRequestsSection from "@/components/league/sections/AdminJoinRequestsSection";
 import AdminGameOfWeekSection from "@/components/league/sections/AdminGameOfWeekSection";
+import AdminInviteSection from "@/components/league/sections/AdminInviteSection";
 import TransactionsSection from "@/components/league/sections/TransactionsSection";
 import DraftSection from "@/components/league/sections/DraftSection";
 import CreateTradeSection from "@/components/league/sections/CreateTradeSection";
@@ -196,11 +197,7 @@ export default function LeagueDetail() {
               <AdminJoinRequestsSection leagueId={leagueId} />
             )}
             {section === "admin-invite" && (
-              <PlaceholderSection
-                icon="UserPlus"
-                title="Invite Players"
-                description="Send invites to prospective league members via link or username. Invite system coming soon."
-              />
+              <AdminInviteSection leagueId={leagueId} />
             )}
             {section === "admin-advance" && (
               <PlaceholderSection

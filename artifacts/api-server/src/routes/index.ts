@@ -9,6 +9,7 @@ import eaRouter from "./ea";
 import proxyRouter from "./proxy";
 import authRouter from "./auth";
 import storageRouter from "./storage";
+import invitesRouter from "./invites";
 
 const router: IRouter = Router();
 
@@ -21,6 +22,7 @@ router.use("/teams", teamsRouter);
 router.use("/players", playersRouter);
 router.use("/games", gamesRouter);
 router.use("/import", importRouter);
+router.use(invitesRouter);
 router.use(proxyRouter);
 
 export default router;

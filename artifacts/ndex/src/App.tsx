@@ -11,6 +11,7 @@ import NewLeague from "@/pages/NewLeague";
 import TeamDetail from "@/pages/TeamDetail";
 import PlayerDetail from "@/pages/PlayerDetail";
 import GameDetail from "@/pages/GameDetail";
+import InviteAccept from "@/pages/InviteAccept";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/teams/:id" component={TeamDetail} />
       <Route path="/players/:id" component={PlayerDetail} />
       <Route path="/games/:id" component={GameDetail} />
+      <Route path="/invite/:token" component={InviteAccept} />
       <Route component={NotFound} />
     </Switch>
   );

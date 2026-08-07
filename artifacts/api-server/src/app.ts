@@ -17,6 +17,7 @@ declare module "express-session" {
       avatar: string | null;
       email?: string;
     };
+    returnTo?: string;
   }
 }
 

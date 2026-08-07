@@ -34,6 +34,12 @@ router.get("/discord", (req, res) => {
     return;
   }
 
+  // Store returnTo in session so callback can redirect back after login
+  const returnTo = req.query["returnTo"] as string | undefined;
+  if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+    req.session.returnTo = returnTo;
+  }
+
   logger.info({ redirectUri }, "Initiating Discord OAuth");
 
   const params = new URLSearchParams({
@@ -126,13 +132,16 @@ router.get("/discord/callback", async (req, res) => {
         .catch((err) => logger.warn({ err }, "Failed to backfill member avatar"));
     }
 
+    const returnTo = req.session.returnTo;
+    delete req.session.returnTo;
+
     req.session.save((err) => {
       if (err) {
         logger.error({ err }, "Session save failed after Discord auth");
         res.redirect("/?auth=error&reason=session");
         return;
       }
-      res.redirect("/leagues");
+      res.redirect(returnTo ?? "/leagues");
     });
   } catch (err) {
     logger.error({ err }, "Discord auth callback error");
