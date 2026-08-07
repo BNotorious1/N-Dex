@@ -248,12 +248,12 @@ function SeedCard({
       <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="xs" shape="circle" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
-          <span className="text-[11px] font-bold text-white truncate">{info.city} {info.name}</span>
+          <span className="font-bold text-white truncate text-[16px]">{info.city} {info.name}</span>
           {isDivWinner && (
-            <span className="text-[7px] font-black text-amber-400 uppercase tracking-wider shrink-0">DIV</span>
+            <span className="font-black text-amber-400 uppercase tracking-wider shrink-0 text-[10px]">DIV</span>
           )}
         </div>
-        <span className="text-[9px] text-white/40 tabular-nums [font-family:'Lora',serif]">{RecordStr(rec)}</span>
+        <span className="text-white/40 tabular-nums [font-family:'Lora',serif] text-[12px]">{RecordStr(rec)}</span>
       </div>
     </div>
   );
@@ -303,8 +303,8 @@ function ConferenceBracket({
               return (
                 <div key={r.teamId} className="flex items-center gap-1.5 px-1 py-0.5 opacity-35">
                   <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color} size="xs" shape="circle" />
-                  <span className="text-[10px] text-white/50 flex-1 truncate">{info.abbreviation}</span>
-                  <span className="text-[9px] text-white/30 tabular-nums [font-family:'Lora',serif]">{RecordStr(r)}</span>
+                  <span className="flex-1 truncate text-[12px] text-[#ffffff]">{info.abbreviation}</span>
+                  <span className="tabular-nums [font-family:'Lora',serif] text-[12px] text-[#ffffff]">{RecordStr(r)}</span>
                 </div>
               );
             });
@@ -369,11 +369,11 @@ function GameToggle({
             shape="circle"
           />
           <div className="flex-1 min-w-0">
-            <p className={`text-[11px] font-bold truncate ${awayWon ? "text-white" : "text-white/60"}`}>
+            <p className="font-bold truncate text-white/60 text-[14px]">
               {awayInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.away_score != null && (
-              <p className={`text-[9px] tabular-nums [font-family:'Lora',serif] ${awayWon ? "text-white/80" : "text-white/30"}`}>
+              <p className="tabular-nums [font-family:'Lora',serif] text-white/30 text-[12px]">
                 {game.away_score}
               </p>
             )}
@@ -383,7 +383,7 @@ function GameToggle({
 
         {/* Center */}
         <div className="flex flex-col items-center justify-center px-1.5 shrink-0">
-          <span className="text-[8px] font-bold text-white/15 uppercase">@</span>
+          <span className="font-bold text-white/15 uppercase text-[12px]">@</span>
           {isModified && (
             <span className="text-[6px] font-black text-[#00C8FF] uppercase tracking-wider">MOD</span>
           )}
@@ -401,11 +401,11 @@ function GameToggle({
             shape="circle"
           />
           <div className="flex-1 min-w-0">
-            <p className={`text-[11px] font-bold truncate text-right ${homeWon ? "text-white" : "text-white/60"}`}>
+            <p className="font-bold truncate text-right text-white text-[14px]">
               {homeInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.home_score != null && (
-              <p className={`text-[9px] tabular-nums [font-family:'Lora',serif] text-right ${homeWon ? "text-white/80" : "text-white/30"}`}>
+              <p className="tabular-nums [font-family:'Lora',serif] text-right text-white/80 text-[12px]">
                 {game.home_score}
               </p>
             )}
