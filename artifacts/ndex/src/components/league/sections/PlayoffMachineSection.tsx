@@ -279,7 +279,7 @@ function TiebreakerGroup({
   const count = group.length;
   return (
     <div className="space-y-1.5">
-      <p className="text-[8px] font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5">
+      <p className="font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5 text-[12px]">
         {count > 2 ? `${count}-way tie` : "Tied"}
         <span className="text-white/15">·</span>
         <span className="tabular-nums [font-family:'Lora',serif]">{record}</span>
@@ -298,14 +298,14 @@ function TiebreakerGroup({
           <div key={`${a.teamId}-${b.teamId}`} className="space-y-0.5">
             <div className="flex items-center gap-1">
               <TeamLogo abbreviation={aInfo.abbreviation} primaryColor={aInfo.primary_color} size="xs" shape="circle" />
-              <span className={`text-[10px] font-bold ${aIn ? "text-white" : "text-white/35"}`}>{aInfo.abbreviation}</span>
+              <span className="font-bold text-white text-[12px]">{aInfo.abbreviation}</span>
               {!aIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
               <span className="text-[8px] text-white/25 mx-0.5">›</span>
               <TeamLogo abbreviation={bInfo.abbreviation} primaryColor={bInfo.primary_color} size="xs" shape="circle" />
-              <span className={`text-[10px] font-bold ${bIn ? "text-white/55" : "text-white/25"}`}>{bInfo.abbreviation}</span>
+              <span className="font-bold text-white/55 text-[12px]">{bInfo.abbreviation}</span>
               {!bIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
             </div>
-            <p className="text-[9px] text-white/35 pl-0.5">
+            <p className="text-white/35 pl-0.5 text-[12px]">
               <span className="text-white/50 font-semibold">{lbl.criterion}:</span>{" "}
               <span className="text-white/80 tabular-nums [font-family:'Lora',serif]">{lbl.aVal}</span>
               <span className="text-white/25"> vs </span>
@@ -382,16 +382,13 @@ function TiebreakerExplainer({
 
   return (
     <div className="mx-1.5 mb-2 rounded-lg border border-white/6 bg-white/[0.015] p-2.5 space-y-3">
-      <p className="text-[9px] font-black uppercase tracking-widest text-white/30">Tiebreakers</p>
-
+      <p className="font-black uppercase tracking-widest text-white/30 text-center text-[12px]">Tiebreakers</p>
       {divTies.map(({ divLabel, group }) => (
         <TiebreakerGroup key={divLabel} label={divLabel} group={group} seededIds={seededIds} teamInfoMap={teamInfoMap} />
       ))}
-
       {divWinnerSeedingTies.map((group, i) => (
         <TiebreakerGroup key={`dw-${i}`} label="div winner seeding" group={group} seededIds={seededIds} teamInfoMap={teamInfoMap} />
       ))}
-
       {wcTies.map((group, i) => {
         const hasBubble = group.some(r => !seededIds.has(r.teamId));
         return (
