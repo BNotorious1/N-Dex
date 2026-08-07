@@ -543,107 +543,96 @@ export default function PlayoffMachineSection({ games, standings }: Props) {
         </div>
       </div>
 
-      {/* Main layout */}
-      <div className="flex gap-5 items-start flex-col xl:flex-row">
+      {/* Week selector */}
+      <div className="flex gap-1 flex-wrap">
+        {weeks.map(w => {
+          const hasChanges = regularGames.filter(g => g.week === w).some(g => overrides.has(g.id));
+          return (
+            <button
+              key={w}
+              onClick={() => setSelectedWeek(w)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors border relative ${
+                selectedWeek === w
+                  ? "bg-[#00C8FF] text-[#0a0a0a] border-transparent"
+                  : "border-white/10 text-white/40 hover:text-white/70"
+              }`}
+            >
+              {w <= 18 ? `WK ${w}` : w === 19 ? "WC" : w === 20 ? "DIV" : w === 21 ? "CONF" : "SB"}
+              {hasChanges && selectedWeek !== w && (
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#00C8FF]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        {/* Left: game toggles */}
-        <div className="flex-1 min-w-0 space-y-4">
-          {/* Week selector */}
-          <div className="flex gap-1 flex-wrap">
-            {weeks.map(w => {
-              const hasChanges = regularGames.filter(g => g.week === w).some(g => overrides.has(g.id));
-              return (
-                <button
-                  key={w}
-                  onClick={() => setSelectedWeek(w)}
-                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors border relative ${
-                    selectedWeek === w
-                      ? "bg-[#00C8FF] text-[#0a0a0a] border-transparent"
-                      : "border-white/10 text-white/40 hover:text-white/70"
-                  }`}
-                >
-                  {w <= 18 ? `WK ${w}` : w === 19 ? "WC" : w === 20 ? "DIV" : w === 21 ? "CONF" : "SB"}
-                  {hasChanges && selectedWeek !== w && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#00C8FF]" />
-                  )}
-                </button>
-              );
-            })}
+      {/* Playoff Picture — AFC & NFC side by side */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Playoff Picture</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded border border-amber-500/40 bg-amber-500/10" />
+              <span className="text-[9px] text-white/30">Div winner</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded border border-white/12 bg-white/4" />
+              <span className="text-[9px] text-white/30">Wild card</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded border border-[#00C8FF]/30 bg-[#00C8FF]/8" />
+              <span className="text-[9px] text-white/30">Changed</span>
+            </div>
+            <span className="text-[9px] text-white/25">7 seeds per conf.</span>
           </div>
-
-          {/* Games */}
-          {groupedGames.length === 0 ? (
-            <div className="rounded-xl border border-white/8 bg-[#111] py-16 text-center text-white/25 text-sm">
-              No games to display.
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {groupedGames.map(([week, wGames]) => (
-                <div key={week}>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-1">
-                    {week <= 18 ? `Week ${week}` : week === 19 ? "Wild Card" : week === 20 ? "Divisional" : week === 21 ? "Conference" : "Super Bowl"}
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    {wGames.map(g => (
-                      <GameToggle
-                        key={g.id}
-                        game={g}
-                        override={overrides.get(g.id)}
-                        onOverride={handleOverride}
-                        teamInfoMap={teamInfoMap}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-
-        {/* Right: Playoff Picture */}
-        <div className="w-full xl:w-72 shrink-0 sticky top-0">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Playoff Picture</span>
-              <span className="text-[9px] text-white/25">7 seeds per conf.</span>
-            </div>
-            <div className="flex xl:flex-col gap-3">
-              <ConferenceBracket
-                conference="AFC"
-                seeds={afcSeeds}
-                records={simRecords}
-                teamInfoMap={teamInfoMap}
-                modifiedTeamIds={modifiedTeamIds}
-                color="#C8102E"
-              />
-              <ConferenceBracket
-                conference="NFC"
-                seeds={nfcSeeds}
-                records={simRecords}
-                teamInfoMap={teamInfoMap}
-                modifiedTeamIds={modifiedTeamIds}
-                color="#013369"
-              />
-            </div>
-
-            {/* Legend */}
-            <div className="rounded-lg border border-white/6 bg-white/[0.02] p-3 space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded border border-amber-500/40 bg-amber-500/10 shrink-0" />
-                <span className="text-[10px] text-white/40">Division winner (seed 1–4)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded border border-white/12 bg-white/4 shrink-0" />
-                <span className="text-[10px] text-white/40">Wild card (seed 5–7)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded border border-[#00C8FF]/30 bg-[#00C8FF]/8 shrink-0" />
-                <span className="text-[10px] text-white/40">Affected by your changes</span>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <ConferenceBracket
+            conference="AFC"
+            seeds={afcSeeds}
+            records={simRecords}
+            teamInfoMap={teamInfoMap}
+            modifiedTeamIds={modifiedTeamIds}
+            color="#C8102E"
+          />
+          <ConferenceBracket
+            conference="NFC"
+            seeds={nfcSeeds}
+            records={simRecords}
+            teamInfoMap={teamInfoMap}
+            modifiedTeamIds={modifiedTeamIds}
+            color="#013369"
+          />
         </div>
       </div>
+
+      {/* Games */}
+      {groupedGames.length === 0 ? (
+        <div className="rounded-xl border border-white/8 bg-[#111] py-16 text-center text-white/25 text-sm">
+          No games to display.
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {groupedGames.map(([week, wGames]) => (
+            <div key={week}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-1">
+                {week <= 18 ? `Week ${week}` : week === 19 ? "Wild Card" : week === 20 ? "Divisional" : week === 21 ? "Conference" : "Super Bowl"}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {wGames.map(g => (
+                  <GameToggle
+                    key={g.id}
+                    game={g}
+                    override={overrides.get(g.id)}
+                    onOverride={handleOverride}
+                    teamInfoMap={teamInfoMap}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
