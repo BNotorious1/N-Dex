@@ -703,11 +703,10 @@ function PlayerStatRow({ player, color, mirror }: { player: GamePlayerStat; colo
           flexDirection: "column",
           justifyContent: "center",
           textAlign: mirror ? "right" : "left",
-        }}
-        className="text-[16px]">
+        }}>
         <div
           style={{
-            fontSize: 12,
+            fontSize: 16,
             fontWeight: 900,
             color: "white",
             textTransform: "uppercase",
@@ -717,7 +716,6 @@ function PlayerStatRow({ player, color, mirror }: { player: GamePlayerStat; colo
             overflow: "hidden",
             textOverflow: "ellipsis",
           }}
-          className="text-[16px]"
         >
           {player.player_name}
         </div>
@@ -725,13 +723,12 @@ function PlayerStatRow({ player, color, mirror }: { player: GamePlayerStat; colo
           <div
             key={i}
             style={{
-              fontSize: 10,
+              fontSize: 14,
               color: "rgba(255,255,255,0.55)",
               marginTop: 5,
               lineHeight: 1,
               fontWeight: 500,
             }}
-            className="text-[14px]"
           >
             {line}
           </div>
@@ -888,7 +885,7 @@ function RecapTab({
 
   // Shared section-header style used in both player stat columns
   const sectionHeader = (color: string) => ({
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: 900,
     color: "rgba(255,255,255,0.5)",
     textTransform: "uppercase" as const,
@@ -957,14 +954,13 @@ function RecapTab({
 
             <div
               style={{
-                fontSize: 15,
+                fontSize: 18,
                 fontWeight: 900,
                 color: "white",
                 textTransform: "uppercase",
                 letterSpacing: "0.2em",
                 lineHeight: 1,
-              }}
-              className="text-[18px]">
+              }}>
               {leagueName} · WEEK {week}
             </div>
           </div>
@@ -1008,21 +1004,16 @@ function RecapTab({
 
               {/* Team info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}
-                  className="text-[14px]">{awayCity}</div>
-                <div style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}
-                  className="text-[36px]">
+                <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>{awayCity}</div>
+                <div style={{ fontSize: 36, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
                   {awayName}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 6 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}
-                    className="text-[14px]">
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}>
                     {awayDiscord ?? "—"}
                   </div>
                   <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
-                  <div style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}
-                    className="text-[14px]">
+                  <div style={{ fontSize: 14, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>
                     {fmtRecord(awayWins, awayLosses, awayTies)}
                   </div>
                 </div>
@@ -1060,8 +1051,7 @@ function RecapTab({
                 borderRight: `3px solid ${homeColor}55`,
               }}
             >
-              <div style={{ fontSize: 9, fontWeight: 900, color: "rgba(255,255,255,0.28)", textTransform: "uppercase", letterSpacing: "0.15em" }}
-                className="text-[14px]">
+              <div style={{ fontSize: 14, fontWeight: 900, color: "rgba(255,255,255,0.28)", textTransform: "uppercase", letterSpacing: "0.15em" }}>
                 FINAL
               </div>
               <div style={{ fontSize: 24, fontWeight: 900, color: "rgba(255,255,255,0.15)", letterSpacing: "0.04em" }}>
@@ -1105,22 +1095,17 @@ function RecapTab({
               {/* Team info */}
               <div
                 style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}
-                  className="text-[14px]">{homeCity}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 5 }}>{homeCity}</div>
                 <div
-                  style={{ fontSize: 26, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}
-                  className="text-[36px]">
+                  style={{ fontSize: 36, fontWeight: 900, color: "white", textTransform: "uppercase", lineHeight: 1, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
                   {homeName}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 7, marginTop: 6 }}>
-                  <div
-                    style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}
-                    className="text-[14px]">
+                  <div style={{ fontSize: 14, fontWeight: 900, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>
                     {fmtRecord(homeWins, homeLosses, homeTies)}
                   </div>
                   <div style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}
-                    className="text-[14px]">
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em" }}>
                     {homeDiscord ?? "—"}
                   </div>
                 </div>
@@ -1168,7 +1153,7 @@ function RecapTab({
                 background: `linear-gradient(180deg, rgba(${hexRgb(awayColor)},0.18) 0%, rgba(${hexRgb(awayColor)},0.06) 100%)`,
               }}
             >
-              <div style={{ ...sectionHeader(awayColor), textAlign: "right" }} className="text-[12px]">PLAYER STATS</div>
+              <div style={{ ...sectionHeader(awayColor), textAlign: "right" }}>PLAYER STATS</div>
               {noStats ? (
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 32 }}>No stats recorded</div>
               ) : (
@@ -1188,7 +1173,7 @@ function RecapTab({
             >
               <div
                 style={{
-                  fontSize: 9,
+                  fontSize: 12,
                   fontWeight: 900,
                   color: "rgba(255,255,255,0.35)",
                   textTransform: "uppercase",
@@ -1199,7 +1184,6 @@ function RecapTab({
                   borderBottom: "1px solid rgba(255,255,255,0.07)",
                   margin: "0 18px 14px",
                 }}
-                className="text-[12px]"
               >
                 TEAM STATS
               </div>
@@ -1267,7 +1251,7 @@ function RecapTab({
                 background: `linear-gradient(180deg, rgba(${hexRgb(homeColor)},0.18) 0%, rgba(${hexRgb(homeColor)},0.06) 100%)`,
               }}
               className="text-[12px]">
-              <div style={sectionHeader(homeColor)} className="text-[#ffffff88] text-[12px]">PLAYER STATS</div>
+              <div style={sectionHeader(homeColor)}>PLAYER STATS</div>
               {noStats ? (
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 32 }}>No stats recorded</div>
               ) : (
