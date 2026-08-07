@@ -225,6 +225,107 @@ function RecordStr(r: TeamRecord) {
   return r.ties > 0 ? `${r.wins}-${r.losses}-${r.ties}` : `${r.wins}-${r.losses}`;
 }
 
+function confRecStr(r: TeamRecord) {
+  return r.confTies > 0
+    ? `${r.confWins}-${r.confLosses}-${r.confTies}`
+    : `${r.confWins}-${r.confLosses}`;
+}
+
+function divRecStr(r: TeamRecord) {
+  return r.divTies > 0
+    ? `${r.divWins}-${r.divLosses}-${r.divTies}`
+    : `${r.divWins}-${r.divLosses}`;
+}
+
+function pdStr(r: TeamRecord) {
+  const d = r.pf - r.pa;
+  return `${d >= 0 ? "+" : ""}${d}`;
+}
+
+/** Returns the label of the first criterion that separates winner from loser
+ *  (assumes they share the same overall win%). */
+function tiebreakerLabel(a: TeamRecord, b: TeamRecord): { criterion: string; aVal: string; bVal: string } {
+  if (Math.abs(confWinPct(a) - confWinPct(b)) > 0.001)
+    return { criterion: "Conf. record", aVal: confRecStr(a), bVal: confRecStr(b) };
+  if (Math.abs(divWinPct(a) - divWinPct(b)) > 0.001)
+    return { criterion: "Div. record", aVal: divRecStr(a), bVal: divRecStr(b) };
+  if ((a.pf - a.pa) !== (b.pf - b.pa))
+    return { criterion: "Point diff", aVal: pdStr(a), bVal: pdStr(b) };
+  return { criterion: "Points for", aVal: String(a.pf), bVal: String(b.pf) };
+}
+
+function TiebreakerExplainer({
+  conference,
+  seeds,
+  records,
+  teamInfoMap,
+}: {
+  conference: string;
+  seeds: PlayoffSeed[];
+  records: Map<number, TeamRecord>;
+  teamInfoMap: Map<number, TeamInfo>;
+}) {
+  // Collect adjacent seed pairs (including seed-7 vs bubble) that share the same overall win%
+  const ties: Array<{ aId: number; bId: number; label: ReturnType<typeof tiebreakerLabel>; isBubble: boolean }> = [];
+
+  const allSeeded = seeds.map(s => records.get(s.teamId)).filter(Boolean) as TeamRecord[];
+
+  // Adjacent seed pairs within playoff spots
+  for (let i = 0; i < allSeeded.length - 1; i++) {
+    const a = allSeeded[i]!;
+    const b = allSeeded[i + 1]!;
+    if (Math.abs(winPct(a) - winPct(b)) < 0.001) {
+      ties.push({ aId: a.teamId, bId: b.teamId, label: tiebreakerLabel(a, b), isBubble: false });
+    }
+  }
+
+  // Seed 7 vs first team out (bubble)
+  const seededIds = new Set(seeds.map(s => s.teamId));
+  const confOut = sortTeams(
+    [...records.values()].filter(r => teamInfoMap.get(r.teamId)?.conference === conference && !seededIds.has(r.teamId))
+  );
+  if (allSeeded.length > 0 && confOut.length > 0) {
+    const last = allSeeded[allSeeded.length - 1]!;
+    const firstOut = confOut[0]!;
+    if (Math.abs(winPct(last) - winPct(firstOut)) < 0.001) {
+      ties.push({ aId: last.teamId, bId: firstOut.teamId, label: tiebreakerLabel(last, firstOut), isBubble: true });
+    }
+  }
+
+  if (ties.length === 0) return null;
+
+  return (
+    <div className="mx-1.5 mb-2 rounded-lg border border-white/6 bg-white/[0.015] p-2.5 space-y-2">
+      <p className="text-[9px] font-black uppercase tracking-widest text-white/30">Tiebreakers</p>
+      {ties.map(({ aId, bId, label, isBubble }) => {
+        const aInfo = teamInfoMap.get(aId);
+        const bInfo = teamInfoMap.get(bId);
+        if (!aInfo || !bInfo) return null;
+        return (
+          <div key={`${aId}-${bId}`} className="space-y-1">
+            {isBubble && (
+              <p className="text-[8px] font-black uppercase tracking-widest text-[#00C8FF]/50">Playoff bubble</p>
+            )}
+            <div className="flex items-center gap-1.5">
+              <TeamLogo abbreviation={aInfo.abbreviation} primaryColor={aInfo.primary_color} size="xs" shape="circle" />
+              <span className="text-[10px] font-bold text-white">{aInfo.abbreviation}</span>
+              <span className="text-[9px] text-white/30 mx-0.5">over</span>
+              <TeamLogo abbreviation={bInfo.abbreviation} primaryColor={bInfo.primary_color} size="xs" shape="circle" />
+              <span className="text-[10px] font-bold text-white/50">{bInfo.abbreviation}</span>
+            </div>
+            <p className="text-[9px] text-white/40 pl-0.5">
+              <span className="text-white/60 font-semibold">{label.criterion}:</span>{" "}
+              <span className="text-white font-bold tabular-nums [font-family:'Lora',serif]">{label.aVal}</span>
+              <span className="text-white/30"> vs </span>
+              <span className="tabular-nums [font-family:'Lora',serif]">{label.bVal}</span>
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SeedCard({
   seed, teamId, isDivWinner, records, teamInfoMap, isModified,
 }: {
@@ -291,7 +392,7 @@ function ConferenceBracket({
           ))
         )}
       </div>
-      <div className="px-2 pb-2">
+      <div className="px-2 pb-1">
         <div className="border-t border-white/8 pt-1.5 space-y-0.5">
           {(() => {
             const seededIds = new Set(seeds.map(s => s.teamId));
@@ -311,6 +412,12 @@ function ConferenceBracket({
           })()}
         </div>
       </div>
+      <TiebreakerExplainer
+        conference={conference}
+        seeds={seeds}
+        records={records}
+        teamInfoMap={teamInfoMap}
+      />
     </div>
   );
 }
