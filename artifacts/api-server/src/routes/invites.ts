@@ -5,6 +5,75 @@ import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
+// ── League join-link (generic, per-league) ────────────────────────────────────
+
+// GET /leagues/:id/join-link — return (or lazily create) the league's join token
+router.get("/leagues/:id/join-link", async (req, res) => {
+  if (!req.session.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+  const leagueId = Number(req.params["id"]);
+  if (!leagueId || isNaN(leagueId)) { res.status(400).json({ error: "Invalid league id" }); return; }
+
+  let [league] = await db.select({ id: leaguesTable.id, name: leaguesTable.name, joinToken: leaguesTable.joinToken })
+    .from(leaguesTable).where(eq(leaguesTable.id, leagueId)).limit(1);
+  if (!league) { res.status(404).json({ error: "League not found" }); return; }
+
+  if (!league.joinToken) {
+    const token = randomUUID();
+    [league] = await db.update(leaguesTable).set({ joinToken: token }).where(eq(leaguesTable.id, leagueId)).returning({
+      id: leaguesTable.id, name: leaguesTable.name, joinToken: leaguesTable.joinToken,
+    });
+  }
+
+  res.json({ token: league!.joinToken, league_id: league!.id, league_name: league!.name });
+});
+
+// POST /leagues/:id/join-link/regenerate — rotate the join token
+router.post("/leagues/:id/join-link/regenerate", async (req, res) => {
+  if (!req.session.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+  const leagueId = Number(req.params["id"]);
+  if (!leagueId || isNaN(leagueId)) { res.status(400).json({ error: "Invalid league id" }); return; }
+
+  const token = randomUUID();
+  const [league] = await db.update(leaguesTable).set({ joinToken: token }).where(eq(leaguesTable.id, leagueId))
+    .returning({ id: leaguesTable.id, name: leaguesTable.name, joinToken: leaguesTable.joinToken });
+  if (!league) { res.status(404).json({ error: "League not found" }); return; }
+
+  res.json({ token: league.joinToken, league_id: league.id, league_name: league.name });
+});
+
+// GET /join/:token — public: get league info via join token
+router.get("/join/:token", async (req, res) => {
+  const token = req.params["token"];
+  if (!token) { res.status(400).json({ error: "Invalid token" }); return; }
+
+  const [league] = await db.select({ id: leaguesTable.id, name: leaguesTable.name, commissionerName: leaguesTable.commissionerName, platform: leaguesTable.platform, memberCount: leaguesTable.memberCount, maxMembers: leaguesTable.maxMembers })
+    .from(leaguesTable).where(eq(leaguesTable.joinToken, token)).limit(1);
+  if (!league) { res.status(404).json({ error: "League not found" }); return; }
+
+  res.json({ token, league_id: league.id, league_name: league.name, commissioner: league.commissionerName, platform: league.platform, member_count: league.memberCount, max_members: league.maxMembers });
+});
+
+// POST /join/:token/accept — join a league via the generic join link
+router.post("/join/:token/accept", async (req, res) => {
+  if (!req.session.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+  const token = req.params["token"];
+  if (!token) { res.status(400).json({ error: "Invalid token" }); return; }
+
+  const [league] = await db.select({ id: leaguesTable.id, name: leaguesTable.name, maxMembers: leaguesTable.maxMembers, memberCount: leaguesTable.memberCount })
+    .from(leaguesTable).where(eq(leaguesTable.joinToken, token)).limit(1);
+  if (!league) { res.status(404).json({ error: "League not found" }); return; }
+
+  const { user } = req.session;
+
+  // Check already a member
+  const [existing] = await db.select({ id: membersTable.id }).from(membersTable)
+    .where(and(eq(membersTable.leagueId, league.id), eq(membersTable.discordName, user.username))).limit(1);
+  if (existing) { res.status(409).json({ error: "Already a member of this league" }); return; }
+
+  await db.insert(membersTable).values({ leagueId: league.id, discordName: user.username, discordAvatarUrl: user.avatar ?? null, permissions: 0 });
+  res.json({ ok: true, league_id: league.id });
+});
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function inviteStatus(invite: { acceptedAt: Date | null; expiresAt: Date }): "pending" | "accepted" | "expired" {
