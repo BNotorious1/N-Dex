@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import TeamLogo from "@/components/TeamLogo";
 import { getWeekLabelShort } from "@/lib/weekLabel";
 import type { TeamGame } from "@workspace/api-client-react";
@@ -20,6 +21,7 @@ function gameResult(game: TeamGame, teamId: number): "W" | "L" | "T" | null {
 
 export default function TeamScheduleTab({ team, games }: Props) {
   const primaryColor = team.primary_color ?? "#555";
+  const [, navigate] = useLocation();
 
   const seasons = useMemo(() => {
     const s = Array.from(new Set(games.map(g => g.season ?? 0))).sort((a, b) => b - a);
@@ -117,7 +119,11 @@ export default function TeamScheduleTab({ team, games }: Props) {
                     const os = isHome ? game.away_score : game.home_score;
                     const rc = result === "W" ? "#4ade80" : result === "L" ? "#F44336" : result === "T" ? "#facc15" : "transparent";
                     return (
-                      <tr key={game.id} className="border-b border-white/5 hover:bg-white/3">
+                      <tr
+                        key={game.id}
+                        className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                        onClick={() => navigate(`/games/${game.id}`)}
+                      >
                         <td className="px-4 py-2 text-white/40 font-bold tabular-nums [font-family:'Lora',serif]">{getWeekLabelShort(game.week)}</td>
                         <td className="px-3 py-2 text-[10px] text-white/30">{isHome ? "vs" : "@"}</td>
                         <td className="px-3 py-2">
