@@ -5,7 +5,7 @@ import { getGetLeagueSummaryQueryKey } from "@workspace/api-client-react";
 import { Check, Pencil, X, Copy } from "lucide-react";
 
 interface League {
-  id: number; name: string; commissioner_name: string;
+  id: number; custom_id?: string | null; name: string; commissioner_name: string;
   platform: string; difficulty: string; category: string;
   skill_level: string; advance_time_hours: number;
   week: number; season: number; phase: string;
@@ -42,6 +42,7 @@ export default function AdminSettingsSection({ league }: Props) {
   const [form, setForm] = useState({
     name: league.name,
     description: league.description ?? "",
+    custom_id: league.custom_id ?? "",
     platform: league.platform,
     difficulty: league.difficulty,
     category: league.category,
@@ -51,13 +52,20 @@ export default function AdminSettingsSection({ league }: Props) {
     is_cross_play: league.is_cross_play,
     is_money_league: league.is_money_league,
   });
+  const [customIdError, setCustomIdError] = useState<string | null>(null);
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm(prev => ({ ...prev, [k]: v }));
 
   const handleSave = () => {
+    setCustomIdError(null);
+    const customIdVal = form.custom_id.trim() === "" ? null : form.custom_id.trim();
+    if (customIdVal && !/^[a-z0-9_-]+$/i.test(customIdVal)) {
+      setCustomIdError("League ID may only contain letters, numbers, hyphens, and underscores.");
+      return;
+    }
     updateLeague.mutate(
-      { id: league.id, data: { ...form, advance_time_hours: Number(form.advance_time_hours), max_members: Number(form.max_members) } },
+      { id: league.id, data: { ...form, custom_id: customIdVal, advance_time_hours: Number(form.advance_time_hours), max_members: Number(form.max_members) } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetLeagueSummaryQueryKey(league.id) });
@@ -65,14 +73,22 @@ export default function AdminSettingsSection({ league }: Props) {
           setSaved(true);
           setTimeout(() => setSaved(false), 2500);
         },
+        onError: (err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Failed to save";
+          if (msg.includes("taken") || msg.includes("unique") || msg.includes("duplicate") || msg.includes("409")) {
+            setCustomIdError("That League ID is already taken. Please choose a different one.");
+          }
+        },
       }
     );
   };
 
   const handleCancel = () => {
+    setCustomIdError(null);
     setForm({
       name: league.name,
       description: league.description ?? "",
+      custom_id: league.custom_id ?? "",
       platform: league.platform,
       difficulty: league.difficulty,
       category: league.category,
@@ -143,6 +159,18 @@ export default function AdminSettingsSection({ league }: Props) {
             rows={2}
             className="w-full rounded-md bg-white/5 border border-white/10 px-2.5 py-1.5 text-xs text-white focus:border-[#00C8FF]/40 focus:outline-none resize-none"
           />
+        </EditRow>
+        <EditRow label="Custom League ID" editing={editing}>
+          <div className="space-y-1">
+            <input
+              value={form.custom_id}
+              onChange={e => { set("custom_id", e.target.value); setCustomIdError(null); }}
+              placeholder={String(league.id)}
+              className="w-full rounded-md bg-white/5 border border-white/10 px-2.5 py-1.5 text-xs text-white font-mono focus:border-[#00C8FF]/40 focus:outline-none"
+            />
+            {customIdError && <p className="text-[10px] text-[#F44336]">{customIdError}</p>}
+            <p className="text-[10px] text-white/25">Letters, numbers, hyphens, underscores only. Leave blank to use numeric ID.</p>
+          </div>
         </EditRow>
       </SettingsCard>
 
@@ -222,9 +250,9 @@ export default function AdminSettingsSection({ league }: Props) {
 
       {/* Technical */}
       <SettingsCard title="Technical">
-        <LeagueIdField id={league.id} />
+        <LeagueIdField id={league.id} customId={league.custom_id ?? null} />
         <p className="text-[10px] text-white/25 mt-3 px-4 pb-3">
-          Use this ID to connect external tools or the EA Companion app to this league.
+          Use the League ID to connect external tools or the EA Companion app to this league.
         </p>
       </SettingsCard>
     </div>
@@ -268,23 +296,27 @@ function Field({
   );
 }
 
-function LeagueIdField({ id }: { id: number }) {
+function LeagueIdField({ id, customId }: { id: number; customId: string | null }) {
   const [copied, setCopied] = useState(false);
+  const displayVal = customId ?? String(id);
   const handleCopy = () => {
-    navigator.clipboard.writeText(String(id)).then(() => {
+    navigator.clipboard.writeText(displayVal).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     });
   };
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 last:border-0 gap-3">
-      <span className="text-xs text-white/40">League ID</span>
+      <div>
+        <span className="text-xs text-white/40">League ID</span>
+        {customId && <p className="text-[10px] text-white/25 mt-0.5">Numeric: {id}</p>}
+      </div>
       <div className="flex items-center gap-2">
         <input
           readOnly
-          value={id}
+          value={displayVal}
           onFocus={e => e.target.select()}
-          className="w-24 rounded-md bg-white/5 border border-white/10 px-2.5 py-1 text-xs text-white font-mono text-right focus:border-[#00C8FF]/40 focus:outline-none cursor-text select-all"
+          className="w-36 rounded-md bg-white/5 border border-white/10 px-2.5 py-1 text-xs text-white font-mono text-right focus:border-[#00C8FF]/40 focus:outline-none cursor-text select-all"
         />
         <button
           onClick={handleCopy}

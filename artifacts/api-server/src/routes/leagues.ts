@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable, joinRequestsTable, gameOfWeekTable } from "@workspace/db";
+import { db, leaguesTable, teamsTable, gamesTable, playersTable, membersTable, playerGameStatsTable, playerTransactionsTable, tradesTable, tradePlayersTable, joinRequestsTable, gameOfWeekTable, playerAwardsTable, AWARD_TYPES } from "@workspace/db";
 import { eq, like, and, sql, desc, isNotNull, or, inArray, lte, gte } from "drizzle-orm";
 import {
   ListLeaguesQueryParams,
@@ -41,6 +41,7 @@ function buildDefaultExportInfo(): Record<string, unknown> {
 function formatLeague(league: typeof leaguesTable.$inferSelect) {
   return {
     id: league.id,
+    custom_id: league.customId ?? null,
     name: league.name,
     commissioner_name: league.commissionerName,
     platform: league.platform,
@@ -89,6 +90,7 @@ function formatTeam(team: typeof teamsTable.$inferSelect) {
     league_id: team.leagueId,
     name: team.name,
     city: team.city,
+    full_name: `${team.city} ${team.name}`,
     abbreviation: team.abbreviation,
     conference: team.conference,
     division: team.division,
@@ -272,17 +274,27 @@ router.patch("/:id", async (req, res) => {
   if (data.description !== undefined) updates.description = data.description;
   if (data.platform !== undefined) updates.platform = data.platform;
   if (data.max_members !== undefined) updates.maxMembers = data.max_members;
+  if (data.custom_id !== undefined) updates.customId = data.custom_id;
 
-  const [league] = await db
-    .update(leaguesTable)
-    .set(updates)
-    .where(eq(leaguesTable.id, parseResult.data.id))
-    .returning();
-  if (!league) {
-    res.status(404).json({ error: "League not found" });
-    return;
+  try {
+    const [league] = await db
+      .update(leaguesTable)
+      .set(updates)
+      .where(eq(leaguesTable.id, parseResult.data.id))
+      .returning();
+    if (!league) {
+      res.status(404).json({ error: "League not found" });
+      return;
+    }
+    res.json(formatLeague(league));
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("unique") || msg.includes("duplicate")) {
+      res.status(409).json({ error: "That League ID is already taken. Please choose a different one." });
+      return;
+    }
+    throw err;
   }
-  res.json(formatLeague(league));
 });
 
 // DELETE /leagues/:id
@@ -326,7 +338,11 @@ router.get("/:id/summary", async (req, res) => {
     .filter(g => isCompleted(g.status))
     .sort((a, b) => b.week - a.week)
     .slice(0, 5)
-    .map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name));
+    .map(g => {
+      const ht = teamMap.get(g.homeTeamId);
+      const at = teamMap.get(g.awayTeamId);
+      return formatGame(g, ht ? `${ht.city} ${ht.name}` : null, at ? `${at.city} ${at.name}` : null);
+    });
 
   const totalGamesPlayed = allGames.filter(g => isCompleted(g.status)).length;
 
@@ -1127,7 +1143,11 @@ router.get("/:id/games", async (req, res) => {
   const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
   const teamMap = new Map(teams.map(t => [t.id, t]));
 
-  res.json(allGames.map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, teamMap.get(g.homeTeamId)?.primaryColor, teamMap.get(g.awayTeamId)?.primaryColor, teamMap.get(g.homeTeamId)?.abbreviation, teamMap.get(g.awayTeamId)?.abbreviation)));
+  res.json(allGames.map(g => {
+    const ht = teamMap.get(g.homeTeamId);
+    const at = teamMap.get(g.awayTeamId);
+    return formatGame(g, ht ? `${ht.city} ${ht.name}` : null, at ? `${at.city} ${at.name}` : null, ht?.primaryColor, at?.primaryColor, ht?.abbreviation, at?.abbreviation);
+  }));
 });
 
 // POST /leagues/:id/games
@@ -1379,11 +1399,191 @@ router.get("/:id/draft", async (req, res) => {
       rookie_year: p.rookieYear ?? null,
       years_pro: p.yearsPro ?? null,
       team_id: p.teamId,
-      team_name: team?.name ?? "Unknown",
+      team_name: team ? `${team.city} ${team.name}` : "Unknown",
       team_abbreviation: team?.abbreviation ?? "UNK",
       team_color: team?.primaryColor ?? null,
     };
   }));
+});
+
+// ─── Awards ────────────────────────────────────────────────────────────────
+
+// GET /leagues/:id/awards?season=N&week=N
+router.get("/:id/awards", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const season = req.query.season ? Number(req.query.season) : undefined;
+  const week   = req.query.week   ? Number(req.query.week)   : undefined;
+
+  let whereClause = eq(playerAwardsTable.leagueId, leagueId);
+  if (season != null && !isNaN(season)) {
+    whereClause = and(whereClause, eq(playerAwardsTable.season, season))!;
+  }
+  if (week != null && !isNaN(week)) {
+    whereClause = and(whereClause, sql`${playerAwardsTable.week} = ${week}`)!;
+  }
+
+  const rows = await db
+    .select({ award: playerAwardsTable, player: playersTable, team: teamsTable })
+    .from(playerAwardsTable)
+    .innerJoin(playersTable, eq(playerAwardsTable.playerId, playersTable.id))
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(whereClause);
+
+  res.json(rows.map(r => ({
+    id: r.award.id,
+    player_id: r.award.playerId,
+    league_id: r.award.leagueId,
+    season: r.award.season,
+    week: r.award.week ?? null,
+    is_override: r.award.isOverride ?? false,
+    award_type: r.award.awardType,
+    created_at: r.award.createdAt.toISOString(),
+    player: {
+      id: r.player.id,
+      name: r.player.name,
+      position: r.player.position,
+      overall: r.player.overall,
+      portrait_id: r.player.portraitId ?? null,
+      age: r.player.age,
+    },
+    team: {
+      id: r.team.id,
+      name: r.team.name,
+      city: r.team.city,
+      full_name: `${r.team.city} ${r.team.name}`,
+      abbreviation: r.team.abbreviation,
+      primary_color: r.team.primaryColor,
+      conference: r.team.conference,
+    },
+  })));
+});
+
+// GET /leagues/:id/awards/weekly-candidates?season=N&week=N
+router.get("/:id/awards/weekly-candidates", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const season = Number(req.query.season);
+  const week   = Number(req.query.week);
+  if (isNaN(season) || isNaN(week)) { res.status(400).json({ error: "season and week are required" }); return; }
+
+  const rows = await db
+    .select({ stats: playerGameStatsTable, player: playersTable, team: teamsTable })
+    .from(playerGameStatsTable)
+    .innerJoin(playersTable, eq(playerGameStatsTable.playerId, playersTable.id))
+    .innerJoin(teamsTable, eq(playersTable.teamId, teamsTable.id))
+    .where(and(
+      eq(playerGameStatsTable.leagueId, leagueId),
+      eq(playerGameStatsTable.season, season),
+      eq(playerGameStatsTable.week, week),
+      eq(playerGameStatsTable.stageIndex, 1),
+    ));
+
+  const OFF_POS = new Set(["QB", "RB", "HB", "FB", "WR", "TE"]);
+  const DEF_POS = new Set(["DE", "DT", "DL", "LEDGE", "REDGE", "OLB", "LOLB", "ROLB", "MLB", "ILB", "SS", "FS", "CB", "S"]);
+
+  function offScore(s: typeof playerGameStatsTable.$inferSelect, pos: string): number {
+    if (pos === "QB") {
+      return (s.pssYds ?? 0) * 0.04 + (s.pssTds ?? 0) * 4 - (s.pssInts ?? 0) * 2 + (s.rshYds ?? 0) * 0.06;
+    }
+    return (s.rshYds ?? 0) * 0.1 + (s.rshTds ?? 0) * 6 + (s.recYds ?? 0) * 0.1 + (s.recTds ?? 0) * 6;
+  }
+
+  function defScore(s: typeof playerGameStatsTable.$inferSelect): number {
+    return (s.defTotalTackles ?? 0) + (s.defSacks ?? 0) * 3 + (s.defInts ?? 0) * 6 + (s.defFf ?? 0) * 3 + (s.defTds ?? 0) * 6 + (s.defPd ?? 0);
+  }
+
+  function fmtRow(r: typeof rows[number], score: number) {
+    return {
+      player: { id: r.player.id, name: r.player.name, position: r.player.position, overall: r.player.overall, portrait_id: r.player.portraitId ?? null },
+      team: { id: r.team.id, full_name: `${r.team.city} ${r.team.name}`, abbreviation: r.team.abbreviation, primary_color: r.team.primaryColor, conference: r.team.conference },
+      score: Math.round(score * 10) / 10,
+      stats: {
+        pss_yds: r.stats.pssYds, pss_tds: r.stats.pssTds, pss_ints: r.stats.pssInts,
+        rsh_yds: r.stats.rshYds, rsh_tds: r.stats.rshTds,
+        rec_yds: r.stats.recYds, rec_tds: r.stats.recTds, rec_catches: r.stats.recCatches,
+        def_tackles: r.stats.defTotalTackles, def_sacks: r.stats.defSacks, def_ints: r.stats.defInts,
+      },
+    };
+  }
+
+  const candidates: Record<string, ReturnType<typeof fmtRow> | null> = {
+    AFC_OPOW: null, NFC_OPOW: null, AFC_DPOW: null, NFC_DPOW: null,
+  };
+
+  const scoreMap = {
+    AFC_OPOW: -Infinity, NFC_OPOW: -Infinity, AFC_DPOW: -Infinity, NFC_DPOW: -Infinity,
+  };
+
+  for (const r of rows) {
+    const conf = r.team.conference?.toUpperCase() ?? "";
+    const isAFC = conf.includes("AFC");
+    const isNFC = conf.includes("NFC");
+    if (!isAFC && !isNFC) continue;
+    const pos = r.player.position;
+
+    if (OFF_POS.has(pos)) {
+      const score = offScore(r.stats, pos);
+      const key = isAFC ? "AFC_OPOW" : "NFC_OPOW";
+      if (score > scoreMap[key]) { scoreMap[key] = score; candidates[key] = fmtRow(r, score); }
+    }
+    if (DEF_POS.has(pos)) {
+      const score = defScore(r.stats);
+      const key = isAFC ? "AFC_DPOW" : "NFC_DPOW";
+      if (score > scoreMap[key]) { scoreMap[key] = score; candidates[key] = fmtRow(r, score); }
+    }
+  }
+
+  res.json(candidates);
+});
+
+// POST /leagues/:id/awards
+router.post("/:id/awards", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!req.session?.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  const { player_id, season, week, award_type, is_override } = req.body as {
+    player_id: number; season: number; week?: number | null; award_type: string; is_override?: boolean;
+  };
+
+  if (!player_id || !season || !award_type) { res.status(400).json({ error: "player_id, season, award_type are required" }); return; }
+  if (!(AWARD_TYPES as readonly string[]).includes(award_type)) {
+    res.status(400).json({ error: `Invalid award_type` }); return;
+  }
+
+  // Remove existing award of same type+season+week before inserting
+  await db.delete(playerAwardsTable).where(
+    and(
+      eq(playerAwardsTable.leagueId, leagueId),
+      eq(playerAwardsTable.awardType, award_type),
+      eq(playerAwardsTable.season, season),
+      week != null ? sql`${playerAwardsTable.week} = ${week}` : sql`${playerAwardsTable.week} IS NULL`,
+    )
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [award] = await db.insert(playerAwardsTable).values({
+    playerId: player_id,
+    leagueId,
+    season,
+    week: week ?? null,
+    isOverride: is_override ?? false,
+    awardType: award_type,
+  } as any).returning();
+
+  res.status(201).json({ id: award.id, award_type: award.awardType, player_id: award.playerId, season: award.season });
+});
+
+// DELETE /leagues/:id/awards/:awardId
+router.delete("/:id/awards/:awardId", async (req, res) => {
+  const leagueId = Number(req.params.id);
+  const awardId  = Number(req.params.awardId);
+  if (isNaN(leagueId) || isNaN(awardId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!req.session?.user) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+  await db.delete(playerAwardsTable).where(and(eq(playerAwardsTable.id, awardId), eq(playerAwardsTable.leagueId, leagueId)));
+  res.status(204).send();
 });
 
 // GET /leagues/:id/players
@@ -1402,7 +1602,7 @@ router.get("/:id/players", async (req, res) => {
   res.json(
     players.map((p) => ({
       ...formatPlayer(p),
-      team_name: teamMap.get(p.teamId)?.name ?? "Unknown",
+      team_name: (() => { const t = teamMap.get(p.teamId); return t ? `${t.city} ${t.name}` : "Unknown"; })(),
       team_abbreviation: teamMap.get(p.teamId)?.abbreviation ?? "UNK",
       team_city: teamMap.get(p.teamId)?.city ?? "",
       team_primary_color: teamMap.get(p.teamId)?.primaryColor ?? null,

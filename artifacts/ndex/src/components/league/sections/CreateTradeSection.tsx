@@ -12,6 +12,8 @@ import type { Team, Player } from "@workspace/api-client-react";
 interface Props {
   leagueId: number;
   season: number;
+  isMember: boolean;
+  myTeamId: number | null;
 }
 
 interface DraftPick {
@@ -220,8 +222,8 @@ function DraftPicksSelector({
   );
 }
 
-export default function CreateTradeSection({ leagueId, season }: Props) {
-  const [teamAId, setTeamAId] = useState<number | null>(null);
+export default function CreateTradeSection({ leagueId, season, isMember, myTeamId }: Props) {
+  const [teamAId, setTeamAId] = useState<number | null>(myTeamId);
   const [teamBId, setTeamBId] = useState<number | null>(null);
   const [playersFromA, setPlayersFromA] = useState<Set<number>>(new Set());
   const [playersFromB, setPlayersFromB] = useState<Set<number>>(new Set());
@@ -319,12 +321,26 @@ export default function CreateTradeSection({ leagueId, season }: Props) {
   };
 
   const resetForm = () => {
-    setTeamAId(null); setTeamBId(null);
+    setTeamAId(myTeamId); setTeamBId(null);
     setPlayersFromA(new Set()); setPlayersFromB(new Set());
     setPicksFromA([]); setPicksFromB([]);
     setNotes(""); setSubmitted(false);
     setSearchA(""); setSearchB("");
   };
+
+  if (!isMember) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+        <div className="h-14 w-14 rounded-full bg-white/5 border border-white/8 flex items-center justify-center">
+          <Repeat2 className="h-6 w-6 text-white/20" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-white/40">Members Only</p>
+          <p className="text-xs text-white/25 mt-1 max-w-xs">You must be a league member to propose trades. Request to join this league from the banner above.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -583,9 +599,9 @@ function TeamPanel({
           <option value="">— Select team —</option>
           {teams
             .filter((t: Team) => t.id !== otherTeamId)
-            .sort((a: Team, b: Team) => a.name.localeCompare(b.name))
+            .sort((a: Team, b: Team) => ((a as Team & { full_name?: string }).full_name ?? `${(a as Team & { city?: string }).city ?? ""} ${a.name}`).localeCompare((b as Team & { full_name?: string }).full_name ?? `${(b as Team & { city?: string }).city ?? ""} ${b.name}`))
             .map((t: Team) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>{(t as Team & { full_name?: string }).full_name ?? `${(t as Team & { city?: string }).city ?? ""} ${t.name}`}</option>
             ))}
         </select>
 

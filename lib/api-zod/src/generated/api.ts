@@ -144,7 +144,8 @@ export const UpdateLeagueBody = zod.object({
   "member_count": zod.number().optional(),
   "is_cross_play": zod.boolean().optional(),
   "is_money_league": zod.boolean().optional(),
-  "description": zod.string().optional()
+  "description": zod.string().optional(),
+  "custom_id": zod.string().nullable().optional()
 })
 
 export const UpdateLeagueResponse = zod.object({

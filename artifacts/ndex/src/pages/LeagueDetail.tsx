@@ -39,6 +39,7 @@ import AdminGameOfWeekSection from "@/components/league/sections/AdminGameOfWeek
 import TransactionsSection from "@/components/league/sections/TransactionsSection";
 import DraftSection from "@/components/league/sections/DraftSection";
 import CreateTradeSection from "@/components/league/sections/CreateTradeSection";
+import AwardsSection from "@/components/league/sections/AwardsSection";
 import LeagueTradesSection from "@/components/league/sections/LeagueTradesSection";
 import TradeCountsSection from "@/components/league/sections/TradeCountsSection";
 
@@ -107,6 +108,11 @@ export default function LeagueDetail() {
   const league = summary?.league;
   const isAdmin = !!user && !!league && user.username === league.commissioner_name;
   const isMember = isAdmin || (!!user && members.some((m: { discord_name: string }) => m.discord_name === user.username));
+  const myTeamId: number | null = (() => {
+    if (!user) return null;
+    const me = members.find((m: { discord_name: string; team_id?: number | null }) => m.discord_name === user.username);
+    return me?.team_id ?? null;
+  })();
 
   if (!league) {
     return (
@@ -165,12 +171,12 @@ export default function LeagueDetail() {
             {section === "transactions" && <TransactionsSection leagueId={leagueId} />}
             {section === "draft" && <DraftSection leagueId={leagueId} />}
             {(section === "trades" || section === "trades-create") && (
-              <CreateTradeSection leagueId={leagueId} season={league.season} />
+              <CreateTradeSection leagueId={leagueId} season={league.season} isMember={isMember} myTeamId={myTeamId} />
             )}
             {section === "trades-league" && <LeagueTradesSection leagueId={leagueId} />}
             {section === "trades-counts" && <TradeCountsSection leagueId={leagueId} />}
             {section === "awards" && (
-              <PlaceholderSection icon="Trophy" title="Awards" description="Season awards and accolades will be displayed here at the end of each season." />
+              <AwardsSection leagueId={leagueId} season={league.season} currentWeek={league.week ?? 1} isAdmin={isAdmin} />
             )}
 
             {/* Administration */}
