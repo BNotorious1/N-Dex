@@ -245,7 +245,7 @@ function SeedCard({
       } ${isModified ? "ring-1 ring-[#00C8FF]/30" : ""}`}
     >
       <span className="w-4 text-center font-black tabular-nums shrink-0 text-[16px] text-[#ffffff]">{seed}</span>
-      <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="xs" shape="circle" />
+      <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="lg" shape="circle" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
           <span className="font-bold text-white truncate text-[16px]">{info.city} {info.name}</span>
@@ -302,7 +302,7 @@ function ConferenceBracket({
               if (!info) return null;
               return (
                 <div key={r.teamId} className="flex items-center gap-1.5 px-1 py-0.5 opacity-35">
-                  <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color} size="xs" shape="circle" />
+                  <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color} size="sm" shape="circle" />
                   <span className="flex-1 truncate text-[12px] text-[#ffffff]">{info.abbreviation}</span>
                   <span className="tabular-nums [font-family:'Lora',serif] text-[12px] text-[#ffffff]">{RecordStr(r)}</span>
                 </div>
@@ -365,7 +365,7 @@ function GameToggle({
           <TeamLogo
             abbreviation={awayInfo?.abbreviation ?? "?"}
             primaryColor={awayInfo?.primary_color ?? "#555"}
-            size="xs"
+            size="lg"
             shape="circle"
           />
           <div className="flex-1 min-w-0">
@@ -397,7 +397,7 @@ function GameToggle({
           <TeamLogo
             abbreviation={homeInfo?.abbreviation ?? "?"}
             primaryColor={homeInfo?.primary_color ?? "#555"}
-            size="xs"
+            size="lg"
             shape="circle"
           />
           <div className="flex-1 min-w-0">
