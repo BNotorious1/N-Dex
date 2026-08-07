@@ -599,9 +599,9 @@ function TeamPanel({
           <option value="">— Select team —</option>
           {teams
             .filter((t: Team) => t.id !== otherTeamId)
-            .sort((a: Team, b: Team) => ((a as Team & { full_name?: string }).full_name ?? `${(a as Team & { city?: string }).city ?? ""} ${a.name}`).localeCompare((b as Team & { full_name?: string }).full_name ?? `${(b as Team & { city?: string }).city ?? ""} ${b.name}`))
+            .sort((a: Team, b: Team) => a.name.localeCompare(b.name))
             .map((t: Team) => (
-              <option key={t.id} value={t.id}>{(t as Team & { full_name?: string }).full_name ?? `${(t as Team & { city?: string }).city ?? ""} ${t.name}`}</option>
+              <option key={t.id} value={t.id}>{t.name}</option>
             ))}
         </select>
 

@@ -90,7 +90,6 @@ function formatTeam(team: typeof teamsTable.$inferSelect) {
     league_id: team.leagueId,
     name: team.name,
     city: team.city,
-    full_name: `${team.city} ${team.name}`,
     abbreviation: team.abbreviation,
     conference: team.conference,
     division: team.division,
@@ -338,11 +337,7 @@ router.get("/:id/summary", async (req, res) => {
     .filter(g => isCompleted(g.status))
     .sort((a, b) => b.week - a.week)
     .slice(0, 5)
-    .map(g => {
-      const ht = teamMap.get(g.homeTeamId);
-      const at = teamMap.get(g.awayTeamId);
-      return formatGame(g, ht ? `${ht.city} ${ht.name}` : null, at ? `${at.city} ${at.name}` : null);
-    });
+    .map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name));
 
   const totalGamesPlayed = allGames.filter(g => isCompleted(g.status)).length;
 
@@ -1143,11 +1138,7 @@ router.get("/:id/games", async (req, res) => {
   const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
   const teamMap = new Map(teams.map(t => [t.id, t]));
 
-  res.json(allGames.map(g => {
-    const ht = teamMap.get(g.homeTeamId);
-    const at = teamMap.get(g.awayTeamId);
-    return formatGame(g, ht ? `${ht.city} ${ht.name}` : null, at ? `${at.city} ${at.name}` : null, ht?.primaryColor, at?.primaryColor, ht?.abbreviation, at?.abbreviation);
-  }));
+  res.json(allGames.map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, teamMap.get(g.homeTeamId)?.primaryColor, teamMap.get(g.awayTeamId)?.primaryColor, teamMap.get(g.homeTeamId)?.abbreviation, teamMap.get(g.awayTeamId)?.abbreviation)));
 });
 
 // POST /leagues/:id/games
@@ -1399,7 +1390,7 @@ router.get("/:id/draft", async (req, res) => {
       rookie_year: p.rookieYear ?? null,
       years_pro: p.yearsPro ?? null,
       team_id: p.teamId,
-      team_name: team ? `${team.city} ${team.name}` : "Unknown",
+      team_name: team?.name ?? "Unknown",
       team_abbreviation: team?.abbreviation ?? "UNK",
       team_color: team?.primaryColor ?? null,
     };
@@ -1602,7 +1593,7 @@ router.get("/:id/players", async (req, res) => {
   res.json(
     players.map((p) => ({
       ...formatPlayer(p),
-      team_name: (() => { const t = teamMap.get(p.teamId); return t ? `${t.city} ${t.name}` : "Unknown"; })(),
+      team_name: teamMap.get(p.teamId)?.name ?? "Unknown",
       team_abbreviation: teamMap.get(p.teamId)?.abbreviation ?? "UNK",
       team_city: teamMap.get(p.teamId)?.city ?? "",
       team_primary_color: teamMap.get(p.teamId)?.primaryColor ?? null,
