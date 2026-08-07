@@ -265,60 +265,79 @@ function TiebreakerExplainer({
   records: Map<number, TeamRecord>;
   teamInfoMap: Map<number, TeamInfo>;
 }) {
-  // Collect adjacent seed pairs (including seed-7 vs bubble) that share the same overall win%
-  const ties: Array<{ aId: number; bId: number; label: ReturnType<typeof tiebreakerLabel>; isBubble: boolean }> = [];
-
-  const allSeeded = seeds.map(s => records.get(s.teamId)).filter(Boolean) as TeamRecord[];
-
-  // Adjacent seed pairs within playoff spots
-  for (let i = 0; i < allSeeded.length - 1; i++) {
-    const a = allSeeded[i]!;
-    const b = allSeeded[i + 1]!;
-    if (Math.abs(winPct(a) - winPct(b)) < 0.001) {
-      ties.push({ aId: a.teamId, bId: b.teamId, label: tiebreakerLabel(a, b), isBubble: false });
-    }
-  }
-
-  // Seed 7 vs first team out (bubble)
   const seededIds = new Set(seeds.map(s => s.teamId));
-  const confOut = sortTeams(
-    [...records.values()].filter(r => teamInfoMap.get(r.teamId)?.conference === conference && !seededIds.has(r.teamId))
+
+  // Sort ALL conference teams by record (same comparator the sim uses)
+  const allConf = sortTeams(
+    [...records.values()].filter(r => teamInfoMap.get(r.teamId)?.conference === conference)
   );
-  if (allSeeded.length > 0 && confOut.length > 0) {
-    const last = allSeeded[allSeeded.length - 1]!;
-    const firstOut = confOut[0]!;
-    if (Math.abs(winPct(last) - winPct(firstOut)) < 0.001) {
-      ties.push({ aId: last.teamId, bId: firstOut.teamId, label: tiebreakerLabel(last, firstOut), isBubble: true });
+
+  // Group into buckets where every team shares the same overall win%
+  const buckets: TeamRecord[][] = [];
+  for (const r of allConf) {
+    const last = buckets[buckets.length - 1];
+    if (last && Math.abs(winPct(last[0]!) - winPct(r)) < 0.001) {
+      last.push(r);
+    } else {
+      buckets.push([r]);
     }
   }
 
-  if (ties.length === 0) return null;
+  // Keep only buckets where ≥2 teams AND at least one team is seeded
+  // (i.e., the tie is relevant to actual playoff positioning)
+  const relevantBuckets = buckets.filter(
+    g => g.length >= 2 && g.some(r => seededIds.has(r.teamId))
+  );
+
+  if (relevantBuckets.length === 0) return null;
 
   return (
-    <div className="mx-1.5 mb-2 rounded-lg border border-white/6 bg-white/[0.015] p-2.5 space-y-2">
+    <div className="mx-1.5 mb-2 rounded-lg border border-white/6 bg-white/[0.015] p-2.5 space-y-3">
       <p className="text-[9px] font-black uppercase tracking-widest text-white/30">Tiebreakers</p>
-      {ties.map(({ aId, bId, label, isBubble }) => {
-        const aInfo = teamInfoMap.get(aId);
-        const bInfo = teamInfoMap.get(bId);
-        if (!aInfo || !bInfo) return null;
+      {relevantBuckets.map((group, gi) => {
+        const record = RecordStr(group[0]!);
+        const hasOut = group.some(r => !seededIds.has(r.teamId));
+        const count = group.length;
         return (
-          <div key={`${aId}-${bId}`} className="space-y-1">
-            {isBubble && (
-              <p className="text-[8px] font-black uppercase tracking-widest text-[#00C8FF]/50">Playoff bubble</p>
-            )}
-            <div className="flex items-center gap-1.5">
-              <TeamLogo abbreviation={aInfo.abbreviation} primaryColor={aInfo.primary_color} size="xs" shape="circle" />
-              <span className="text-[10px] font-bold text-white">{aInfo.abbreviation}</span>
-              <span className="text-[9px] text-white/30 mx-0.5">over</span>
-              <TeamLogo abbreviation={bInfo.abbreviation} primaryColor={bInfo.primary_color} size="xs" shape="circle" />
-              <span className="text-[10px] font-bold text-white/50">{bInfo.abbreviation}</span>
-            </div>
-            <p className="text-[9px] text-white/40 pl-0.5">
-              <span className="text-white/60 font-semibold">{label.criterion}:</span>{" "}
-              <span className="text-white font-bold tabular-nums [font-family:'Lora',serif]">{label.aVal}</span>
-              <span className="text-white/30"> vs </span>
-              <span className="tabular-nums [font-family:'Lora',serif]">{label.bVal}</span>
+          <div key={gi} className="space-y-1.5">
+            {/* Group header */}
+            <p className="text-[8px] font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5">
+              {count > 2 ? `${count}-way tie` : "2-way tie"}
+              <span className="text-white/15">·</span>
+              <span className="tabular-nums [font-family:'Lora',serif]">{record}</span>
+              {hasOut && (
+                <span className="text-[#00C8FF]/50 ml-1">Bubble</span>
+              )}
             </p>
+            {/* Pairwise comparisons within the group */}
+            {group.slice(0, -1).map((a, i) => {
+              const b = group[i + 1]!;
+              const aInfo = teamInfoMap.get(a.teamId);
+              const bInfo = teamInfoMap.get(b.teamId);
+              if (!aInfo || !bInfo) return null;
+              const label = tiebreakerLabel(a, b);
+              const aIn = seededIds.has(a.teamId);
+              const bIn = seededIds.has(b.teamId);
+              return (
+                <div key={`${a.teamId}-${b.teamId}`} className="space-y-0.5">
+                  <div className="flex items-center gap-1">
+                    <TeamLogo abbreviation={aInfo.abbreviation} primaryColor={aInfo.primary_color} size="xs" shape="circle" />
+                    <span className={`text-[10px] font-bold ${aIn ? "text-white" : "text-white/35"}`}>{aInfo.abbreviation}</span>
+                    {!aIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
+                    <span className="text-[8px] text-white/25 mx-0.5">›</span>
+                    <TeamLogo abbreviation={bInfo.abbreviation} primaryColor={bInfo.primary_color} size="xs" shape="circle" />
+                    <span className={`text-[10px] font-bold ${bIn ? "text-white/55" : "text-white/25"}`}>{bInfo.abbreviation}</span>
+                    {!bIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
+                  </div>
+                  <p className="text-[9px] text-white/35 pl-0.5">
+                    <span className="text-white/50 font-semibold">{label.criterion}:</span>{" "}
+                    <span className="text-white/80 tabular-nums [font-family:'Lora',serif]">{label.aVal}</span>
+                    <span className="text-white/25"> vs </span>
+                    <span className="tabular-nums [font-family:'Lora',serif]">{label.bVal}</span>
+                  </p>
+                </div>
+              );
+            })}
           </div>
         );
       })}
