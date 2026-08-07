@@ -68,8 +68,22 @@ function computeSeeds(entries: StandingEntry[]): SeedEntry[] {
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export default function HomeSection({ summary, leagueId, statLeaders, standings, gotw, onNavigate }: Props) {
-  const afcEntries = standings?.filter(s => s.conference === "AFC") ?? [];
-  const nfcEntries = standings?.filter(s => s.conference === "NFC") ?? [];
+  // Regular-season-only standings for playoff race (excludes weeks 19+)
+  const { data: regularStandings } = useQuery<StandingEntry[]>({
+    queryKey: ["standings-regular", leagueId],
+    queryFn: async () => {
+      const res = await fetch(`/api/leagues/${leagueId}/standings?phase=regular`);
+      if (!res.ok) throw new Error("Failed to fetch regular season standings");
+      return res.json() as Promise<StandingEntry[]>;
+    },
+    enabled: !!leagueId,
+  });
+
+  // Fall back to prop standings while regular-season fetch is in flight
+  const playoffRaceStandings = regularStandings ?? standings ?? [];
+
+  const afcEntries = playoffRaceStandings.filter(s => s.conference === "AFC");
+  const nfcEntries = playoffRaceStandings.filter(s => s.conference === "NFC");
   const afcSeeds = computeSeeds(afcEntries);
   const nfcSeeds = computeSeeds(nfcEntries);
 

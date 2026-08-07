@@ -362,13 +362,18 @@ router.get("/:id/standings", async (req, res) => {
     return;
   }
   const leagueId = parseResult.data.id;
+  const phase = typeof req.query.phase === "string" ? req.query.phase : "all";
   const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
   const allGames = await db.select().from(gamesTable).where(eq(gamesTable.leagueId, leagueId));
+  // Regular season = weeks 1–18; postseason = week 19+
+  const games = phase === "regular"
+    ? allGames.filter(g => (g.week ?? 0) <= 18)
+    : allGames;
 
-  const records = computeTeamRecords(allGames);
+  const records = computeTeamRecords(games);
 
   const pointsMap = new Map<number, { for: number; against: number }>();
-  for (const game of allGames) {
+  for (const game of games) {
     if (!isCompleted(game.status)) continue;
     const hScore = game.homeScore ?? 0;
     const aScore = game.awayScore ?? 0;
