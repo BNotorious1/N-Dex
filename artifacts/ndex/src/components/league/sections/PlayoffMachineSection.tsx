@@ -254,6 +254,70 @@ function tiebreakerLabel(a: TeamRecord, b: TeamRecord): { criterion: string; aVa
   return { criterion: "Points for", aVal: String(a.pf), bVal: String(b.pf) };
 }
 
+function tiedBuckets(sorted: TeamRecord[]): TeamRecord[][] {
+  const out: TeamRecord[][] = [];
+  for (const r of sorted) {
+    const last = out[out.length - 1];
+    if (last && Math.abs(winPct(last[0]!) - winPct(r)) < 0.001) last.push(r);
+    else out.push([r]);
+  }
+  return out;
+}
+
+function TiebreakerGroup({
+  label,
+  group,
+  seededIds,
+  teamInfoMap,
+}: {
+  label: string;
+  group: TeamRecord[];
+  seededIds: Set<number>;
+  teamInfoMap: Map<number, TeamInfo>;
+}) {
+  const record = RecordStr(group[0]!);
+  const count = group.length;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[8px] font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5">
+        {count > 2 ? `${count}-way tie` : "Tied"}
+        <span className="text-white/15">·</span>
+        <span className="tabular-nums [font-family:'Lora',serif]">{record}</span>
+        <span className="text-white/15">·</span>
+        <span className="normal-case tracking-normal font-medium text-white/30">{label}</span>
+      </p>
+      {group.slice(0, -1).map((a, i) => {
+        const b = group[i + 1]!;
+        const aInfo = teamInfoMap.get(a.teamId);
+        const bInfo = teamInfoMap.get(b.teamId);
+        if (!aInfo || !bInfo) return null;
+        const lbl = tiebreakerLabel(a, b);
+        const aIn = seededIds.has(a.teamId);
+        const bIn = seededIds.has(b.teamId);
+        return (
+          <div key={`${a.teamId}-${b.teamId}`} className="space-y-0.5">
+            <div className="flex items-center gap-1">
+              <TeamLogo abbreviation={aInfo.abbreviation} primaryColor={aInfo.primary_color} size="xs" shape="circle" />
+              <span className={`text-[10px] font-bold ${aIn ? "text-white" : "text-white/35"}`}>{aInfo.abbreviation}</span>
+              {!aIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
+              <span className="text-[8px] text-white/25 mx-0.5">›</span>
+              <TeamLogo abbreviation={bInfo.abbreviation} primaryColor={bInfo.primary_color} size="xs" shape="circle" />
+              <span className={`text-[10px] font-bold ${bIn ? "text-white/55" : "text-white/25"}`}>{bInfo.abbreviation}</span>
+              {!bIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
+            </div>
+            <p className="text-[9px] text-white/35 pl-0.5">
+              <span className="text-white/50 font-semibold">{lbl.criterion}:</span>{" "}
+              <span className="text-white/80 tabular-nums [font-family:'Lora',serif]">{lbl.aVal}</span>
+              <span className="text-white/25"> vs </span>
+              <span className="tabular-nums [font-family:'Lora',serif]">{lbl.bVal}</span>
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function TiebreakerExplainer({
   conference,
   seeds,
@@ -266,79 +330,72 @@ function TiebreakerExplainer({
   teamInfoMap: Map<number, TeamInfo>;
 }) {
   const seededIds = new Set(seeds.map(s => s.teamId));
+  const divWinnerIds = new Set(seeds.filter(s => s.isDivWinner).map(s => s.teamId));
 
-  // Sort ALL conference teams by record (same comparator the sim uses)
-  const allConf = sortTeams(
-    [...records.values()].filter(r => teamInfoMap.get(r.teamId)?.conference === conference)
-  );
-
-  // Group into buckets where every team shares the same overall win%
-  const buckets: TeamRecord[][] = [];
-  for (const r of allConf) {
-    const last = buckets[buckets.length - 1];
-    if (last && Math.abs(winPct(last[0]!) - winPct(r)) < 0.001) {
-      last.push(r);
-    } else {
-      buckets.push([r]);
+  // ── 1. Divisional tiebreakers ──────────────────────────────────────────────
+  // Per division: if 2+ teams are tied for the top spot, one won by tiebreaker
+  const divMap = new Map<string, TeamRecord[]>();
+  for (const r of records.values()) {
+    const info = teamInfoMap.get(r.teamId);
+    if (!info || info.conference !== conference) continue;
+    const d = info.division;
+    if (!divMap.has(d)) divMap.set(d, []);
+    divMap.get(d)!.push(r);
+  }
+  const divTies: Array<{ divLabel: string; group: TeamRecord[] }> = [];
+  for (const [div, teams] of divMap) {
+    const sorted = sortTeams(teams);
+    if (sorted.length < 2) continue;
+    const topPct = winPct(sorted[0]!);
+    const tied = sorted.filter(r => Math.abs(winPct(r) - topPct) < 0.001);
+    if (tied.length >= 2) {
+      // e.g. "AFC South" → "South"
+      const short = div.replace(/^(AFC|NFC)\s+/, "");
+      divTies.push({ divLabel: `${short} div`, group: tied });
     }
   }
 
-  // Keep only buckets where ≥2 teams AND at least one team is seeded
-  // (i.e., the tie is relevant to actual playoff positioning)
-  const relevantBuckets = buckets.filter(
-    g => g.length >= 2 && g.some(r => seededIds.has(r.teamId))
-  );
+  // ── 2. Div-winner seeding tiebreakers ──────────────────────────────────────
+  // Among the 4 div winners, adjacent seeds with same record
+  const divWinnerRecords = seeds
+    .filter(s => s.isDivWinner)
+    .map(s => records.get(s.teamId))
+    .filter(Boolean) as TeamRecord[];
+  const divWinnerSeedingTies: TeamRecord[][] = tiedBuckets(divWinnerRecords).filter(g => g.length >= 2);
 
-  if (relevantBuckets.length === 0) return null;
+  // ── 3. Wild-card tiebreakers ───────────────────────────────────────────────
+  // Among non-div-winner conf teams; only buckets that fall within or span the WC bubble (spots 1–4)
+  const wcSorted = sortTeams(
+    [...records.values()].filter(r => teamInfoMap.get(r.teamId)?.conference === conference && !divWinnerIds.has(r.teamId))
+  );
+  const wcAllBuckets = tiedBuckets(wcSorted);
+  const wcTies: TeamRecord[][] = [];
+  let seen = 0;
+  for (const bucket of wcAllBuckets) {
+    if (seen >= 4) break; // past the bubble
+    if (bucket.length >= 2) wcTies.push(bucket);
+    seen += bucket.length;
+  }
+
+  const hasAny = divTies.length > 0 || divWinnerSeedingTies.length > 0 || wcTies.length > 0;
+  if (!hasAny) return null;
 
   return (
     <div className="mx-1.5 mb-2 rounded-lg border border-white/6 bg-white/[0.015] p-2.5 space-y-3">
       <p className="text-[9px] font-black uppercase tracking-widest text-white/30">Tiebreakers</p>
-      {relevantBuckets.map((group, gi) => {
-        const record = RecordStr(group[0]!);
-        const hasOut = group.some(r => !seededIds.has(r.teamId));
-        const count = group.length;
+
+      {divTies.map(({ divLabel, group }) => (
+        <TiebreakerGroup key={divLabel} label={divLabel} group={group} seededIds={seededIds} teamInfoMap={teamInfoMap} />
+      ))}
+
+      {divWinnerSeedingTies.map((group, i) => (
+        <TiebreakerGroup key={`dw-${i}`} label="div winner seeding" group={group} seededIds={seededIds} teamInfoMap={teamInfoMap} />
+      ))}
+
+      {wcTies.map((group, i) => {
+        const hasBubble = group.some(r => !seededIds.has(r.teamId));
         return (
-          <div key={gi} className="space-y-1.5">
-            {/* Group header */}
-            <p className="text-[8px] font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5">
-              {count > 2 ? `${count}-way tie` : "2-way tie"}
-              <span className="text-white/15">·</span>
-              <span className="tabular-nums [font-family:'Lora',serif]">{record}</span>
-              {hasOut && (
-                <span className="text-[#00C8FF]/50 ml-1">Bubble</span>
-              )}
-            </p>
-            {/* Pairwise comparisons within the group */}
-            {group.slice(0, -1).map((a, i) => {
-              const b = group[i + 1]!;
-              const aInfo = teamInfoMap.get(a.teamId);
-              const bInfo = teamInfoMap.get(b.teamId);
-              if (!aInfo || !bInfo) return null;
-              const label = tiebreakerLabel(a, b);
-              const aIn = seededIds.has(a.teamId);
-              const bIn = seededIds.has(b.teamId);
-              return (
-                <div key={`${a.teamId}-${b.teamId}`} className="space-y-0.5">
-                  <div className="flex items-center gap-1">
-                    <TeamLogo abbreviation={aInfo.abbreviation} primaryColor={aInfo.primary_color} size="xs" shape="circle" />
-                    <span className={`text-[10px] font-bold ${aIn ? "text-white" : "text-white/35"}`}>{aInfo.abbreviation}</span>
-                    {!aIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
-                    <span className="text-[8px] text-white/25 mx-0.5">›</span>
-                    <TeamLogo abbreviation={bInfo.abbreviation} primaryColor={bInfo.primary_color} size="xs" shape="circle" />
-                    <span className={`text-[10px] font-bold ${bIn ? "text-white/55" : "text-white/25"}`}>{bInfo.abbreviation}</span>
-                    {!bIn && <span className="text-[7px] text-white/25 uppercase">out</span>}
-                  </div>
-                  <p className="text-[9px] text-white/35 pl-0.5">
-                    <span className="text-white/50 font-semibold">{label.criterion}:</span>{" "}
-                    <span className="text-white/80 tabular-nums [font-family:'Lora',serif]">{label.aVal}</span>
-                    <span className="text-white/25"> vs </span>
-                    <span className="tabular-nums [font-family:'Lora',serif]">{label.bVal}</span>
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+          <TiebreakerGroup key={`wc-${i}`} label={hasBubble ? "wild card bubble" : "wild card seeding"} group={group} seededIds={seededIds} teamInfoMap={teamInfoMap} />
         );
       })}
     </div>
