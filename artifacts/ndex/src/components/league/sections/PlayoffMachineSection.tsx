@@ -238,8 +238,6 @@ function SeedCard({
   const info = teamInfoMap.get(teamId);
   const rec = records.get(teamId);
   if (!info || !rec) return null;
-  const color = info.primary_color ?? "#555";
-
   return (
     <div
       className={`flex items-center gap-3 rounded-lg px-3 py-2 border transition-all ${
@@ -247,7 +245,7 @@ function SeedCard({
       } ${isModified ? "ring-1 ring-[#00C8FF]/30" : ""}`}
     >
       <span className="w-5 text-center text-[11px] font-black text-white/30 tabular-nums">{seed}</span>
-      <TeamLogo abbreviation={info.abbreviation} primaryColor={color} size="sm" shape="circle" />
+      <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="sm" shape="circle" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-white truncate">{info.city} {info.name}</span>
@@ -257,10 +255,7 @@ function SeedCard({
         </div>
         <span className="text-[10px] text-white/40 tabular-nums [font-family:'Lora',serif]">{RecordStr(rec)}</span>
       </div>
-      <span
-        className="font-black tabular-nums text-[color:var(--color-white)] text-[12px]"
-        style={{ color }}
-      >
+      <span className="font-black tabular-nums text-white/70 text-[12px]">
         {((winPct(rec)) * 100).toFixed(0)}%
       </span>
     </div>
@@ -353,8 +348,6 @@ function GameToggle({
   const effectiveWinner = override ?? originalWinner;
   const isModified = override != null;
 
-  const homeColor = homeInfo?.primary_color ?? "#555";
-  const awayColor = awayInfo?.primary_color ?? "#555";
   const homeWon = effectiveWinner === "home";
   const awayWon = effectiveWinner === "away";
 
@@ -380,7 +373,7 @@ function GameToggle({
         >
           <TeamLogo
             abbreviation={awayInfo?.abbreviation ?? "?"}
-            primaryColor={awayColor}
+            primaryColor={awayInfo?.primary_color ?? "#555"}
             size="sm"
             shape="circle"
           />
@@ -389,14 +382,13 @@ function GameToggle({
               {awayInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.away_score != null && (
-              <p className="text-[10px] tabular-nums [font-family:'Lora',serif] text-[color:var(--color-white)]"
-                style={awayWon ? { color: awayColor } : {}}>
+              <p className={`text-[10px] tabular-nums [font-family:'Lora',serif] ${awayWon ? "text-white" : "text-white/40"}`}>
                 {game.away_score}
               </p>
             )}
           </div>
           {awayWon && (
-            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: awayColor }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
           )}
         </button>
 
@@ -415,7 +407,7 @@ function GameToggle({
         >
           <TeamLogo
             abbreviation={homeInfo?.abbreviation ?? "?"}
-            primaryColor={homeColor}
+            primaryColor={homeInfo?.primary_color ?? "#555"}
             size="sm"
             shape="circle"
           />
@@ -424,14 +416,13 @@ function GameToggle({
               {homeInfo?.abbreviation ?? "?"}
             </p>
             {game.status === "FINAL" && game.home_score != null && (
-              <p className="text-[10px] tabular-nums [font-family:'Lora',serif] text-right border-t-[color:var(--color-white)] border-r-[color:var(--color-white)] border-b-[color:var(--color-white)] border-l-[color:var(--color-white)] text-[#ffffff]"
-                style={homeWon ? { color: homeColor } : {}}>
+              <p className={`text-[10px] tabular-nums [font-family:'Lora',serif] text-right ${homeWon ? "text-white" : "text-white/40"}`}>
                 {game.home_score}
               </p>
             )}
           </div>
           {homeWon && (
-            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: homeColor }} />
+            <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-white/60" />
           )}
         </button>
       </div>
@@ -443,7 +434,7 @@ function GameToggle({
 
 export default function PlayoffMachineSection({ games, standings }: Props) {
   const [overrides, setOverrides] = useState<Map<number, WinnerOverride>>(new Map());
-  const [selectedWeek, setSelectedWeek] = useState<number | "all">("all");
+  const [selectedWeek, setSelectedWeek] = useState<number>(11);
 
   // Build teamInfoMap from standings
   const teamInfoMap = useMemo(() => {
@@ -474,15 +465,13 @@ export default function PlayoffMachineSection({ games, standings }: Props) {
     [games]
   );
 
-  const weeks = useMemo(() => [...new Set(regularGames.map(g => g.week))].sort((a, b) => a - b), [regularGames]);
-
-  // Set initial week to last completed week (or first week)
-  useState(() => {
-    if (weeks.length > 0) setSelectedWeek(weeks[weeks.length - 1]!);
-  });
+  const weeks = useMemo(() =>
+    [...new Set(regularGames.map(g => g.week))].filter(w => w >= 11).sort((a, b) => a - b),
+    [regularGames]
+  );
 
   const displayedGames = useMemo(() =>
-    selectedWeek === "all" ? regularGames : regularGames.filter(g => g.week === selectedWeek),
+    regularGames.filter(g => g.week === selectedWeek),
     [regularGames, selectedWeek]
   );
 
@@ -561,16 +550,6 @@ export default function PlayoffMachineSection({ games, standings }: Props) {
         <div className="flex-1 min-w-0 space-y-4">
           {/* Week selector */}
           <div className="flex gap-1 flex-wrap">
-            <button
-              onClick={() => setSelectedWeek("all")}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors border ${
-                selectedWeek === "all"
-                  ? "bg-[#00C8FF] text-[#0a0a0a] border-transparent"
-                  : "border-white/10 text-white/40 hover:text-white/70"
-              }`}
-            >
-              All
-            </button>
             {weeks.map(w => {
               const hasChanges = regularGames.filter(g => g.week === w).some(g => overrides.has(g.id));
               return (
@@ -635,7 +614,7 @@ export default function PlayoffMachineSection({ games, standings }: Props) {
                 records={simRecords}
                 teamInfoMap={teamInfoMap}
                 modifiedTeamIds={modifiedTeamIds}
-                color="#003087"
+                color="#C8102E"
               />
               <ConferenceBracket
                 conference="NFC"
