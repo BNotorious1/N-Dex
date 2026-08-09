@@ -87,9 +87,9 @@ export default function AdminGameOfWeekSection({ leagueId, currentWeek = 1, curr
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[#00C8FF]/60 mb-1">Currently Live</p>
               <p className="text-sm font-bold text-white">
-                {gotw.away_team ? gotw.away_team.name : "TBD"}
+                {gotw.away_team ? `${gotw.away_team.city} ${gotw.away_team.name}` : "TBD"}
                 {" vs "}
-                {gotw.home_team ? gotw.home_team.name : "TBD"}
+                {gotw.home_team ? `${gotw.home_team.city} ${gotw.home_team.name}` : "TBD"}
               </p>
               <p className="text-xs text-white/40 mt-0.5">{getWeekLabel(gotw.week)} · Season {gotw.season}</p>
               {gotw.headline && <p className="text-xs text-white/60 mt-1 italic">{gotw.headline}</p>}
@@ -230,7 +230,7 @@ function TeamSelect({
       >
         <option value="">{placeholder}</option>
         {teams.map((t) => (
-          <option key={t.id} value={t.id}>{t.name} ({t.abbreviation})</option>
+          <option key={t.id} value={t.id}>{t.city} {t.name} ({t.abbreviation})</option>
         ))}
       </select>
       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">▾</span>

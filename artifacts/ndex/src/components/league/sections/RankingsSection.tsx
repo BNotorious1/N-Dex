@@ -70,7 +70,7 @@ export default function RankingsSection({ standings }: Props) {
                         size="md"
                         shape="rounded"
                       />
-                      <span className="font-bold text-white">{e.team.name}</span>
+                      <span className="font-bold text-white">{e.team.city} {e.team.name}</span>
                     </Link>
                   </td>
                   <td className="px-3 py-3 text-center text-white/45">{e.conference}</td>

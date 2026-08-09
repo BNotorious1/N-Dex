@@ -81,7 +81,7 @@ function StandingsTable({ entries, title }: { entries: StandingEntry[]; title?: 
                         size="sm"
                         shape="circle"
                       />
-                      <span className="font-semibold text-white">{e.team.name}</span>
+                      <span className="font-semibold text-white">{e.team.city} {e.team.name}</span>
                     </Link>
                   </td>
                   <td className="px-3 py-2.5 text-center font-bold text-white">{e.wins}</td>

@@ -197,7 +197,7 @@ export default function TeamStatisticsTab({ team, leagueId }: Props) {
       {/* Header + phase toggle */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-black text-white tracking-tight">
-          {team.name} Stats
+          {team.city} {team.name} Stats
         </h2>
         <div className="flex rounded-lg overflow-hidden border border-white/10 bg-[#111]">
           {PHASE_TABS.map(t => (

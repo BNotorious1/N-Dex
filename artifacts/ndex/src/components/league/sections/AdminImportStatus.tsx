@@ -157,7 +157,6 @@ export default function AdminImportStatus({ leagueId }: Props) {
 
   const isConnected = data?.is_ea_connected ?? false;
   const exportInfo = data?.export_info ?? { league: null, rosters: null, statistics: {} };
-  const currentWeek = data?.week ?? 1;
   const anyImporting = importing !== null;
 
   const TopBtn = ({
@@ -303,7 +302,6 @@ export default function AdminImportStatus({ leagueId }: Props) {
               {Array.from({ length: 23 }, (_, i) => {
                 const isProBowl = i === 21;
                 const weekData = exportInfo.statistics[String(i)] as StatWeek | undefined;
-                const isNotYetPlayed = i >= currentWeek;
                 const isImportingThisWeek = importing === `week-${i}`;
                 const weekLabel = i === 18 ? "Wildcard"
                   : i === 19 ? "Divisional"
@@ -317,7 +315,7 @@ export default function AdminImportStatus({ leagueId }: Props) {
                     <td className="px-2 py-1.5 text-center">
                       <button
                         onClick={() => void doWeekImport(i)}
-                        disabled={!isConnected || anyImporting || isNotYetPlayed || isProBowl}
+                        disabled={!isConnected || anyImporting || isProBowl}
                         title={isProBowl ? "Pro Bowl — no player stats" : `Import ${weekLabel} Stats`}
                         className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-[#00C8FF]/15 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                       >
@@ -337,10 +335,8 @@ export default function AdminImportStatus({ leagueId }: Props) {
                             <span className="text-white/20">N/A</span>
                           ) : val ? (
                             <span className="text-emerald-400 font-mono">{timeAgo(val)}</span>
-                          ) : isNotYetPlayed ? (
-                            <span className="text-white/20">Not Played</span>
                           ) : (
-                            <span className="text-amber-500/70">Missing</span>
+                            <span className="text-white/25">—</span>
                           )}
                         </td>
                       );

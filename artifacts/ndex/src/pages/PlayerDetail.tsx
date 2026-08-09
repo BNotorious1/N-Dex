@@ -2140,7 +2140,7 @@ export default function PlayerDetail() {
                   <div className="flex items-center gap-2 mb-3">
                     <TeamLogo abbreviation={player.team_abbreviation} primaryColor={player.team_primary_color} size="sm" shape="circle" />
                     <span className="text-[11px] tracking-[0.2em] uppercase text-white/40">
-                      {player.team_name}
+                      {player.team_city} · {player.team_name}
                     </span>
                   </div>
 

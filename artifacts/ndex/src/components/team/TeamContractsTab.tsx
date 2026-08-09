@@ -56,7 +56,7 @@ export default function TeamContractsTab({ team, players }: Props) {
   return (
     <div className="rounded-xl overflow-hidden border border-white/8 bg-[#111]">
       <div className="px-6 py-4 border-b border-white/8">
-        <h2 className="text-lg font-black text-white tracking-tight">{team.name} Contracts</h2>
+        <h2 className="text-lg font-black text-white tracking-tight">{team.city} {team.name} Contracts</h2>
         {!noData && (
           <p className="text-[11px] text-white/30 mt-0.5">
             {sorted.length} player{sorted.length !== 1 ? "s" : ""}

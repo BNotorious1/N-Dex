@@ -422,7 +422,7 @@ function SeedCard({
       <TeamLogo abbreviation={info.abbreviation} primaryColor={info.primary_color ?? "#555"} size="lg" shape="circle" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
-          <span className="font-bold text-white truncate text-[16px]">{info.name}</span>
+          <span className="font-bold text-white truncate text-[16px]">{info.city} {info.name}</span>
           {isDivWinner && (
             <span className="font-black text-amber-400 uppercase tracking-wider shrink-0 text-[10px]">DIV</span>
           )}

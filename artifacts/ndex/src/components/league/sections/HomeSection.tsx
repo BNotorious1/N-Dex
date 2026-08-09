@@ -197,7 +197,7 @@ function PlayoffRace({ conf, seeds }: { conf: "AFC" | "NFC"; seeds: SeedEntry[] 
               <TeamLogo abbreviation={e.team.abbreviation} primaryColor={e.team.primary_color} size="xs" shape="circle" />
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-white truncate group-hover:text-[#00C8FF] transition-colors leading-tight">
-                  {e.team.name}
+                  {e.team.city} {e.team.name}
                 </p>
               </div>
               <span className="text-[10px] font-black text-white/60 tabular-nums shrink-0">
@@ -231,7 +231,7 @@ function RankingsSidebar({ entries, onViewAll }: { entries: StandingEntry[]; onV
           <span className={`text-[11px] font-black w-4 shrink-0 text-right tabular-nums ${i < 3 ? "text-[#00C8FF]" : "text-white/25"}`}>{i + 1}</span>
           <TeamLogo abbreviation={e.team.abbreviation} primaryColor={e.team.primary_color} size="xs" shape="circle" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-white truncate group-hover:text-[#00C8FF] transition-colors">{e.team.name}</p>
+            <p className="text-[10px] font-bold text-white truncate group-hover:text-[#00C8FF] transition-colors">{e.team.city} {e.team.name}</p>
             <p className="text-[9px] text-white/30">{e.conference} · {e.division}</p>
           </div>
           <span className="text-[10px] font-black text-white/60 tabular-nums shrink-0">{e.wins}–{e.losses}</span>
@@ -274,7 +274,7 @@ function GameOfWeekHero({ gotw }: { gotw: GameOfWeek }) {
             <div className="flex-1 flex flex-col items-center gap-2 text-center">
               <TeamLogo abbreviation={awayTeam?.abbreviation ?? "???"} primaryColor={awayColor} size="lg" shape="circle" />
               <div>
-                <p className="text-sm font-black text-white leading-tight">{awayTeam ? awayTeam.name : "TBD"}</p>
+                <p className="text-sm font-black text-white leading-tight">{awayTeam ? `${awayTeam.city} ${awayTeam.name}` : "TBD"}</p>
                 {awayTeam && <p className="text-[10px] text-white/40">{awayTeam.wins}–{awayTeam.losses} · {awayTeam.conference}</p>}
               </div>
             </div>
@@ -286,7 +286,7 @@ function GameOfWeekHero({ gotw }: { gotw: GameOfWeek }) {
             <div className="flex-1 flex flex-col items-center gap-2 text-center">
               <TeamLogo abbreviation={homeTeam?.abbreviation ?? "???"} primaryColor={homeColor} size="lg" shape="circle" />
               <div>
-                <p className="text-sm font-black text-white leading-tight">{homeTeam ? homeTeam.name : "TBD"}</p>
+                <p className="text-sm font-black text-white leading-tight">{homeTeam ? `${homeTeam.city} ${homeTeam.name}` : "TBD"}</p>
                 {homeTeam && <p className="text-[10px] text-white/40">{homeTeam.wins}–{homeTeam.losses} · {homeTeam.conference}</p>}
               </div>
             </div>
