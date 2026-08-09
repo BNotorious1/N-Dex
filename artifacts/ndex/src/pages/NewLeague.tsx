@@ -166,10 +166,9 @@ export default function NewLeague() {
                   { value: "PC", label: "PC" },
                 ]} />
                 <SelectField form={form} name="difficulty" label="Difficulty" options={[
-                  { value: "ALL_MADDEN", label: "All Madden" },
-                  { value: "ADVANCED", label: "Advanced" },
+                  { value: "ALL_MADDEN", label: "All-Madden" },
+                  { value: "ALL_PRO", label: "All-Pro" },
                   { value: "PRO", label: "Pro" },
-                  { value: "VETERAN", label: "Veteran" },
                   { value: "ROOKIE", label: "Rookie" },
                 ]} />
                 <SelectField form={form} name="category" label="Category" options={[
