@@ -942,6 +942,7 @@ export interface GameDetail {
 export type LeagueTradeTeamA = {
   id: number;
   name: string;
+  city: string;
   abbreviation: string;
   /** @nullable */
   primary_color?: string | null;
@@ -954,6 +955,7 @@ export type LeagueTradeTeamA = {
 export type LeagueTradeTeamB = {
   id: number;
   name: string;
+  city: string;
   abbreviation: string;
   /** @nullable */
   primary_color?: string | null;
@@ -1036,6 +1038,7 @@ export type LeagueTransactionPlayer = {
 export type LeagueTransactionTeam = {
   id: number;
   name: string;
+  city: string;
   abbreviation: string;
   /** @nullable */
   primary_color?: string | null;

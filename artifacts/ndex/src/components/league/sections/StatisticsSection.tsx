@@ -199,7 +199,7 @@ export default function StatisticsSection({ leagueId }: { leagueId: number }) {
               placeholder="All Teams"
             >
               {allTeams.map(t => (
-                <option key={t.id} value={t.name}>{t.name}</option>
+                <option key={t.id} value={t.name}>{t.city} {t.name}</option>
               ))}
             </FilterSelect>
 

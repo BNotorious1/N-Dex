@@ -245,7 +245,7 @@ export default function AdminJoinRequestsSection({ leagueId }: Props) {
               {r.status === "approved" && team && !isExpanded && (
                 <div className="px-4 pb-3 flex items-center gap-2">
                   <TeamLogo abbreviation={team.abbreviation} size={16} />
-                  <span className="text-[11px] text-white/50">{team.name}</span>
+                  <span className="text-[11px] text-white/50">{team.city} {team.name}</span>
                 </div>
               )}
 
@@ -267,13 +267,13 @@ export default function AdminJoinRequestsSection({ leagueId }: Props) {
                     >
                       <option value="">— No team —</option>
                       {teams.sort((a: Team, b: Team) => a.name.localeCompare(b.name)).map((t: Team) => (
-                        <option key={t.id} value={t.id}>{t.name} ({t.abbreviation})</option>
+                        <option key={t.id} value={t.id}>{t.city} {t.name} ({t.abbreviation})</option>
                       ))}
                     </select>
                     {selectedTeam && (
                       <div className="flex items-center gap-2 mt-1 px-1">
                         <TeamLogo abbreviation={selectedTeam.abbreviation} size={18} />
-                        <span className="text-xs text-white/60">{selectedTeam.name}</span>
+                        <span className="text-xs text-white/60">{selectedTeam.city} {selectedTeam.name}</span>
                       </div>
                     )}
                   </div>

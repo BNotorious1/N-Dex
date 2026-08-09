@@ -1210,13 +1210,13 @@ async function loadTrade(tradeId: number, leagueId: number) {
     week: trade.week ?? null,
     status: trade.status,
     team_a: {
-      id: teamA.id, name: teamA.name, abbreviation: teamA.abbreviation,
+      id: teamA.id, name: teamA.name, city: teamA.city, abbreviation: teamA.abbreviation,
       primary_color: teamA.primaryColor ?? null,
       member_discord: memberA?.discordName ?? null,
       member_gamertag: memberA?.gamerTag ?? null,
     },
     team_b: {
-      id: teamB.id, name: teamB.name, abbreviation: teamB.abbreviation,
+      id: teamB.id, name: teamB.name, city: teamB.city, abbreviation: teamB.abbreviation,
       primary_color: teamB.primaryColor ?? null,
       member_discord: memberB?.discordName ?? null,
       member_gamertag: memberB?.gamerTag ?? null,
@@ -1348,6 +1348,7 @@ router.get("/:id/transactions", async (req, res) => {
     team: {
       id: r.teams.id,
       name: r.teams.name,
+      city: r.teams.city,
       abbreviation: r.teams.abbreviation,
       primary_color: r.teams.primaryColor ?? null,
     },

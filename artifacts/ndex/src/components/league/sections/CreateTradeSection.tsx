@@ -352,8 +352,8 @@ export default function CreateTradeSection({ leagueId, season, isMember, myTeamI
           <h2 className="text-xl font-black text-white mb-1">Trade Submitted!</h2>
           <p className="text-sm text-white/50">
             The trade proposal between{" "}
-            <span className="text-white/80">{teamAObj?.name}</span> and{" "}
-            <span className="text-white/80">{teamBObj?.name}</span> is now pending review.
+            <span className="text-white/80">{teamAObj?.city} {teamAObj?.name}</span> and{" "}
+            <span className="text-white/80">{teamBObj?.city} {teamBObj?.name}</span> is now pending review.
           </p>
         </div>
         <button
@@ -437,14 +437,14 @@ export default function CreateTradeSection({ leagueId, season, isMember, myTeamI
           {/* Value comparison */}
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
             <div className="text-right">
-              <p className="text-[10px] text-white/35 font-bold uppercase tracking-wider mb-0.5">{teamAObj?.name ?? "Team A"}</p>
+              <p className="text-[10px] text-white/35 font-bold uppercase tracking-wider mb-0.5">{teamAObj ? `${teamAObj.city} ${teamAObj.name}` : "Team A"}</p>
               <p className="text-2xl font-black text-[#00C8FF] tabular-nums">{valueA}</p>
             </div>
             <div className="text-center px-1">
               <ArrowLeftRight className="h-4 w-4 text-white/20 mx-auto" />
             </div>
             <div>
-              <p className="text-[10px] text-white/35 font-bold uppercase tracking-wider mb-0.5">{teamBObj?.name ?? "Team B"}</p>
+              <p className="text-[10px] text-white/35 font-bold uppercase tracking-wider mb-0.5">{teamBObj ? `${teamBObj.city} ${teamBObj.name}` : "Team B"}</p>
               <p className="text-2xl font-black text-[#F44336] tabular-nums">{valueB}</p>
             </div>
           </div>
@@ -601,7 +601,7 @@ function TeamPanel({
             .filter((t: Team) => t.id !== otherTeamId)
             .sort((a: Team, b: Team) => a.name.localeCompare(b.name))
             .map((t: Team) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>{t.city} {t.name}</option>
             ))}
         </select>
 
