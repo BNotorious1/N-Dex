@@ -221,7 +221,8 @@ export default function AdminImportStatus({ leagueId }: Props) {
           </div>
           <div className="p-4 space-y-3">
             <ol className="text-[11px] text-white/40 list-decimal list-inside space-y-1 mb-4">
-              <li><strong className="text-white/60">League Info</strong> — Import basic league information</li>
+              <li><strong className="text-white/60">League Info</strong> — Import teams, divisions, and standings</li>
+              <li><strong className="text-white/60">Schedules</strong> — Import game schedule; unlocks past weeks for stat import</li>
               <li><strong className="text-white/60">Rosters</strong> — Import team rosters and player data</li>
               <li><strong className="text-white/60">Import All Stats</strong> — Import all player stats (may take 5–10 min)</li>
             </ol>

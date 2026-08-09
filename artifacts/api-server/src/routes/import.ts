@@ -79,10 +79,16 @@ export async function upsertLeagueTeams(leagueId: number, teams: RawTeam[]): Pro
     const { conference, division } = parseDivName(t);
 
     const rawUserName = str(t["userName"], "");
+    const nickPart = str(t["teamName"] || t["nickName"] || t["displayName"], "Unknown");
+    const cityPart = str(t["cityName"], "");
+    // Build full "City Nickname" name; guard against Companion App already sending full name
+    const fullName = cityPart && !nickPart.toLowerCase().startsWith(cityPart.toLowerCase())
+      ? `${cityPart} ${nickPart}`
+      : nickPart;
     const values = {
       leagueId,
-      name: str(t["teamName"] || t["nickName"] || t["displayName"], "Unknown"),
-      city: str(t["cityName"], "Unknown"),
+      name: fullName,
+      city: cityPart || "Unknown",
       abbreviation: str(t["abbrName"], "???").toUpperCase().slice(0, 4),
       conference,
       division,
