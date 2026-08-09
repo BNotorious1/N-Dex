@@ -79,12 +79,19 @@ export async function upsertLeagueTeams(leagueId: number, teams: RawTeam[]): Pro
     const { conference, division } = parseDivName(t);
 
     const rawUserName = str(t["userName"], "");
-    const cityPart = str(t["cityName"], "Unknown");
+    const cityPart = str(t["cityName"], "");
+    // Blaze: displayName = "Packers" (correct), nickName = "Pack" (short form), teamName absent
+    // Companion App: teamName = full name or nickname
+    const nickPart = str(t["displayName"] || t["teamName"] || t["nickName"], "Unknown");
+    // Store the full "City Nickname" as name (e.g. "Green Bay Packers").
+    // Guard against Companion App already sending the full name (don't double-prepend).
+    const fullName = cityPart && !nickPart.toLowerCase().startsWith(cityPart.toLowerCase())
+      ? `${cityPart} ${nickPart}`
+      : nickPart;
     const values = {
       leagueId,
-      // Prefer nickName (e.g. "Packers") over teamName which Blaze sends as a short form (e.g. "Pack")
-      name: str(t["nickName"] || t["teamName"] || t["displayName"], "Unknown"),
-      city: cityPart,
+      name: fullName,
+      city: cityPart || "Unknown",
       abbreviation: str(t["abbrName"], "???").toUpperCase().slice(0, 4),
       conference,
       division,

@@ -346,7 +346,7 @@ export default function AdminMembersSection({ leagueId }: Props) {
               >
                 <option value="">— No team —</option>
                 {sortedTeams.map((t: Team) => (
-                  <option key={t.id} value={t.id}>{t.city} {t.name}</option>
+                  <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
             </div>
@@ -473,7 +473,7 @@ export default function AdminMembersSection({ leagueId }: Props) {
                       >
                         <option value="">— No team —</option>
                         {sortedTeams.map((t: Team) => (
-                          <option key={t.id} value={t.id}>{t.city} {t.name}</option>
+                          <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
                       </select>
                     </div>

@@ -227,7 +227,7 @@ function TxRow({ tx, odd }: { tx: LeagueTransaction; odd: boolean }) {
         <Link href={`/teams/${tx.team.id}`} className="flex items-center gap-2 group w-fit">
           <TeamLogo size="sm" abbreviation={tx.team.abbreviation} primaryColor={tx.team.primary_color} />
           <span className="text-[12px] font-bold text-white/80 group-hover:text-[#00C8FF] transition-colors whitespace-nowrap">
-            {tx.team.city} {tx.team.name}
+            {tx.team.name}
           </span>
         </Link>
       </td>

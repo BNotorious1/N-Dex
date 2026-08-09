@@ -42,7 +42,7 @@ export default function TeamsSection({ teams }: Props) {
 
   const filtered = teams.filter((t) => {
     const matchName =
-      `${t.city} ${t.name}`.toLowerCase().includes(search.toLowerCase()) ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.abbreviation.toLowerCase().includes(search.toLowerCase());
     const matchConf = conference === "All" || t.conference === conference;
     return matchName && matchConf;
@@ -114,7 +114,7 @@ export default function TeamsSection({ teams }: Props) {
                       />
                       <div>
                         <p className="font-bold text-white group-hover:text-[#00C8FF] transition-colors whitespace-nowrap">
-                          {team.city} {team.name}
+                          {team.name}
                         </p>
                         {team.is_user_team && (
                           <p className="text-[10px] text-[#00C8FF]">Your Team</p>

@@ -70,7 +70,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
         <div className="flex items-center gap-2.5 min-w-0">
           <TeamLogo abbreviation={trade.team_a.abbreviation} size={26} />
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">{trade.team_a.city} {trade.team_a.name}</p>
+            <p className="text-sm font-bold text-white truncate">{trade.team_a.name}</p>
             <p className="text-[10px] text-white/35">
               {memberA ?? <span className="italic">None</span>}
             </p>
@@ -81,7 +81,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
         <div className="flex items-center gap-2.5 min-w-0">
           <TeamLogo abbreviation={trade.team_b.abbreviation} size={26} />
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">{trade.team_b.city} {trade.team_b.name}</p>
+            <p className="text-sm font-bold text-white truncate">{trade.team_b.name}</p>
             <p className="text-[10px] text-white/35">
               {memberB ?? "CPU"}
             </p>
@@ -110,7 +110,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
             {/* Players from A */}
             <div>
               <p className="text-[10px] font-black uppercase tracking-wider text-white/30 mb-2">
-                {trade.team_a.city} {trade.team_a.name} sends
+                {trade.team_a.name} sends
               </p>
               <div className="space-y-1.5">
                 {trade.players_from_a.length === 0
@@ -139,7 +139,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
             {/* Players from B */}
             <div>
               <p className="text-[10px] font-black uppercase tracking-wider text-white/30 mb-2">
-                {trade.team_b.city} {trade.team_b.name} sends
+                {trade.team_b.name} sends
               </p>
               <div className="space-y-1.5">
                 {trade.players_from_b.length === 0
@@ -287,7 +287,7 @@ export default function LeagueTradesSection({ leagueId }: Props) {
             >
               <option value="">All Teams</option>
               {(teams ?? []).sort((a, b) => a.name.localeCompare(b.name)).map(t => (
-                <option key={t.id} value={t.id}>{t.city} {t.name}</option>
+                <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
           </div>
@@ -300,7 +300,7 @@ export default function LeagueTradesSection({ leagueId }: Props) {
             >
               <option value="">All Teams</option>
               {(teams ?? []).sort((a, b) => a.name.localeCompare(b.name)).map(t => (
-                <option key={t.id} value={t.id}>{t.city} {t.name}</option>
+                <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
           </div>
