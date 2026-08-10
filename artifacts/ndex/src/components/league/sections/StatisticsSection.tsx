@@ -654,7 +654,7 @@ function PlayerCell({ p }: { p: PlayerSeasonStats }) {
       <div className="flex flex-col gap-0.5">
         <Link
           href={`/players/${p.player.id}`}
-          className="font-bold text-white hover:text-[#00C8FF] transition-colors leading-tight"
+          className="font-bold text-white hover:text-[#00C8FF] transition-colors leading-tight text-left"
         >
           {p.player.name}
         </Link>
