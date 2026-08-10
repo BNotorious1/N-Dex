@@ -194,7 +194,13 @@ export async function upsertTeamRoster(
       devTrait: ni(p, "devTrait"),
       yearsPro: deriveYearsPro(p),
       rookieYear: ni(p, "rookieYear"),
-      draftRound: ni(p, "draftRound"),
+      // EA draftRound is offset by 1 (EA 2–8 = NFL rounds 1–7; ≥9 = undrafted)
+      draftRound: (() => {
+        const raw = ni(p, "draftRound");
+        if (raw == null) return null;
+        const adjusted = raw - 1;
+        return adjusted >= 1 && adjusted <= 7 ? adjusted : null;
+      })(),
       draftPick: ni(p, "draftPick"),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
       // Restore or initialise drafted snapshot
