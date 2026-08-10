@@ -144,7 +144,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
         {draftAbbr && draftTeamId ? (
           <Link href={`/teams/${draftTeamId}`}>
             <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
-              <TeamLogo abbreviation={draftAbbr} size={18} primaryColor={draftColor ?? undefined} />
+              <TeamLogo abbreviation={draftAbbr} size="sm" primaryColor={draftColor ?? undefined} />
               <span className="text-xs font-bold text-white/70 truncate max-w-[90px]">{draftTeamName}</span>
             </div>
           </Link>
@@ -186,7 +186,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
       <td className="py-3 px-2 border-l border-white/5">
         <Link href={`/teams/${p.team_id}`}>
           <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
-            <TeamLogo abbreviation={p.team_abbreviation} size={18} primaryColor={p.team_color ?? undefined} />
+            <TeamLogo abbreviation={p.team_abbreviation} size="sm" primaryColor={p.team_color ?? undefined} />
             <span className="text-xs font-bold text-white/70 truncate max-w-[90px]">{p.team_name}</span>
           </div>
         </Link>
