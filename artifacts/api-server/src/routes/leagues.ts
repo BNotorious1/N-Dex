@@ -104,7 +104,7 @@ function formatTeam(team: typeof teamsTable.$inferSelect) {
   };
 }
 
-function formatGame(game: typeof gamesTable.$inferSelect, homeTeamName?: string | null, awayTeamName?: string | null, homeTeamColor?: string | null, awayTeamColor?: string | null, homeTeamAbbr?: string | null, awayTeamAbbr?: string | null) {
+function formatGame(game: typeof gamesTable.$inferSelect, homeTeamName?: string | null, awayTeamName?: string | null, homeTeamColor?: string | null, awayTeamColor?: string | null, homeTeamAbbr?: string | null, awayTeamAbbr?: string | null, homeTeamCity?: string | null, awayTeamCity?: string | null) {
   return {
     id: game.id,
     league_id: game.leagueId,
@@ -112,6 +112,8 @@ function formatGame(game: typeof gamesTable.$inferSelect, homeTeamName?: string 
     away_team_id: game.awayTeamId,
     home_team_name: homeTeamName ?? null,
     away_team_name: awayTeamName ?? null,
+    home_team_city: homeTeamCity ?? null,
+    away_team_city: awayTeamCity ?? null,
     home_team_color: homeTeamColor ?? null,
     away_team_color: awayTeamColor ?? null,
     home_team_abbreviation: homeTeamAbbr ?? null,
@@ -337,7 +339,7 @@ router.get("/:id/summary", async (req, res) => {
     .filter(g => isCompleted(g.status))
     .sort((a, b) => b.week - a.week)
     .slice(0, 5)
-    .map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name));
+    .map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, undefined, undefined, undefined, undefined, teamMap.get(g.homeTeamId)?.city, teamMap.get(g.awayTeamId)?.city));
 
   const totalGamesPlayed = allGames.filter(g => isCompleted(g.status)).length;
 
@@ -1143,7 +1145,7 @@ router.get("/:id/games", async (req, res) => {
   const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
   const teamMap = new Map(teams.map(t => [t.id, t]));
 
-  res.json(allGames.map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, teamMap.get(g.homeTeamId)?.primaryColor, teamMap.get(g.awayTeamId)?.primaryColor, teamMap.get(g.homeTeamId)?.abbreviation, teamMap.get(g.awayTeamId)?.abbreviation)));
+  res.json(allGames.map(g => formatGame(g, teamMap.get(g.homeTeamId)?.name, teamMap.get(g.awayTeamId)?.name, teamMap.get(g.homeTeamId)?.primaryColor, teamMap.get(g.awayTeamId)?.primaryColor, teamMap.get(g.homeTeamId)?.abbreviation, teamMap.get(g.awayTeamId)?.abbreviation, teamMap.get(g.homeTeamId)?.city, teamMap.get(g.awayTeamId)?.city)));
 });
 
 // POST /leagues/:id/games

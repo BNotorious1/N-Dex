@@ -1314,8 +1314,16 @@ export default function GameDetail() {
   const awayColor = game?.away_team_color ?? "#555555";
   const homeAbbr = game?.home_team_abbreviation ?? "HME";
   const awayAbbr = game?.away_team_abbreviation ?? "AWY";
-  const homeName = game?.home_team_name ?? homeAbbr;
-  const awayName = game?.away_team_name ?? awayAbbr;
+  const homeName = (() => {
+    const name = game?.home_team_name ?? homeAbbr;
+    const city = game?.home_team_city;
+    return city && name.startsWith(city) ? name.slice(city.length).trim() : name;
+  })();
+  const awayName = (() => {
+    const name = game?.away_team_name ?? awayAbbr;
+    const city = game?.away_team_city;
+    return city && name.startsWith(city) ? name.slice(city.length).trim() : name;
+  })();
 
   const isCompleted = isGameCompleted(game?.status ?? "");
   const homeWon = isCompleted && (game?.home_score ?? 0) > (game?.away_score ?? 0);
