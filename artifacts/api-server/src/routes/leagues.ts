@@ -1399,6 +1399,13 @@ router.get("/:id/draft", async (req, res) => {
       team_name: team?.name ?? "Unknown",
       team_abbreviation: team?.abbreviation ?? "UNK",
       team_color: team?.primaryColor ?? null,
+      draft_team_id: p.draftTeamId ?? null,
+      draft_team_name: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.name ?? null) : null,
+      draft_team_abbreviation: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.abbreviation ?? null) : null,
+      draft_team_color: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.primaryColor ?? null) : null,
+      draft_position: p.draftPosition ?? null,
+      draft_age: p.draftAge ?? null,
+      draft_overall: p.draftOverall ?? null,
     };
   }));
 });

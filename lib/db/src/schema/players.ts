@@ -15,6 +15,11 @@ export const playersTable = pgTable("players", {
   rookieYear: integer("rookie_year"),
   draftRound: integer("draft_round"),
   draftPick: integer("draft_pick"),
+  // Drafted-at-rookie-import snapshot (set once, never overwritten)
+  draftTeamId: integer("draft_team_id"),
+  draftPosition: text("draft_position"),
+  draftAge: integer("draft_age"),
+  draftOverall: integer("draft_overall"),
   eaPlayerId: text("ea_player_id"),
   presentationId: integer("presentation_id"),
   portraitId: integer("portrait_id"),

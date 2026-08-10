@@ -52,7 +52,13 @@ const NAV: NavItem[] = [
   { key: "statistics", label: "Statistics", icon: BarChart3 },
   { key: "standings", label: "Standings", icon: ListOrdered },
   { key: "transactions", label: "Transactions", icon: ArrowLeftRight },
-  { key: "draft", label: "Draft", icon: ClipboardList },
+  {
+    key: "draft", label: "Draft", icon: ClipboardList,
+    sub: [
+      { key: "draft", label: "Draft Board", icon: ClipboardList },
+      { key: "draft-recap", label: "Draft Recap", icon: TrendingUp },
+    ],
+  },
   { key: "rankings", label: "Rankings", icon: TrendingUp },
   {
     key: "trades", label: "Trades", icon: Repeat2,
@@ -90,6 +96,9 @@ export default function LeagueSidebar({ league, section, onSelect, collapsed, on
   }
   if (["games", "games-gotw", "games-playoff"].includes(section)) {
     initialExpanded.add("games");
+  }
+  if (["draft", "draft-recap"].includes(section)) {
+    initialExpanded.add("draft");
   }
   const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
   const [, navigate] = useLocation();

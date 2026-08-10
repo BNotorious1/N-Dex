@@ -136,6 +136,29 @@ export async function upsertTeamRoster(
   if (dbTeam.length === 0) return 0;
   const teamId = dbTeam[0]!.id;
 
+  // Snapshot existing drafted values before delete, keyed by eaPlayerId
+  const existingPlayers = await db
+    .select({
+      eaPlayerId: playersTable.eaPlayerId,
+      draftTeamId: playersTable.draftTeamId,
+      draftPosition: playersTable.draftPosition,
+      draftAge: playersTable.draftAge,
+      draftOverall: playersTable.draftOverall,
+    })
+    .from(playersTable)
+    .where(eq(playersTable.teamId, teamId));
+
+  const draftSnapshot = new Map(
+    existingPlayers
+      .filter(p => p.eaPlayerId != null)
+      .map(p => [p.eaPlayerId!, {
+        draftTeamId: p.draftTeamId,
+        draftPosition: p.draftPosition,
+        draftAge: p.draftAge,
+        draftOverall: p.draftOverall,
+      }])
+  );
+
   await db.delete(playersTable).where(eq(playersTable.teamId, teamId));
 
   function ni(p: RawPlayer, key: string, ...fallbackKeys: string[]): number | null {
@@ -174,6 +197,22 @@ export async function upsertTeamRoster(
       draftRound: ni(p, "draftRound"),
       draftPick: ni(p, "draftPick"),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
+      // Restore or initialise drafted snapshot
+      ...(() => {
+        const eaId = p["rosterId"] != null ? String(p["rosterId"]) : null;
+        const snap = eaId ? draftSnapshot.get(eaId) : undefined;
+        const currentOverall = num(p["playerBestOvr"] ?? p["overall"], 70);
+        const currentAge = num(p["age"], 25);
+        const currentPos = str(p["position"], "OL");
+        return snap && (snap.draftTeamId != null || snap.draftOverall != null)
+          ? snap  // existing snapshot — preserve it
+          : {     // first import — use current values as drafted baseline
+              draftTeamId: teamId,
+              draftPosition: currentPos,
+              draftAge: currentAge,
+              draftOverall: currentOverall,
+            };
+      })(),
       presentationId: ni(p, "presentationId"),
       portraitId: ni(p, "portraitId"),
       birthYear: ni(p, "birthYear"),

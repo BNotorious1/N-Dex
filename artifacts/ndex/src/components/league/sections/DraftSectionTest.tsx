@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useGetLeagueDraft, getGetLeagueDraftQueryKey, LeagueDraftEntry } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import TeamLogo from "../../TeamLogo";
-import { ClipboardList, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ClipboardList, TrendingUp, TrendingDown } from "lucide-react";
 
 import devTraitNormal    from "@assets/Normal_1781202579092.png";
 import devTraitStar      from "@assets/Star_1781202579092.png";
@@ -52,11 +52,11 @@ function Portrait({ portraitId, name }: { portraitId?: number | null; name: stri
   );
 }
 
-function OvrDelta({ drafted, current }: { drafted: number | null; current: number }) {
+function OvrDelta({ drafted, current }: { drafted: number | null | undefined; current: number }) {
   if (drafted == null) return <span className="text-white/20 text-xs">—</span>;
   const delta = current - drafted;
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       <span className="font-black text-[13px] tabular-nums" style={{ color: OVR_COLOR(drafted) }}>{drafted}</span>
       {delta !== 0 && (
         <span className={`text-[10px] font-bold flex items-center gap-0.5 ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
@@ -93,11 +93,17 @@ function FilterPill({
 }
 
 function RecapRow({ p }: { p: LeagueDraftEntry }) {
-  const draftedAge = (p.age != null && p.years_pro != null) ? p.age - p.years_pro : null;
   const dev = p.dev_trait != null ? DEV_TRAIT[p.dev_trait] : null;
   const pickLabel = (p.draft_round != null && p.draft_pick != null)
     ? `${p.draft_round}.${String(p.draft_pick).padStart(2, "0")}`
     : "—";
+
+  const draftAbbr = p.draft_team_abbreviation;
+  const draftColor = p.draft_team_color;
+  const draftTeamName = p.draft_team_name;
+  const draftTeamId = p.draft_team_id;
+
+  const posChanged = p.draft_position != null && p.draft_position !== p.position;
 
   return (
     <tr className="border-b border-white/5 hover:bg-white/3 transition-colors group">
@@ -133,32 +139,51 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* ── AT DRAFT ─────────────────────── */}
 
-      {/* Drafted Team — not tracked */}
-      <td className="py-3 px-2 text-center">
-        <span className="text-white/20 text-xs">—</span>
+      {/* Drafted Team */}
+      <td className="py-3 px-2 border-l border-white/5">
+        {draftAbbr && draftTeamId ? (
+          <Link href={`/teams/${draftTeamId}`}>
+            <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
+              <TeamLogo abbreviation={draftAbbr} size={18} primaryColor={draftColor ?? undefined} />
+              <span className="text-xs font-bold text-white/70 truncate max-w-[90px]">{draftTeamName}</span>
+            </div>
+          </Link>
+        ) : (
+          <span className="text-white/20 text-xs">—</span>
+        )}
       </td>
 
-      {/* Drafted Pos — not tracked */}
+      {/* Drafted Pos */}
       <td className="py-3 px-2 text-center">
-        <span className="text-white/20 text-xs">—</span>
+        {p.draft_position ? (
+          <span className="text-[11px] font-black text-[#00C8FF]/70 bg-[#00C8FF]/8 px-1.5 py-0.5 rounded">
+            {p.draft_position}
+          </span>
+        ) : (
+          <span className="text-white/20 text-xs">—</span>
+        )}
       </td>
 
       {/* Drafted Age */}
       <td className="py-3 px-2 text-center">
         <span className="text-xs font-bold text-white/60 tabular-nums">
-          {draftedAge != null ? draftedAge : "—"}
+          {p.draft_age ?? "—"}
         </span>
       </td>
 
-      {/* Drafted OVR — not tracked */}
+      {/* Drafted OVR */}
       <td className="py-3 px-2 text-center">
-        <span className="text-white/20 text-xs">—</span>
+        {p.draft_overall != null ? (
+          <OvrDelta drafted={p.draft_overall} current={p.overall} />
+        ) : (
+          <span className="text-white/20 text-xs">—</span>
+        )}
       </td>
 
       {/* ── CURRENT ──────────────────────── */}
 
       {/* Current Team */}
-      <td className="py-3 px-2">
+      <td className="py-3 px-2 border-l border-white/5">
         <Link href={`/teams/${p.team_id}`}>
           <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
             <TeamLogo abbreviation={p.team_abbreviation} size={18} primaryColor={p.team_color ?? undefined} />
@@ -169,7 +194,11 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* Current Pos */}
       <td className="py-3 px-2 text-center">
-        <span className="text-[11px] font-black text-white/60 bg-white/5 px-1.5 py-0.5 rounded">{p.position}</span>
+        <span className={`text-[11px] font-black px-1.5 py-0.5 rounded ${
+          posChanged ? "text-amber-400 bg-amber-400/10" : "text-white/60 bg-white/5"
+        }`}>
+          {p.position}
+        </span>
       </td>
 
       {/* Current Age */}
@@ -179,7 +208,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* Current OVR */}
       <td className="py-3 px-4 text-left">
-        <OvrDelta drafted={null} current={p.overall} />
+        <OvrDelta drafted={p.draft_overall} current={p.overall} />
       </td>
     </tr>
   );
@@ -250,14 +279,20 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
         )}
       </div>
 
-      {/* Info banner — drafted team/pos/ovr not yet tracked */}
-      <div className="rounded-lg bg-white/3 border border-white/8 px-4 py-2.5 flex items-center gap-2">
-        <Minus className="w-3.5 h-3.5 text-white/25 shrink-0" />
-        <p className="text-[11px] text-white/35">
-          Drafted team, drafted position, and drafted overall are not yet tracked in the data model —
-          those columns show <span className="font-bold">—</span> until historical snapshot import is added.
-          Drafted age is estimated from current age minus years pro.
-        </p>
+      {/* Legend */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-[#00C8FF]/40" />
+          <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">At Draft</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-400/40" />
+          <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">Current</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">POS</span>
+          <span className="text-[10px] text-white/30">= position changed</span>
+        </div>
       </div>
 
       {/* Filters */}

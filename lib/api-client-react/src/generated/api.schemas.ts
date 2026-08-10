@@ -1084,6 +1084,20 @@ export interface LeagueDraftEntry {
   team_abbreviation: string;
   /** @nullable */
   team_color?: string | null;
+  /** @nullable */
+  draft_team_id?: number | null;
+  /** @nullable */
+  draft_team_name?: string | null;
+  /** @nullable */
+  draft_team_abbreviation?: string | null;
+  /** @nullable */
+  draft_team_color?: string | null;
+  /** @nullable */
+  draft_position?: string | null;
+  /** @nullable */
+  draft_age?: number | null;
+  /** @nullable */
+  draft_overall?: number | null;
 }
 
 export interface UploadUrlRequest {
