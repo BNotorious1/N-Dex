@@ -142,7 +142,7 @@ export default function TeamDetail() {
                     className="text-4xl font-black uppercase tracking-tight leading-none"
                     style={{ color: "white", textShadow: `0 0 40px ${primaryColor}60` }}
                   >
-                    {team.name}
+                    {team.name.startsWith(team.city) ? team.name.slice(team.city.length).trim() : team.name}
                   </h1>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     <span className="text-sm text-white/50">
