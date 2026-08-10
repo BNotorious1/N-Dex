@@ -6,9 +6,16 @@ import { getWeekLabel } from "@/lib/weekLabel";
 interface Game {
   id: number; week: number; season: number; status: string;
   home_team_name?: string | null; away_team_name?: string | null;
+  home_team_city?: string | null; away_team_city?: string | null;
   home_score?: number | null; away_score?: number | null;
   home_team_color?: string | null; away_team_color?: string | null;
   home_team_abbreviation?: string | null; away_team_abbreviation?: string | null;
+}
+
+function nickname(name?: string | null, city?: string | null): string {
+  if (!name) return "TBD";
+  if (city && name.startsWith(city)) return name.slice(city.length).trim();
+  return name;
 }
 
 interface Props { games: Game[] }
@@ -131,7 +138,7 @@ function GameRow({ game }: { game: Game }) {
       {/* Away */}
       <div className="flex-1 text-right">
         <p className="font-bold text-white text-[24px] text-center">
-          {game.away_team_name ?? "TBD"}
+          {nickname(game.away_team_name, game.away_team_city)}
         </p>
         <p className="text-white/30 text-[14px] text-center">Away</p>
       </div>
@@ -157,7 +164,7 @@ function GameRow({ game }: { game: Game }) {
       {/* Home */}
       <div className="flex-1">
         <p className="font-bold text-[24px] text-center text-[color:var(--color-white)]">
-          {game.home_team_name ?? "TBD"}
+          {nickname(game.home_team_name, game.home_team_city)}
         </p>
         <p className="text-white/30 text-[14px] text-center">Home</p>
       </div>
