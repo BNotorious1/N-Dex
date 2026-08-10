@@ -39,6 +39,7 @@ import AdminGameOfWeekSection from "@/components/league/sections/AdminGameOfWeek
 import AdminInviteSection from "@/components/league/sections/AdminInviteSection";
 import TransactionsSection from "@/components/league/sections/TransactionsSection";
 import DraftSection from "@/components/league/sections/DraftSection";
+import DraftSectionTest from "@/components/league/sections/DraftSectionTest";
 import CreateTradeSection from "@/components/league/sections/CreateTradeSection";
 import AwardsSection from "@/components/league/sections/AwardsSection";
 import LeagueTradesSection from "@/components/league/sections/LeagueTradesSection";
@@ -47,7 +48,7 @@ import TradeCountsSection from "@/components/league/sections/TradeCountsSection"
 export type LeagueSection =
   | "home" | "rules" | "news" | "teams" | "players" | "players-search" | "suspensions"
   | "games" | "games-gotw" | "games-playoff" | "statistics" | "standings" | "transactions" | "draft"
-  | "rankings" | "trades" | "trades-create" | "trades-league" | "trades-counts" | "awards"
+  | "rankings" | "trades" | "trades-create" | "trades-league" | "trades-counts" | "awards" | "draft-recap"
   | "admin" | "admin-settings" | "admin-ea-connect" | "admin-import-status"
   | "admin-members" | "admin-requests" | "admin-invite" | "admin-advance";
 
@@ -171,6 +172,7 @@ export default function LeagueDetail() {
             )}
             {section === "transactions" && <TransactionsSection leagueId={leagueId} />}
             {section === "draft" && <DraftSection leagueId={leagueId} />}
+            {section === "draft-recap" && <DraftSectionTest leagueId={leagueId} />}
             {(section === "trades" || section === "trades-create") && (
               <CreateTradeSection leagueId={leagueId} season={league.season} isMember={isMember} myTeamId={myTeamId} />
             )}
