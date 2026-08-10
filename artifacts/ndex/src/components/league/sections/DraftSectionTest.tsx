@@ -57,7 +57,7 @@ function OvrDelta({ drafted, current }: { drafted: number | null | undefined; cu
   const delta = current - drafted;
   return (
     <div className="flex items-center gap-1.5">
-      <span className="font-black text-[13px] tabular-nums" style={{ color: OVR_COLOR(drafted) }}>{drafted}</span>
+      <span className="font-black text-[13px] tabular-nums text-white/80">{drafted}</span>
       {delta !== 0 && (
         <span className={`text-[10px] font-bold flex items-center gap-0.5 ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
           {delta > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
@@ -145,7 +145,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
           <Link href={`/teams/${draftTeamId}`}>
             <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
               <TeamLogo abbreviation={draftAbbr} size="sm" primaryColor={draftColor ?? undefined} />
-              <span className="text-xs font-bold text-white/70 truncate max-w-[90px]">{draftTeamName}</span>
+              <span className="text-xs font-bold text-white/70">{draftAbbr}</span>
             </div>
           </Link>
         ) : (
@@ -187,7 +187,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
         <Link href={`/teams/${p.team_id}`}>
           <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
             <TeamLogo abbreviation={p.team_abbreviation} size="sm" primaryColor={p.team_color ?? undefined} />
-            <span className="text-xs font-bold text-white/70 truncate max-w-[90px]">{p.team_name}</span>
+            <span className="text-xs font-bold text-white/70">{p.team_abbreviation}</span>
           </div>
         </Link>
       </td>

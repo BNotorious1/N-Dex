@@ -201,7 +201,13 @@ export async function upsertTeamRoster(
         const adjusted = raw - 1;
         return adjusted >= 1 && adjusted <= 7 ? adjusted : null;
       })(),
-      draftPick: ni(p, "draftPick"),
+      // EA draftPick is also offset by 1 (EA 2–33 = picks 1–32)
+      draftPick: (() => {
+        const raw = ni(p, "draftPick");
+        if (raw == null) return null;
+        const adjusted = raw - 1;
+        return adjusted >= 1 && adjusted <= 32 ? adjusted : null;
+      })(),
       eaPlayerId: p["rosterId"] != null ? String(p["rosterId"]) : null,
       // Restore or initialise drafted snapshot
       ...(() => {
