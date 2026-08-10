@@ -56,7 +56,7 @@ function OvrDelta({ drafted, current }: { drafted: number | null | undefined; cu
   if (drafted == null) return <span className="text-white/20 text-xs">—</span>;
   const delta = current - drafted;
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center justify-center gap-1.5">
       <span className="font-black text-[13px] tabular-nums text-white/80">{drafted}</span>
       {delta !== 0 && (
         <span className={`text-[10px] font-bold flex items-center gap-0.5 ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
@@ -140,10 +140,10 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
       {/* ── AT DRAFT ─────────────────────── */}
 
       {/* Drafted Team */}
-      <td className="py-3 px-2 border-l border-white/5">
+      <td className="py-3 px-2 border-l border-white/5 text-center">
         {draftAbbr && draftTeamId ? (
           <Link href={`/teams/${draftTeamId}`}>
-            <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
               <TeamLogo abbreviation={draftAbbr} size="sm" primaryColor={draftColor ?? undefined} />
               <span className="text-xs font-bold text-white/70">{draftAbbr}</span>
             </div>
@@ -183,9 +183,9 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
       {/* ── CURRENT ──────────────────────── */}
 
       {/* Current Team */}
-      <td className="py-3 px-2 border-l border-white/5">
+      <td className="py-3 px-2 border-l border-white/5 text-center">
         <Link href={`/teams/${p.team_id}`}>
-          <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
+          <div className="flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
             <TeamLogo abbreviation={p.team_abbreviation} size="sm" primaryColor={p.team_color ?? undefined} />
             <span className="text-xs font-bold text-white/70">{p.team_abbreviation}</span>
           </div>
@@ -207,7 +207,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
       </td>
 
       {/* Current OVR */}
-      <td className="py-3 px-4 text-left">
+      <td className="py-3 px-4 text-center">
         <OvrDelta drafted={p.draft_overall} current={p.overall} />
       </td>
     </tr>
