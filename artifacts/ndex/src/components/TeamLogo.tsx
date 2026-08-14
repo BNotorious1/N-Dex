@@ -25,6 +25,7 @@ const SIZE_MAP: Record<LogoSize, { container: string; text: string; padding: str
 const ESPN_SLUG: Record<string, string> = {
   WAS: "wsh",
   ARZ: "ari",
+  AZ: "ari",
 };
 
 function getEspnUrl(abbreviation: string): string {
@@ -57,7 +58,7 @@ export default function TeamLogo({
   }
 
   return (
-    <div className={`${outer}${noBg ? "" : " bg-[#1a1a1a]"}`}>
+    <div className={outer}>
       <img
         src={getEspnUrl(abbreviation)}
         alt={abbreviation}

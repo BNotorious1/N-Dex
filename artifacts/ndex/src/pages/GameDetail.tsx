@@ -586,7 +586,7 @@ function getPosLabel(p: GamePlayerStat): string {
   return pos || "—";
 }
 
-const ESPN_SLUG_OVERRIDE: Record<string, string> = { WAS: "wsh", ARZ: "ari" };
+const ESPN_SLUG_OVERRIDE: Record<string, string> = { WAS: "wsh", ARZ: "ari", AZ: "ari" };
 function espnLogoUrl(abbr: string): string {
   const slug = ESPN_SLUG_OVERRIDE[abbr.toUpperCase()] ?? abbr.toLowerCase();
   return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
