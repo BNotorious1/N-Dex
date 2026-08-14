@@ -1486,7 +1486,7 @@ router.get("/:id/awards/weekly-candidates", async (req, res) => {
     ));
 
   const OFF_POS = new Set(["QB", "RB", "HB", "FB", "WR", "TE"]);
-  const DEF_POS = new Set(["DE", "DT", "DL", "LEDGE", "REDGE", "OLB", "LOLB", "ROLB", "MLB", "ILB", "SS", "FS", "CB", "S"]);
+  const DEF_POS = new Set(["DE", "DT", "DL", "LEDGE", "REDGE", "LEDG", "REDG", "OLB", "LOLB", "ROLB", "MLB", "ILB", "SS", "FS", "CB", "S"]);
 
   function offScore(s: typeof playerGameStatsTable.$inferSelect, pos: string): number {
     if (pos === "QB") {

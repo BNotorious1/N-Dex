@@ -35,6 +35,15 @@ function str(v: unknown, def = ""): string {
   return typeof v === "string" ? v : String(def);
 }
 
+// EA M27 shortened LEDGE/REDGE → LEDG/REDG; normalise back to our canonical names
+const POSITION_ALIASES: Record<string, string> = {
+  LEDG: "LEDGE",
+  REDG: "REDGE",
+};
+function normalizePosition(pos: string): string {
+  return POSITION_ALIASES[pos.toUpperCase()] ?? pos;
+}
+
 function intToHex(n: unknown): string | null {
   if (typeof n !== "number" || n === 0) return null;
   return `#${n.toString(16).padStart(6, "0")}`;
@@ -188,7 +197,7 @@ export async function upsertTeamRoster(
   const rows = validPlayers.map((p) => ({
       teamId,
       name: `${str(p["firstName"])} ${str(p["lastName"])}`.trim() || "Unknown",
-      position: str(p["position"], "OL"),
+      position: normalizePosition(str(p["position"], "OL")),
       overall: num(p["playerBestOvr"] ?? p["overall"], 70),
       age: num(p["age"], 25),
       devTrait: ni(p, "devTrait"),
