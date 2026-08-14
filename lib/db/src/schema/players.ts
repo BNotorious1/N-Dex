@@ -132,12 +132,38 @@ export const playersTable = pgTable("players", {
   weight: integer("weight"),
   college: text("college"),
 
+  // ── Biographical (M27+) ──────────────────────────────────────────────────
+  jerseyNum: integer("jersey_num"),
+  homeState: text("home_state"),
+  homeTown: text("home_town"),
+
+  // ── Roster Status (M27+) ─────────────────────────────────────────────────
+  isActive: boolean("is_active"),
+  isFreeAgent: boolean("is_free_agent"),
+  isOnIR: boolean("is_on_ir"),
+  isOnPracticeSquad: boolean("is_on_practice_squad"),
+
+  // ── Injury (M27+) ────────────────────────────────────────────────────────
+  injuryType: text("injury_type"),
+  injuryLength: integer("injury_length"),
+
+  // ── Scheme Fit (M27+) ────────────────────────────────────────────────────
+  scheme: text("scheme"),
+  playerSchemeOvr: integer("player_scheme_ovr"),
+  teamSchemeOvr: integer("team_scheme_ovr"),
+
   // ── Contract ─────────────────────────────────────────────────────────────
   contractSalary: integer("contract_salary"),
   contractBonus: integer("contract_bonus"),
   contractLength: integer("contract_length"),
   contractYearsLeft: integer("contract_years_left"),
   capHit: integer("cap_hit"),
+  capReleaseNetSavings: integer("cap_release_net_savings"),
+  capReleasePenalty: integer("cap_release_penalty"),
+  desiredSalary: integer("desired_salary"),
+  desiredBonus: integer("desired_bonus"),
+  desiredLength: integer("desired_length"),
+  reSignStatus: integer("re_sign_status"),
   depthChartOrder: integer("depth_chart_order"),
   tradeBlock: boolean("trade_block").notNull().default(false),
 });

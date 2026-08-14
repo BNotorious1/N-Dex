@@ -879,14 +879,6 @@ router.post("/import-rosters", async (req, res) => {
           playerArray = Array.isArray(pListFallback) ? pListFallback as Record<string, unknown>[] : [];
         }
 
-        // DEV: log all field keys from first player of first team for M27 attribute comparison
-        if (totalPlayers === 0 && playerArray.length > 0) {
-          req.log.info(
-            { m27_player_keys: Object.keys(playerArray[0]!).sort() },
-            "import-rosters: raw field keys from first player",
-          );
-        }
-
         const count = await upsertTeamRoster(leagueId, team.teamId, playerArray);
         totalPlayers += count;
       } catch (err) {

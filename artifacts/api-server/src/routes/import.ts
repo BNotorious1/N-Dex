@@ -333,12 +333,34 @@ export async function upsertTeamRoster(
       height: ni(p, "height"),
       weight: ni(p, "weight"),
       college: typeof p["college"] === "string" ? (p["college"] as string).trim() || null : null,
+      // Biographical (M27+)
+      jerseyNum: ni(p, "jerseyNum"),
+      homeState: typeof p["homeState"] === "string" ? (p["homeState"] as string).trim() || null : null,
+      homeTown: typeof p["homeTown"] === "string" ? (p["homeTown"] as string).trim() || null : null,
+      // Roster Status (M27+)
+      isActive: typeof p["isActive"] === "boolean" ? p["isActive"] as boolean : null,
+      isFreeAgent: typeof p["isFreeAgent"] === "boolean" ? p["isFreeAgent"] as boolean : null,
+      isOnIR: typeof p["isOnIR"] === "boolean" ? p["isOnIR"] as boolean : null,
+      isOnPracticeSquad: typeof p["isOnPracticeSquad"] === "boolean" ? p["isOnPracticeSquad"] as boolean : null,
+      // Injury (M27+)
+      injuryType: typeof p["injuryType"] === "string" ? (p["injuryType"] as string).trim() || null : null,
+      injuryLength: ni(p, "injuryLength"),
+      // Scheme Fit (M27+)
+      scheme: typeof p["scheme"] === "string" ? (p["scheme"] as string).trim() || null : null,
+      playerSchemeOvr: ni(p, "playerSchemeOvr"),
+      teamSchemeOvr: ni(p, "teamSchemeOvr"),
       // Contract
       contractSalary: ni(p, "contractSalary"),
       contractBonus: ni(p, "contractBonus"),
       contractLength: ni(p, "contractLength"),
       contractYearsLeft: ni(p, "contractYearsLeft"),
       capHit: ni(p, "capHit"),
+      capReleaseNetSavings: ni(p, "capReleaseNetSavings"),
+      capReleasePenalty: ni(p, "capReleasePenalty"),
+      desiredSalary: ni(p, "desiredSalary"),
+      desiredBonus: ni(p, "desiredBonus"),
+      desiredLength: ni(p, "desiredLength"),
+      reSignStatus: ni(p, "reSignStatus"),
       depthChartOrder: ni(p, "depthChartOrder"),
       tradeBlock: false,
     }));
