@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useGetLeagueDraft, getGetLeagueDraftQueryKey, LeagueDraftEntry } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import TeamLogo from "../../TeamLogo";
-import { ClipboardList, TrendingUp, TrendingDown } from "lucide-react";
+import { ClipboardList, TrendingUp, TrendingDown, Search } from "lucide-react";
 
 import devTraitNormal    from "@assets/Normal_1781202579092.png";
 import devTraitStar      from "@assets/Star_1781202579092.png";
@@ -15,9 +15,6 @@ const DEV_TRAIT: Record<number, { label: string; color: string; img: string }> =
   2: { label: "Superstar", color: "#d97706", img: devTraitSuperstar },
   3: { label: "X-Factor",  color: "#ef4444", img: devTraitXFactor   },
 };
-
-const OVR_COLOR = (v: number) =>
-  v >= 90 ? "#ef4444" : v >= 80 ? "#d97706" : v >= 70 ? "#22c55e" : "#94a3b8";
 
 const POSITIONS = [
   "QB","HB","FB","WR","TE","LT","LG","C","RG","RT",
@@ -53,15 +50,17 @@ function Portrait({ portraitId, name }: { portraitId?: number | null; name: stri
 }
 
 function OvrDelta({ drafted, current }: { drafted: number | null | undefined; current: number }) {
-  if (drafted == null) return <span className="text-white/20 text-xs">—</span>;
+  if (drafted == null) return <span className="font-black text-[13px] tabular-nums" style={{ color: current >= 90 ? "#ef4444" : current >= 80 ? "#d97706" : current >= 70 ? "#22c55e" : "#94a3b8" }}>{current}</span>;
   const delta = current - drafted;
   return (
-    <div className="flex items-center justify-center gap-1.5">
-      <span className="font-black text-[13px] tabular-nums text-white/80">{drafted}</span>
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="font-black text-[13px] tabular-nums" style={{ color: current >= 90 ? "#ef4444" : current >= 80 ? "#d97706" : current >= 70 ? "#22c55e" : "#94a3b8" }}>
+        {current}
+      </span>
       {delta !== 0 && (
-        <span className={`text-[10px] font-bold flex items-center gap-0.5 ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
+        <span className={`text-[9px] font-bold flex items-center gap-0.5 ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
           {delta > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-          {Math.abs(delta)}
+          {delta > 0 ? "+" : ""}{delta}
         </span>
       )}
     </div>
@@ -94,28 +93,35 @@ function FilterPill({
 
 function RecapRow({ p }: { p: LeagueDraftEntry }) {
   const dev = p.dev_trait != null ? DEV_TRAIT[p.dev_trait] : null;
-  const pickLabel = (p.draft_round != null && p.draft_pick != null)
+
+  const isUDFA = p.draft_round == null;
+  const pickLabel = !isUDFA && p.draft_pick != null
     ? `${p.draft_round}.${String(p.draft_pick).padStart(2, "0")}`
-    : "—";
+    : null;
 
   const draftAbbr = p.draft_team_abbreviation;
   const draftColor = p.draft_team_color;
-  const draftTeamName = p.draft_team_name;
   const draftTeamId = p.draft_team_id;
 
   const posChanged = p.draft_position != null && p.draft_position !== p.position;
 
   return (
-    <tr className="border-b border-white/5 hover:bg-white/3 transition-colors group">
-      {/* Pick */}
+    <tr className="border-b border-white/5 last:border-0 hover:bg-white/[0.025] transition-colors group">
+      {/* Pick / UDFA */}
       <td className="py-3 pl-4 pr-2 whitespace-nowrap">
-        <span className="text-xs font-black text-white/40 tabular-nums">{pickLabel}</span>
+        {isUDFA ? (
+          <span className="text-[9px] font-black text-white/30 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
+            UDFA
+          </span>
+        ) : (
+          <span className="text-xs font-black text-white/40 tabular-nums">{pickLabel}</span>
+        )}
       </td>
 
       {/* Player */}
       <td className="py-3 px-2">
         <Link href={`/players/${p.player_id}`}>
-          <div className="flex items-center gap-2.5 cursor-pointer group-hover:opacity-90">
+          <div className="flex items-center gap-2.5 cursor-pointer">
             <Portrait portraitId={p.portrait_id} name={p.name} />
             <div className="min-w-0">
               <p className="text-sm font-bold text-white leading-tight truncate group-hover:text-[#00C8FF] transition-colors">
@@ -134,18 +140,18 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* Year */}
       <td className="py-3 px-2 text-center">
-        <span className="text-xs text-white/50 tabular-nums">{p.rookie_year ?? "—"}</span>
+        <span className="text-xs text-white/40 tabular-nums">{p.rookie_year ?? "—"}</span>
       </td>
 
       {/* ── AT DRAFT ─────────────────────── */}
 
-      {/* Drafted Team */}
-      <td className="py-3 px-2 border-l border-white/5 text-center">
+      {/* Drafted By */}
+      <td className="py-3 px-2 border-l border-[#00C8FF]/10 text-center">
         {draftAbbr && draftTeamId ? (
           <Link href={`/teams/${draftTeamId}`}>
             <div className="flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
               <TeamLogo abbreviation={draftAbbr} size="sm" primaryColor={draftColor ?? undefined} />
-              <span className="text-xs font-bold text-white/70">{draftAbbr}</span>
+              <span className="text-xs font-bold text-white/60">{draftAbbr}</span>
             </div>
           </Link>
         ) : (
@@ -156,7 +162,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
       {/* Drafted Pos */}
       <td className="py-3 px-2 text-center">
         {p.draft_position ? (
-          <span className="text-[11px] font-black text-[#00C8FF]/70 bg-[#00C8FF]/8 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-black text-[#00C8FF]/60 bg-[#00C8FF]/8 border border-[#00C8FF]/15 px-1.5 py-0.5 rounded">
             {p.draft_position}
           </span>
         ) : (
@@ -166,7 +172,7 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* Drafted Age */}
       <td className="py-3 px-2 text-center">
-        <span className="text-xs font-bold text-white/60 tabular-nums">
+        <span className="text-xs font-bold text-white/40 tabular-nums">
           {p.draft_age ?? "—"}
         </span>
       </td>
@@ -174,16 +180,16 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
       {/* Drafted OVR */}
       <td className="py-3 px-2 text-center">
         {p.draft_overall != null ? (
-          <OvrDelta drafted={p.draft_overall} current={p.overall} />
+          <span className="text-xs font-black tabular-nums text-white/50">{p.draft_overall}</span>
         ) : (
           <span className="text-white/20 text-xs">—</span>
         )}
       </td>
 
-      {/* ── CURRENT ──────────────────────── */}
+      {/* ── NOW ──────────────────────── */}
 
       {/* Current Team */}
-      <td className="py-3 px-2 border-l border-white/5 text-center">
+      <td className="py-3 px-2 border-l border-emerald-400/10 text-center">
         <Link href={`/teams/${p.team_id}`}>
           <div className="flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
             <TeamLogo abbreviation={p.team_abbreviation} size="sm" primaryColor={p.team_color ?? undefined} />
@@ -194,8 +200,10 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* Current Pos */}
       <td className="py-3 px-2 text-center">
-        <span className={`text-[11px] font-black px-1.5 py-0.5 rounded ${
-          posChanged ? "text-amber-400 bg-amber-400/10" : "text-white/60 bg-white/5"
+        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded border ${
+          posChanged
+            ? "text-amber-400 bg-amber-400/8 border-amber-400/20"
+            : "text-white/50 bg-white/5 border-white/10"
         }`}>
           {p.position}
         </span>
@@ -203,10 +211,10 @@ function RecapRow({ p }: { p: LeagueDraftEntry }) {
 
       {/* Current Age */}
       <td className="py-3 px-2 text-center">
-        <span className="text-xs font-bold text-white/70 tabular-nums">{p.age}</span>
+        <span className="text-xs font-bold text-white/60 tabular-nums">{p.age}</span>
       </td>
 
-      {/* Current OVR */}
+      {/* Current OVR (with delta) */}
       <td className="py-3 px-4 text-center">
         <OvrDelta drafted={p.draft_overall} current={p.overall} />
       </td>
@@ -222,10 +230,11 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
   const picks = data?.picks ?? [];
   const foundedYear = data?.founded_year;
 
-  const [roundFilter, setRoundFilter] = useState<string>("ALL");
-  const [teamFilter,  setTeamFilter]  = useState<string>("ALL");
-  const [posFilter,   setPosFilter]   = useState<string>("ALL");
-  const [yearFilter,  setYearFilter]  = useState<string>("ALL");
+  const [roundFilter,    setRoundFilter]    = useState<string>("ALL");
+  const [draftTeamFilter, setDraftTeamFilter] = useState<string>("ALL");
+  const [posFilter,      setPosFilter]      = useState<string>("ALL");
+  const [yearFilter,     setYearFilter]     = useState<string>("ALL");
+  const [nameSearch,     setNameSearch]     = useState<string>("");
 
   const rounds = useMemo(() => {
     const s = new Set<number>();
@@ -233,9 +242,13 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
     return Array.from(s).sort((a, b) => a - b);
   }, [picks]);
 
-  const teams = useMemo(() => {
+  // Drafted-by teams (not current team)
+  const draftTeams = useMemo(() => {
     const seen = new Map<string, string>();
-    for (const p of picks) seen.set(p.team_abbreviation, p.team_name);
+    for (const p of picks) {
+      if (p.draft_team_abbreviation && p.draft_team_name)
+        seen.set(p.draft_team_abbreviation, p.draft_team_name);
+    }
     return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [picks]);
 
@@ -256,15 +269,19 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
     return POSITIONS.filter(pos => s.has(pos));
   }, [picks]);
 
-  const filtered = useMemo(() => picks.filter(p => {
-    if (roundFilter !== "ALL" && String(p.draft_round) !== roundFilter) return false;
-    if (teamFilter  !== "ALL" && p.team_abbreviation   !== teamFilter)  return false;
-    if (posFilter   !== "ALL" && p.position             !== posFilter)   return false;
-    if (yearFilter  !== "ALL" && String(p.rookie_year)  !== yearFilter)  return false;
-    return true;
-  }), [picks, roundFilter, teamFilter, posFilter, yearFilter]);
+  const filtered = useMemo(() => {
+    const q = nameSearch.trim().toLowerCase();
+    return picks.filter(p => {
+      if (roundFilter     !== "ALL" && String(p.draft_round)          !== roundFilter)     return false;
+      if (draftTeamFilter !== "ALL" && p.draft_team_abbreviation      !== draftTeamFilter) return false;
+      if (posFilter       !== "ALL" && p.position                     !== posFilter)        return false;
+      if (yearFilter      !== "ALL" && String(p.rookie_year)          !== yearFilter)       return false;
+      if (q && !p.name.toLowerCase().includes(q))                                          return false;
+      return true;
+    });
+  }, [picks, roundFilter, draftTeamFilter, posFilter, yearFilter, nameSearch]);
 
-  const hasFilters = roundFilter !== "ALL" || teamFilter !== "ALL" || posFilter !== "ALL" || yearFilter !== "ALL";
+  const hasFilters = roundFilter !== "ALL" || draftTeamFilter !== "ALL" || posFilter !== "ALL" || yearFilter !== "ALL" || nameSearch !== "";
 
   if (isLoading) {
     return (
@@ -287,25 +304,21 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
         )}
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#00C8FF]/40" />
-          <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">At Draft</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-emerald-400/40" />
-          <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">Current</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">POS</span>
-          <span className="text-[10px] text-white/30">= position changed</span>
-        </div>
-      </div>
-
       {/* Filters */}
       <div className="flex flex-wrap gap-x-4 gap-y-2 items-center">
-        {years.length > 1 && (
+        {/* Name search */}
+        <div className="flex items-center gap-1.5">
+          <Search className="w-3 h-3 text-white/30" />
+          <input
+            type="text"
+            value={nameSearch}
+            onChange={e => setNameSearch(e.target.value)}
+            placeholder="Player name…"
+            className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/25 w-32"
+          />
+        </div>
+
+        {years.length > 0 && (
           <FilterPill label="Year" value={yearFilter} onChange={setYearFilter}
             options={years.map(y => ({ value: String(y), label: String(y) }))} allLabel="All Years" />
         )}
@@ -313,9 +326,9 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
           <FilterPill label="Round" value={roundFilter} onChange={setRoundFilter}
             options={rounds.map(r => ({ value: String(r), label: `Round ${r}` }))} allLabel="All Rounds" />
         )}
-        {teams.length > 0 && (
-          <FilterPill label="Team" value={teamFilter} onChange={setTeamFilter}
-            options={teams.map(([abbr, name]) => ({ value: abbr, label: name }))} allLabel="All Teams" />
+        {draftTeams.length > 0 && (
+          <FilterPill label="Drafted By" value={draftTeamFilter} onChange={setDraftTeamFilter}
+            options={draftTeams.map(([abbr, name]) => ({ value: abbr, label: name }))} allLabel="All Teams" />
         )}
         {usedPositions.length > 0 && (
           <FilterPill label="Pos" value={posFilter} onChange={setPosFilter}
@@ -323,7 +336,7 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
         )}
         {hasFilters && (
           <button
-            onClick={() => { setRoundFilter("ALL"); setTeamFilter("ALL"); setPosFilter("ALL"); setYearFilter("ALL"); }}
+            onClick={() => { setRoundFilter("ALL"); setDraftTeamFilter("ALL"); setPosFilter("ALL"); setYearFilter("ALL"); setNameSearch(""); }}
             className="px-2.5 py-1 rounded text-[10px] font-bold text-white/30 hover:text-white transition-colors"
           >
             Reset
@@ -341,41 +354,33 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
         </div>
       ) : (
         <div className="rounded-xl border border-white/8 bg-[#141414] overflow-x-auto">
-          <table className="w-full text-left min-w-[700px]">
+          <table className="w-full text-left min-w-[820px]">
             <thead>
-              <tr className="border-b border-white/8">
-                <th className="py-2.5 pl-4 pr-2 text-[10px] font-black uppercase tracking-wider text-white/25" colSpan={2}>
-                  Player
+              {/* Group header row */}
+              <tr className="border-b border-white/5" style={{ backgroundColor: "#0d0d0d" }}>
+                <th colSpan={3} className="py-1.5 pl-4 pr-2 text-[9px] font-black uppercase tracking-widest text-white/20" />
+                <th colSpan={4} className="py-1.5 px-2 text-[9px] font-black uppercase tracking-widest text-[#00C8FF]/40 text-center border-l border-[#00C8FF]/10">
+                  At Draft
                 </th>
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-white/25 text-center">
-                  Year
+                <th colSpan={4} className="py-1.5 px-4 text-[9px] font-black uppercase tracking-widest text-emerald-400/40 text-center border-l border-emerald-400/10">
+                  Now
                 </th>
-                {/* At Draft group */}
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/40 text-center border-l border-white/5">
-                  Drafted Team
-                </th>
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/40 text-center">
-                  Drafted Pos
-                </th>
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/40 text-center">
-                  Drafted Age
-                </th>
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/40 text-center">
-                  Drafted OVR
-                </th>
-                {/* Current group */}
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-emerald-400/50 text-center border-l border-white/5">
-                  Current Team
-                </th>
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-emerald-400/50 text-center">
-                  Current Pos
-                </th>
-                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-emerald-400/50 text-center">
-                  Current Age
-                </th>
-                <th className="py-2.5 px-4 text-[10px] font-black uppercase tracking-wider text-emerald-400/50 text-left">
-                  Current OVR
-                </th>
+              </tr>
+              {/* Column header row */}
+              <tr className="border-b border-white/8" style={{ backgroundColor: "#101010" }}>
+                <th className="py-2.5 pl-4 pr-2 text-[10px] font-black uppercase tracking-wider text-white/25 w-14">Pick</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-white/25">Player</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-white/25 text-center w-14">Year</th>
+                {/* At Draft */}
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/35 text-center border-l border-[#00C8FF]/10">Team</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/35 text-center w-16">Pos</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/35 text-center w-14">Age</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-[#00C8FF]/35 text-center w-14">OVR</th>
+                {/* Now */}
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-emerald-400/40 text-center border-l border-emerald-400/10">Team</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-emerald-400/40 text-center w-16">Pos</th>
+                <th className="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider text-emerald-400/40 text-center w-14">Age</th>
+                <th className="py-2.5 px-4 text-[10px] font-black uppercase tracking-wider text-emerald-400/40 text-center w-16">OVR</th>
               </tr>
             </thead>
             <tbody>
@@ -385,6 +390,20 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
           {filtered.length === 0 && (
             <div className="py-10 text-center text-white/25 text-sm">No players match the current filters.</div>
           )}
+        </div>
+      )}
+
+      {/* Legend */}
+      {picks.length > 0 && (
+        <div className="flex items-center gap-5 flex-wrap pt-1">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-amber-400/60" />
+            <span className="text-[10px] text-white/25 font-bold">Amber pos = position changed since draft</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <TrendingUp className="w-3 h-3 text-emerald-400/60" />
+            <span className="text-[10px] text-white/25 font-bold">OVR change since drafted</span>
+          </div>
         </div>
       )}
     </div>
