@@ -68,13 +68,14 @@ function OvrDelta({ drafted, current }: { drafted: number | null | undefined; cu
 }
 
 function FilterPill({
-  label, value, onChange, options, allLabel,
+  label, value, onChange, options, allLabel, showAll = true,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
-  allLabel: string;
+  allLabel?: string;
+  showAll?: boolean;
 }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -82,10 +83,11 @@ function FilterPill({
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-white/25"
+        className="border border-white/10 rounded-lg px-2 py-1 text-xs text-white/80 focus:outline-none focus:border-white/25"
+        style={{ backgroundColor: "#1a1a1a" }}
       >
-        <option value="ALL">{allLabel}</option>
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        {showAll && allLabel && <option value="ALL" style={{ backgroundColor: "#1a1a1a" }}>{allLabel}</option>}
+        {options.map(o => <option key={o.value} value={o.value} style={{ backgroundColor: "#1a1a1a" }}>{o.label}</option>)}
       </select>
     </div>
   );
@@ -230,11 +232,12 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
   const picks = data?.picks ?? [];
   const foundedYear = data?.founded_year;
 
-  const [roundFilter,    setRoundFilter]    = useState<string>("ALL");
+  const [roundFilter,     setRoundFilter]     = useState<string>("ALL");
   const [draftTeamFilter, setDraftTeamFilter] = useState<string>("ALL");
-  const [posFilter,      setPosFilter]      = useState<string>("ALL");
-  const [yearFilter,     setYearFilter]     = useState<string>("ALL");
-  const [nameSearch,     setNameSearch]     = useState<string>("");
+  const [posFilter,       setPosFilter]       = useState<string>("ALL");
+  // "LATEST" is the sentinel meaning "auto-select most recent year"
+  const [yearFilter,      setYearFilter]      = useState<string>("LATEST");
+  const [nameSearch,      setNameSearch]      = useState<string>("");
 
   const rounds = useMemo(() => {
     const s = new Set<number>();
@@ -269,19 +272,22 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
     return POSITIONS.filter(pos => s.has(pos));
   }, [picks]);
 
+  // Resolve the active year: "LATEST" snaps to the most recent year in the list
+  const effectiveYear = yearFilter === "LATEST" ? (years[0] ? String(years[0]) : "ALL") : yearFilter;
+
   const filtered = useMemo(() => {
     const q = nameSearch.trim().toLowerCase();
     return picks.filter(p => {
+      if (effectiveYear   !== "ALL" && String(p.rookie_year)          !== effectiveYear)   return false;
       if (roundFilter     !== "ALL" && String(p.draft_round)          !== roundFilter)     return false;
       if (draftTeamFilter !== "ALL" && p.draft_team_abbreviation      !== draftTeamFilter) return false;
       if (posFilter       !== "ALL" && p.position                     !== posFilter)        return false;
-      if (yearFilter      !== "ALL" && String(p.rookie_year)          !== yearFilter)       return false;
       if (q && !p.name.toLowerCase().includes(q))                                          return false;
       return true;
     });
-  }, [picks, roundFilter, draftTeamFilter, posFilter, yearFilter, nameSearch]);
+  }, [picks, effectiveYear, roundFilter, draftTeamFilter, posFilter, nameSearch]);
 
-  const hasFilters = roundFilter !== "ALL" || draftTeamFilter !== "ALL" || posFilter !== "ALL" || yearFilter !== "ALL" || nameSearch !== "";
+  const hasFilters = roundFilter !== "ALL" || draftTeamFilter !== "ALL" || posFilter !== "ALL" || yearFilter !== "LATEST" || nameSearch !== "";
 
   if (isLoading) {
     return (
@@ -319,8 +325,8 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
         </div>
 
         {years.length > 0 && (
-          <FilterPill label="Year" value={yearFilter} onChange={setYearFilter}
-            options={years.map(y => ({ value: String(y), label: String(y) }))} allLabel="All Years" />
+          <FilterPill label="Year" value={effectiveYear} onChange={setYearFilter}
+            options={years.map(y => ({ value: String(y), label: String(y) }))} showAll={false} />
         )}
         {rounds.length > 1 && (
           <FilterPill label="Round" value={roundFilter} onChange={setRoundFilter}
@@ -336,7 +342,7 @@ export default function DraftSectionTest({ leagueId }: { leagueId: number }) {
         )}
         {hasFilters && (
           <button
-            onClick={() => { setRoundFilter("ALL"); setDraftTeamFilter("ALL"); setPosFilter("ALL"); setYearFilter("ALL"); setNameSearch(""); }}
+            onClick={() => { setRoundFilter("ALL"); setDraftTeamFilter("ALL"); setPosFilter("ALL"); setYearFilter("LATEST"); setNameSearch(""); }}
             className="px-2.5 py-1 rounded text-[10px] font-bold text-white/30 hover:text-white transition-colors"
           >
             Reset
