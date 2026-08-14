@@ -778,7 +778,7 @@ router.post("/import-league-info", async (req, res) => {
     // Blaze returns { leagueTeamInfoList: [...] } — a flat array, NOT nested under .leagueTeamInfo
     type TeamsExport = { leagueTeamInfoList?: unknown };
     const teamsData = await blazeExport<TeamsExport>(
-      "FranchiseMode_GetLeagueTeamsExport",
+      "CareerMode_GetLeagueTeamsExport",
       sessionKey,
       platform,
       { leagueId: Number(eaLeagueId) },
@@ -809,6 +809,7 @@ router.post("/import-league-info", async (req, res) => {
     }));
     res.json({ success: true, export_info: exportInfo, teams_imported: teamCount, week: detectedWeek ?? undefined });
   } catch (err) {
+    req.log.error({ err }, "import-league-info: error");
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });
   }
@@ -824,7 +825,7 @@ router.post("/import-rosters", async (req, res) => {
     type TeamEntry = { teamId?: number; rosterId?: number };
     type TeamsExport = { leagueTeamInfoList?: unknown };
     const teamsData = await blazeExport<TeamsExport>(
-      "FranchiseMode_GetLeagueTeamsExport",
+      "CareerMode_GetLeagueTeamsExport",
       sessionKey,
       platform,
       { leagueId: Number(eaLeagueId) },
@@ -846,7 +847,7 @@ router.post("/import-rosters", async (req, res) => {
         // Blaze roster export returns { rosterInfoList: [...] } — flat array of players
         type RosterExport = { rosterInfoList?: unknown; playerInfoList?: unknown };
         const rosterData = await blazeExport<RosterExport>(
-          "FranchiseMode_GetTeamRostersExport",
+          "CareerMode_GetTeamRostersExport",
           sessionKey,
           platform,
           {
@@ -893,6 +894,7 @@ router.post("/import-rosters", async (req, res) => {
     }));
     res.json({ success: true, export_info: exportInfo, players_imported: totalPlayers });
   } catch (err) {
+    req.log.error({ err }, "import-rosters: error");
     const e = err as Error & { status?: number };
     res.status(e.status ?? 500).json({ message: e.message });
   }
@@ -922,7 +924,7 @@ router.post("/import-schedules", async (req, res) => {
         const schedParams = { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: weekIdx };
         const schedRes = await doRequest(
           "POST",
-          `https://${BLAZE_HOST}/wal/mca/FranchiseMode_GetWeeklySchedulesExport/${sessionKey}`,
+          `https://${BLAZE_HOST}/wal/mca/CareerMode_GetWeeklySchedulesExport/${sessionKey}`,
           JSON.stringify(schedParams),
           {
             "Accept": "application/json",
@@ -980,12 +982,12 @@ router.post("/import-schedules", async (req, res) => {
 
 // Blaze export type → stat type name (used by processStatBlob)
 const PLAYER_STAT_EXPORT_MAP: Record<string, string> = {
-  "FranchiseMode_GetWeeklyPassingStatsExport":   "passing",
-  "FranchiseMode_GetWeeklyRushingStatsExport":   "rushing",
-  "FranchiseMode_GetWeeklyReceivingStatsExport": "receiving",
-  "FranchiseMode_GetWeeklyKickingStatsExport":   "kicking",
-  "FranchiseMode_GetWeeklyPuntingStatsExport":   "punting",
-  "FranchiseMode_GetWeeklyDefensiveStatsExport": "defense",
+  "CareerMode_GetWeeklyPassingStatsExport":   "passing",
+  "CareerMode_GetWeeklyRushingStatsExport":   "rushing",
+  "CareerMode_GetWeeklyReceivingStatsExport": "receiving",
+  "CareerMode_GetWeeklyKickingStatsExport":   "kicking",
+  "CareerMode_GetWeeklyPuntingStatsExport":   "punting",
+  "CareerMode_GetWeeklyDefensiveStatsExport": "defense",
 };
 
 const PLAYER_STAT_EXPORTS = Object.keys(PLAYER_STAT_EXPORT_MAP);
@@ -1001,7 +1003,7 @@ async function detectActualSeason(
   try {
     type SchedExport = { gameScheduleInfoList?: Array<Record<string, unknown>> };
     const data = await blazeExport<SchedExport>(
-      "FranchiseMode_GetWeeklySchedulesExport",
+      "CareerMode_GetWeeklySchedulesExport",
       sessionKey, platform,
       { leagueId: Number(eaLeagueId), stageIndex: 1, weekIndex: 0 },
     );
