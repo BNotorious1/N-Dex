@@ -22,7 +22,7 @@ description: Correct wire format for EA Blaze RPC message auth — critical for 
   "commandName": "...",
   "componentId": 2060,
   "commandId": ...,
-  "componentName": "careermode",
+  "componentName": "franchisemode",
   "messageAuthData": { "authData": "...", "authCode": "...", "authType": 17039361 },
   "messageExpirationTime": <unix seconds NOW, not +300>,
   "deviceId": "444d362e8e067fe2",
