@@ -942,7 +942,6 @@ export interface GameDetail {
 export type LeagueTradeTeamA = {
   id: number;
   name: string;
-  city: string;
   abbreviation: string;
   /** @nullable */
   primary_color?: string | null;
@@ -955,7 +954,6 @@ export type LeagueTradeTeamA = {
 export type LeagueTradeTeamB = {
   id: number;
   name: string;
-  city: string;
   abbreviation: string;
   /** @nullable */
   primary_color?: string | null;
@@ -1038,7 +1036,6 @@ export type LeagueTransactionPlayer = {
 export type LeagueTransactionTeam = {
   id: number;
   name: string;
-  city: string;
   abbreviation: string;
   /** @nullable */
   primary_color?: string | null;
@@ -1084,20 +1081,12 @@ export interface LeagueDraftEntry {
   team_abbreviation: string;
   /** @nullable */
   team_color?: string | null;
-  /** @nullable */
-  draft_team_id?: number | null;
-  /** @nullable */
-  draft_team_name?: string | null;
-  /** @nullable */
-  draft_team_abbreviation?: string | null;
-  /** @nullable */
-  draft_team_color?: string | null;
-  /** @nullable */
-  draft_position?: string | null;
-  /** @nullable */
-  draft_age?: number | null;
-  /** @nullable */
-  draft_overall?: number | null;
+}
+
+export interface LeagueDraftResponse {
+  picks: LeagueDraftEntry[];
+  /** The season year the league was first created (from EA data) */
+  founded_year: number;
 }
 
 export interface UploadUrlRequest {

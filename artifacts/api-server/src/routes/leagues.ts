@@ -1369,7 +1369,12 @@ router.get("/:id/draft", async (req, res) => {
   const leagueId = Number(req.params.id);
   if (isNaN(leagueId)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const teams = await db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId));
+  const [leagueRows, teams] = await Promise.all([
+    db.select({ season: leaguesTable.season }).from(leaguesTable).where(eq(leaguesTable.id, leagueId)).limit(1),
+    db.select().from(teamsTable).where(eq(teamsTable.leagueId, leagueId)),
+  ]);
+
+  const foundedYear = leagueRows[0]?.season ?? new Date().getFullYear();
   const teamMap = new Map(teams.map(t => [t.id, t]));
 
   const players = await db
@@ -1383,33 +1388,36 @@ router.get("/:id/draft", async (req, res) => {
     )
     .orderBy(playersTable.draftRound, playersTable.draftPick);
 
-  res.json(players.map(p => {
-    const team = teamMap.get(p.teamId);
-    return {
-      player_id: p.id,
-      name: p.name,
-      position: p.position,
-      overall: p.overall,
-      age: p.age,
-      dev_trait: p.devTrait ?? null,
-      portrait_id: p.portraitId ?? null,
-      draft_round: p.draftRound ?? null,
-      draft_pick: p.draftPick ?? null,
-      rookie_year: p.rookieYear ?? null,
-      years_pro: p.yearsPro ?? null,
-      team_id: p.teamId,
-      team_name: team?.name ?? "Unknown",
-      team_abbreviation: team?.abbreviation ?? "UNK",
-      team_color: team?.primaryColor ?? null,
-      draft_team_id: p.draftTeamId ?? null,
-      draft_team_name: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.name ?? null) : null,
-      draft_team_abbreviation: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.abbreviation ?? null) : null,
-      draft_team_color: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.primaryColor ?? null) : null,
-      draft_position: p.draftPosition ?? null,
-      draft_age: p.draftAge ?? null,
-      draft_overall: p.draftOverall ?? null,
-    };
-  }));
+  res.json({
+    founded_year: foundedYear,
+    picks: players.map(p => {
+      const team = teamMap.get(p.teamId);
+      return {
+        player_id: p.id,
+        name: p.name,
+        position: p.position,
+        overall: p.overall,
+        age: p.age,
+        dev_trait: p.devTrait ?? null,
+        portrait_id: p.portraitId ?? null,
+        draft_round: p.draftRound ?? null,
+        draft_pick: p.draftPick ?? null,
+        rookie_year: p.rookieYear ?? null,
+        years_pro: p.yearsPro ?? null,
+        team_id: p.teamId,
+        team_name: team?.name ?? "Unknown",
+        team_abbreviation: team?.abbreviation ?? "UNK",
+        team_color: team?.primaryColor ?? null,
+        draft_team_id: p.draftTeamId ?? null,
+        draft_team_name: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.name ?? null) : null,
+        draft_team_abbreviation: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.abbreviation ?? null) : null,
+        draft_team_color: p.draftTeamId ? (teamMap.get(p.draftTeamId)?.primaryColor ?? null) : null,
+        draft_position: p.draftPosition ?? null,
+        draft_age: p.draftAge ?? null,
+        draft_overall: p.draftOverall ?? null,
+      };
+    }),
+  });
 });
 
 // ─── Awards ────────────────────────────────────────────────────────────────

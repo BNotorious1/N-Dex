@@ -2763,6 +2763,20 @@ components:
         created_at:
           type: string
 
+    LeagueDraftResponse:
+      type: object
+      required:
+        - picks
+        - founded_year
+      properties:
+        picks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeagueDraftEntry"
+        founded_year:
+          type: integer
+          description: The season year the league was first created (from EA data)
+
     LeagueDraftEntry:
       type: object
       required:

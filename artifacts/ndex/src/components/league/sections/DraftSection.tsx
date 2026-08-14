@@ -62,9 +62,12 @@ function OvrBar({ value }: { value: number }) {
 }
 
 export default function DraftSection({ leagueId }: { leagueId: number }) {
-  const { data: picks = [], isLoading } = useGetLeagueDraft(leagueId, {
+  const { data, isLoading } = useGetLeagueDraft(leagueId, {
     query: { queryKey: getGetLeagueDraftQueryKey(leagueId) },
   });
+
+  const picks = data?.picks ?? [];
+  const foundedYear = data?.founded_year;
 
   const [roundFilter, setRoundFilter] = useState<number | "ALL">("ALL");
   const [teamFilter, setTeamFilter] = useState<string>("ALL");
@@ -85,9 +88,16 @@ export default function DraftSection({ leagueId }: { leagueId: number }) {
 
   const years = useMemo(() => {
     const s = new Set<number>();
+    // Always include the founding year as the floor
+    if (foundedYear != null) s.add(foundedYear);
     for (const p of picks) if (p.rookie_year != null) s.add(p.rookie_year);
+    // Fill any gaps between founding year and the latest year in picks
+    if (foundedYear != null && s.size > 1) {
+      const max = Math.max(...Array.from(s));
+      for (let y = foundedYear; y <= max; y++) s.add(y);
+    }
     return Array.from(s).sort((a, b) => b - a);
-  }, [picks]);
+  }, [picks, foundedYear]);
 
   const usedPositions = useMemo(() => {
     const s = new Set<string>();
