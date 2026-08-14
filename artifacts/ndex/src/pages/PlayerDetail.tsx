@@ -215,7 +215,7 @@ function espnLogoUrl(abbr: string): string {
 }
 
 function portraitUrl(portraitId: number): string {
-  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-26/portraits/${portraitId}.png`;
+  return `https://ratings-images-prod.pulse.ea.com/madden-nfl-27/portraits/${portraitId}.png`;
 }
 
 // ─── Small components ─────────────────────────────────────────────────────────
