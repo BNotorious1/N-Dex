@@ -4,7 +4,7 @@ description: How Blaze pull imports and Companion App push imports share the sam
 ---
 
 ## Key insight
-The Blaze export API (`/wal/mca/CareerMode_Get*Export`) and the Madden Companion App push both deliver data in the **same JSON shape**. This means one set of upsert functions covers both paths.
+The Blaze export API (`/wal/mca/FranchiseMode_Get*Export`) and the Madden Companion App push both deliver data in the **same JSON shape**. This means one set of upsert functions covers both paths.
 
 ## Core functions (exported from `artifacts/api-server/src/routes/import.ts`)
 - `upsertLeagueTeams(leagueId, teams[])` — upserts from `leagueTeamInfoList.leagueTeamInfo[]`

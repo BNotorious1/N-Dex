@@ -12,7 +12,7 @@ const CLIENT_SECRET = "teJpJ9cSXFqZAuKNW8IuHpy8D4dwWPoVrPoek38iCnrGbrUSfjqnHMBAv
 const REDIRECT_URL = "http://127.0.0.1/success"
 const CLIENT_ID = "MCA_26_COMP_APP"
 const MACHINE_KEY = "444d362e8e067fe2"
-const YEAR = "2026"
+const YEAR = "2027"
 const TWO_DIGIT_YEAR = "26"
 ```
 
@@ -279,7 +279,7 @@ The `requestInfo` is a JSON-stringified object:
   "commandName": "...",
   "componentId": 2060,
   "commandId": ...,
-  "componentName": "careermode",
+  "componentName": "franchisemode",
   "messageAuthData": "...",
   "messageExpirationTime": <unix seconds>,
   "deviceId": "444d362e8e067fe2",
@@ -350,17 +350,17 @@ EA sometimes returns `ERR_TIMEOUT` errors. Retry with exponential backoff (defau
 
 | Enum | Endpoint Name | Extra Parameters |
 |---|---|---|
-| `TEAMS` | `CareerMode_GetLeagueTeamsExport` | `leagueId` |
-| `STANDINGS` | `CareerMode_GetStandingsExport` | `leagueId` |
-| `WEEKLY_SCHEDULE` | `CareerMode_GetWeeklySchedulesExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `RUSHING_STATS` | `CareerMode_GetWeeklyRushingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `TEAM_STATS` | `CareerMode_GetWeeklyTeamStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `PUNTING_STATS` | `CareerMode_GetWeeklyPuntingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `RECEIVING_STATS` | `CareerMode_GetWeeklyReceivingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `DEFENSIVE_STATS` | `CareerMode_GetWeeklyDefensiveStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `KICKING_STATS` | `CareerMode_GetWeeklyKickingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `PASSING_STATS` | `CareerMode_GetWeeklyPassingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
-| `TEAM_ROSTER` | `CareerMode_GetTeamRostersExport` | `leagueId`, `listIndex`, `returnFreeAgents`, `teamId` |
+| `TEAMS` | `FranchiseMode_GetLeagueTeamsExport` | `leagueId` |
+| `STANDINGS` | `FranchiseMode_GetStandingsExport` | `leagueId` |
+| `WEEKLY_SCHEDULE` | `FranchiseMode_GetWeeklySchedulesExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `RUSHING_STATS` | `FranchiseMode_GetWeeklyRushingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `TEAM_STATS` | `FranchiseMode_GetWeeklyTeamStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `PUNTING_STATS` | `FranchiseMode_GetWeeklyPuntingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `RECEIVING_STATS` | `FranchiseMode_GetWeeklyReceivingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `DEFENSIVE_STATS` | `FranchiseMode_GetWeeklyDefensiveStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `KICKING_STATS` | `FranchiseMode_GetWeeklyKickingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `PASSING_STATS` | `FranchiseMode_GetWeeklyPassingStatsExport` | `leagueId`, `stageIndex`, `weekIndex` |
+| `TEAM_ROSTER` | `FranchiseMode_GetTeamRostersExport` | `leagueId`, `listIndex`, `returnFreeAgents`, `teamId` |
 
 ### Stage Index Values
 
