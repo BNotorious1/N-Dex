@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { UserCog, Plus, Users, Trash2, Crown } from "lucide-react";
+import TeamLogo from "../../TeamLogo";
 import {
   useGetLeagueMembers,
   getGetLeagueMembersQueryKey,
@@ -52,17 +53,6 @@ function DiscordAvatar({ name, avatarUrl, size = 32 }: { name: string; avatarUrl
   );
 }
 
-function TeamLogo({ abbreviation, size = 20 }: { abbreviation: string; size?: number }) {
-  return (
-    <img
-      src={`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${abbreviation.toLowerCase()}.png&h=${size * 2}&w=${size * 2}`}
-      alt={abbreviation}
-      style={{ width: size, height: size }}
-      className="object-contain shrink-0"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-    />
-  );
-}
 
 function PermToggle({
   checked,
@@ -464,7 +454,7 @@ export default function AdminMembersSection({ leagueId }: Props) {
                   {/* Team dropdown (auto-saves) */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      {team && <TeamLogo abbreviation={team.abbreviation} size={18} />}
+                      {team && <TeamLogo abbreviation={team.abbreviation} className="h-[18px] w-[18px]" />}
                       <select
                         value={m.team_id ?? ""}
                         onChange={(e) => handleTeamChange(m, e.target.value)}

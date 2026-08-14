@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { ArrowLeftRight, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
+import TeamLogo from "../../TeamLogo";
 import {
   useGetLeagueTrades,
   getGetLeagueTradesQueryKey,
@@ -19,17 +20,6 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   CANCELLED: { bg: "bg-white/8",       text: "text-white/35",   label: "Cancelled" },
 };
 
-function TeamLogo({ abbreviation, size = 28 }: { abbreviation: string; size?: number }) {
-  return (
-    <img
-      src={`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${abbreviation.toLowerCase()}.png&h=${size * 2}&w=${size * 2}`}
-      alt={abbreviation}
-      style={{ width: size, height: size }}
-      className="object-contain"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-    />
-  );
-}
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
@@ -68,7 +58,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
 
         {/* Team A */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <TeamLogo abbreviation={trade.team_a.abbreviation} size={26} />
+          <TeamLogo abbreviation={trade.team_a.abbreviation} className="h-[26px] w-[26px]" />
           <div className="min-w-0">
             <p className="text-sm font-bold text-white truncate">{trade.team_a.name}</p>
             <p className="text-[10px] text-white/35">
@@ -79,7 +69,7 @@ function TradeRow({ trade }: { trade: LeagueTrade }) {
 
         {/* Team B */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <TeamLogo abbreviation={trade.team_b.abbreviation} size={26} />
+          <TeamLogo abbreviation={trade.team_b.abbreviation} className="h-[26px] w-[26px]" />
           <div className="min-w-0">
             <p className="text-sm font-bold text-white truncate">{trade.team_b.name}</p>
             <p className="text-[10px] text-white/35">

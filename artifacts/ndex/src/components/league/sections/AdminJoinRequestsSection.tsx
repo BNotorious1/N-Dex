@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { UserPlus, CheckCircle, XCircle, Clock, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import TeamLogo from "../../TeamLogo";
 import {
   useGetLeagueJoinRequests,
   getGetLeagueJoinRequestsQueryKey,
@@ -43,17 +44,6 @@ function DiscordAvatar({ name, size = 34 }: { name: string; size?: number }) {
   );
 }
 
-function TeamLogo({ abbreviation, size = 22 }: { abbreviation: string; size?: number }) {
-  return (
-    <img
-      src={`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${abbreviation.toLowerCase()}.png&h=${size * 2}&w=${size * 2}`}
-      alt={abbreviation}
-      style={{ width: size, height: size }}
-      className="object-contain shrink-0"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-    />
-  );
-}
 
 export default function AdminJoinRequestsSection({ leagueId }: Props) {
   const qc = useQueryClient();
@@ -244,7 +234,7 @@ export default function AdminJoinRequestsSection({ leagueId }: Props) {
               {/* Assigned team (approved) */}
               {r.status === "approved" && team && !isExpanded && (
                 <div className="px-4 pb-3 flex items-center gap-2">
-                  <TeamLogo abbreviation={team.abbreviation} size={16} />
+                  <TeamLogo abbreviation={team.abbreviation} className="h-4 w-4" />
                   <span className="text-[11px] text-white/50">{team.name}</span>
                 </div>
               )}
@@ -272,7 +262,7 @@ export default function AdminJoinRequestsSection({ leagueId }: Props) {
                     </select>
                     {selectedTeam && (
                       <div className="flex items-center gap-2 mt-1 px-1">
-                        <TeamLogo abbreviation={selectedTeam.abbreviation} size={18} />
+                        <TeamLogo abbreviation={selectedTeam.abbreviation} className="h-[18px] w-[18px]" />
                         <span className="text-xs text-white/60">{selectedTeam.name}</span>
                       </div>
                     )}

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { BarChart3, Search, X } from "lucide-react";
+import TeamLogo from "../../TeamLogo";
 import {
   useGetLeagueTradeCounts,
   getGetLeagueTradeCountsQueryKey,
@@ -12,17 +13,6 @@ interface Props {
   leagueId: number;
 }
 
-function TeamLogo({ abbreviation, size = 28 }: { abbreviation: string; size?: number }) {
-  return (
-    <img
-      src={`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${abbreviation.toLowerCase()}.png&h=${size * 2}&w=${size * 2}`}
-      alt={abbreviation}
-      style={{ width: size, height: size }}
-      className="object-contain"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-    />
-  );
-}
 
 function CountBadge({ value, color }: { value: number; color: string }) {
   return (
@@ -206,7 +196,7 @@ function TradeCountRow({ count, idx }: { count: LeagueTradeCount; idx: number })
     <tr className={`border-t border-white/5 transition-colors hover:bg-white/3 ${idx % 2 === 0 ? "" : "bg-white/1"}`}>
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
-          <TeamLogo abbreviation={count.team_abbreviation} size={26} />
+          <TeamLogo abbreviation={count.team_abbreviation} className="h-[26px] w-[26px]" />
           <div>
             <p className="text-sm font-bold text-white">{count.team_name}</p>
             <p className="text-[10px] text-white/35">{count.team_abbreviation}</p>

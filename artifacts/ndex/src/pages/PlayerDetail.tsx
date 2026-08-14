@@ -209,8 +209,9 @@ function splitName(fullName: string): [string, string] {
   return [parts.join(" "), last];
 }
 
+const ESPN_SLUG_OVERRIDE: Record<string, string> = { WAS: "wsh", ARZ: "ari", AZ: "ari" };
 function espnLogoUrl(abbr: string): string {
-  const slug = abbr.toLowerCase() === "was" ? "wsh" : abbr.toLowerCase();
+  const slug = ESPN_SLUG_OVERRIDE[abbr.toUpperCase()] ?? abbr.toLowerCase();
   return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
 }
 

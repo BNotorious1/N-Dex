@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Repeat2, Plus, X, ArrowLeftRight, CheckCircle2, Trash2 } from "lucide-react";
+import TeamLogo from "../../TeamLogo";
 import {
   useGetLeagueTeams,
   getGetLeagueTeamsQueryKey,
@@ -74,17 +75,6 @@ function DevBadge({ trait }: { trait?: number | null }) {
   );
 }
 
-function TeamLogoImg({ abbreviation, size = 28 }: { abbreviation: string; size?: number }) {
-  return (
-    <img
-      src={`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${abbreviation.toLowerCase()}.png&h=${size * 2}&w=${size * 2}`}
-      alt={abbreviation}
-      style={{ width: size, height: size }}
-      className="object-contain"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-    />
-  );
-}
 
 function PlayerCard({
   player,
@@ -576,7 +566,7 @@ function TeamPanel({
       {/* Panel header */}
       <div className="px-4 py-3 border-b border-white/8" style={{ backgroundColor: `${accentColor}12` }}>
         <div className="flex items-center gap-2">
-          {selectedTeam && <TeamLogoImg abbreviation={selectedTeam.abbreviation} size={22} />}
+          {selectedTeam && <TeamLogo abbreviation={selectedTeam.abbreviation} className="h-[22px] w-[22px]" />}
           <span className="text-xs font-black text-white/70 uppercase tracking-wider">{label}</span>
           {totalSelected > 0 && (
             <span
