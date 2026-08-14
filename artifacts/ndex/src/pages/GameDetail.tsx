@@ -324,9 +324,9 @@ function HalfTable({ players, teamColor, teamName, columns, activeSortKey, onSor
               {teamName}
             </th>
             <th className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-10">Pos</th>
-            {columns.map((col) => (
+            {columns.map((col, i) => (
               <th
-                key={col.key as string}
+                key={`${col.key as string}-${i}`}
                 onClick={() => onSortChange(col.key)}
                 className="px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wider text-white w-12 cursor-pointer select-none hover:opacity-70 transition-opacity"
               >
@@ -356,14 +356,14 @@ function HalfTable({ players, teamColor, teamName, columns, activeSortKey, onSor
                     {p.position}
                   </span>
                 </td>
-                {columns.map((col) => {
+                {columns.map((col, ci) => {
                   const isActive = col.key === activeSortKey;
                   const display = col.render
                     ? col.render(p)
                     : ((p[col.key] as number | null | undefined) ?? "—");
                   return (
                     <td
-                      key={col.key as string}
+                      key={`${col.key as string}-${ci}`}
                       className={`px-2 py-2 text-center tabular-nums [font-family:'Lora',serif] text-[14px] ${isActive ? "font-bold text-white" : "text-white/60"}`}
                     >
                       {display}
