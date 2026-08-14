@@ -8,7 +8,9 @@ import { logger } from "../lib/logger";
 
 const router = Router({ mergeParams: true });
 
-// ─── Madden 26 Constants ────────────────────────────────────────────────────
+// ─── EA Constants ───────────────────────────────────────────────────────────
+// Auth/entitlement keys stay at M26 values (CLIENT_ID, AUTH_SOURCE, VALID_ENTITLEMENTS).
+// Blaze product/service IDs use the M27 year ("2027") as confirmed by the M27 companion app.
 
 const AUTH_SOURCE = "317239";
 const CLIENT_SECRET =
@@ -30,21 +32,21 @@ const VALID_ENTITLEMENTS: Record<string, { platform: string; namespace: string }
 };
 
 const BLAZE_PRODUCT: Record<string, string> = {
-  xone: "madden-2026-xone-mca",
-  ps4: "madden-2026-ps4-mca",
-  pc: "madden-2026-pc-mca",
-  ps5: "madden-2026-ps5-mca",
-  xbsx: "madden-2026-xbsx-mca",
-  stadia: "madden-2026-stadia-mca",
+  xone: "madden-2027-xone-mca",
+  ps4: "madden-2027-ps4-mca",
+  pc: "madden-2027-pc-mca",
+  ps5: "madden-2027-ps5-mca",
+  xbsx: "madden-2027-xbsx-mca",
+  stadia: "madden-2027-stadia-mca",
 };
 
 const BLAZE_SERVICE_ID: Record<string, string> = {
-  xone: "madden-2026-xone",
-  ps4: "madden-2026-ps4",
-  pc: "madden-2026-pc",
-  ps5: "madden-2026-ps5",
-  xbsx: "madden-2026-xbsx",
-  stadia: "madden-2026-stadia",
+  xone: "madden-2027-xone",
+  ps4: "madden-2027-ps4",
+  pc: "madden-2027-pc",
+  ps5: "madden-2027-ps5",
+  xbsx: "madden-2027-xbsx",
+  stadia: "madden-2027-stadia",
 };
 
 const STATS_COOLDOWN_MS = 30 * 60 * 1000;

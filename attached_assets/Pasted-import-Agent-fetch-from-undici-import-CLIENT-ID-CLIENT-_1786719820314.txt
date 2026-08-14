@@ -1,0 +1,830 @@
+import { Agent, fetch } from "undici";
+import { CLIENT_ID, CLIENT_SECRET, AUTH_SOURCE, AccountToken, BLAZE_SERVICE, SystemConsole, BLAZE_PRODUCT_NAME, BlazeAuthenticatedResponse, MACHINE_KEY, League, GetMyLeaguesResponse, LeagueResponse, BlazeLeagueResponse } from "./ea_constants"
+import { constants, randomBytes, createHash, randomUUID } from "crypto"
+import { Buffer } from "buffer"
+import { TeamExport, StandingExport, SchedulesExport, RushingExport, TeamStatsExport, PuntingExport, ReceivingExport, DefensiveExport, KickingExport, PassingExport, RosterExport } from "../export/madden_league_types"
+import db from "../db/firebase"
+import { createDestination } from "../export/exporter";
+import { DEPLOYMENT_URL, QUEUE_CONCURRENCY } from "../config";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { exportCounter } from "../debug/metrics";
+import fastq, { queueAsPromised } from "fastq"
+import NodeCache from "node-cache";
+import { SnallabotError } from "../errors";
+
+
+export enum LeagueData {
+  TEAMS = "CareerMode_GetLeagueTeamsExport",
+  STANDINGS = "CareerMode_GetStandingsExport",
+  WEEKLY_SCHEDULE = "CareerMode_GetWeeklySchedulesExport",
+  RUSHING_STATS = "CareerMode_GetWeeklyRushingStatsExport",
+  TEAM_STATS = "CareerMode_GetWeeklyTeamStatsExport",
+  PUNTING_STATS = "CareerMode_GetWeeklyPuntingStatsExport",
+  RECEIVING_STATS = "CareerMode_GetWeeklyReceivingStatsExport",
+  DEFENSIVE_STATS = "CareerMode_GetWeeklyDefensiveStatsExport",
+  KICKING_STATS = "CareerMode_GetWeeklyKickingStatsExport",
+  PASSING_STATS = "CareerMode_GetWeeklyPassingStatsExport",
+  TEAM_ROSTER = "CareerMode_GetTeamRostersExport"
+}
+
+export enum Stage {
+  PRESEASON = 0,
+  SEASON = 1
+}
+
+interface EAClient {
+  getLeagues(): Promise<League[]>,
+  getLeagueInfo(leagueId: number): Promise<LeagueResponse>,
+  getTeams(leagueId: number): Promise<TeamExport>,
+  getStandings(leagueId: number): Promise<StandingExport>,
+  getSchedules(leagueId: number, stage: Stage, weekIndex: number): Promise<SchedulesExport>,
+  getRushingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<RushingExport>,
+  getTeamStats(leagueId: number, stage: Stage, weekIndex: number): Promise<TeamStatsExport>,
+  getPuntingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<PuntingExport>,
+  getReceivingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<ReceivingExport>,
+  getDefensiveStats(leagueId: number, stage: Stage, weekIndex: number): Promise<DefensiveExport>,
+  getKickingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<KickingExport>,
+  getPassingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<PassingExport>,
+  getTeamRoster(leagueId: number, teamId: number, teamIndex: number): Promise<RosterExport>,
+  getFreeAgents(leagueId: number): Promise<RosterExport>,
+  getSystemConsole(): SystemConsole
+}
+
+
+export type TokenInformation = { accessToken: string, refreshToken: string, expiry: Date, console: SystemConsole, blazeId: string }
+export type SessionInformation = { blazeId: number, sessionKey: string, requestId: number }
+type MessageAuth = { authData: string, authCode: string, authType: number }
+export type BlazeRequest = { commandName: string, componentId: number, commandId: number, requestPayload: Record<string, any>, componentName: string }
+type BlazeErrorResponse = { error: { errorname: string, component: number, errorcode: number, errordf: { commandSeverity: string, errorString: string } } }
+
+
+export class BlazeError extends Error {
+  error: BlazeErrorResponse
+  constructor(error: BlazeErrorResponse) {
+    super(JSON.stringify(error))
+    this.name = "BlazeError"
+    this.error = error
+  }
+}
+
+export class EAAccountError extends SnallabotError {
+  troubleshoot: string
+
+  constructor(message: string, troubleshoot: string) {
+    super(new Error(message), troubleshoot)
+    this.troubleshoot = troubleshoot
+  }
+}
+
+
+
+// EA is on legaacy SSL, node by default rejects these requests. Have to turn off manually
+const dispatcher = new Agent({
+  connect: {
+    rejectUnauthorized: false,
+    secureOptions: constants.SSL_OP_LEGACY_SERVER_CONNECT,
+  },
+})
+
+const headers = (t: TokenInformation) => {
+  return {
+    "Accept-Charset": "UTF-8",
+    "Accept": "application/json",
+    "X-BLAZE-ID": BLAZE_SERVICE[t.console],
+    "X-BLAZE-VOID-RESP": "XML",
+    "X-Application-Key": "MADDEN-MCA",
+    "Content-Type": "application/json",
+    "User-Agent":
+      "Dalvik/2.1.0 (Linux; U; Android 13; sdk_gphone_x86_64 Build/TE1A.220922.031)",
+  }
+}
+
+async function refreshToken(token: TokenInformation): Promise<TokenInformation> {
+  const now = new Date()
+  if (now > token.expiry) {
+    const res = await fetch(`https://accounts.ea.com/connect/token`, {
+      method: "POST",
+      headers: {
+        "Accept-Charset": "UTF-8",
+        "User-Agent":
+          "Dalvik/2.1.0 (Linux; U; Android 13; sdk_gphone_x86_64 Build/TE1A.220922.031)",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Accept-Encoding": "gzip",
+      },
+      body: `grant_type=refresh_token&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&release_type=prod&refresh_token=${token.refreshToken}&authentication_source=${AUTH_SOURCE}&token_format=JWS`,
+    });
+    const newToken = await res.json() as AccountToken
+    if (!res.ok || !newToken.access_token) {
+      throw new EAAccountError(`Error refreshing tokens, response from EA ${JSON.stringify(newToken)}`, `Lost connection to EA. Connect this league again via ${DEPLOYMENT_URL}/dashboard`)
+    }
+    const newExpiry = new Date(new Date().getTime() + newToken.expires_in * 1000)
+    return { accessToken: newToken.access_token, refreshToken: newToken.refresh_token, expiry: newExpiry, console: token.console, blazeId: `${token.blazeId}` }
+  } else {
+    return token
+  }
+}
+
+async function retrieveBlazeSession(token: TokenInformation): Promise<SessionInformation> {
+  const res1 = await fetch(
+    `https://wal2.tools.gos.bio-iad.ea.com/wal/authentication/login`,
+    {
+      dispatcher: dispatcher,
+      method: "POST",
+      headers: headers(token),
+      body: JSON.stringify({
+        accessToken: token.accessToken,
+        productName: BLAZE_PRODUCT_NAME[token.console],
+      }),
+    }
+  )
+  const textResponse = await res1.text()
+  try {
+    const blazeSession = JSON.parse(textResponse) as BlazeAuthenticatedResponse
+    const sessionKey = blazeSession.userLoginInfo.sessionKey
+    const blazeId = blazeSession.userLoginInfo.personaDetails.personaId
+    return { blazeId: blazeId, sessionKey: sessionKey, requestId: 1 }
+  } catch (e) {
+    throw new EAAccountError(`Could not connect to EA Blaze (Madden) Error from EA: ${textResponse}`, "This could be temporary (EA is down for example). Could mean to unlink and setup the dashboard as well")
+  }
+}
+
+function calculateMessageAuthData(blazeId: number, requestId: number): MessageAuth {
+  const rand4bytes = randomBytes(4);
+  const requestData = JSON.stringify({
+    staticData: "05e6a7ead5584ab4",
+    requestId: requestId,
+    blazeId: blazeId,
+  });
+  const staticBytes = Buffer.from(
+    "634203362017bf72f70ba900c0aa4e6b",
+    "hex"
+  );
+
+  const xorHash = createHash("md5")
+    .update(rand4bytes)
+    .update(staticBytes)
+    .digest();
+  const requestBuffer = Buffer.from(requestData, "utf-8");
+  const scrambledBytes = requestBuffer.map((b, i) => b ^ xorHash[i % 16]);
+  const authDataBytes = Buffer.concat([rand4bytes, scrambledBytes]);
+  const staticAuthCode = Buffer.from(
+    "3a53413521464c3b6531326530705b70203a2900",
+    "hex"
+  );
+
+  const authCode = createHash("md5")
+    .update(staticAuthCode)
+    .update(authDataBytes)
+    .digest("base64");
+  const authData = authDataBytes.toString("base64");
+  const authType = 17039361;
+  return { authData, authCode, authType };
+}
+
+async function sendBlazeRequest<T>(token: TokenInformation, session: SessionInformation, request: BlazeRequest): Promise<T> {
+  const authData = calculateMessageAuthData(session.blazeId, session.requestId)
+  const messageExpiration = Math.floor(new Date().getTime() / 1000)
+  const { requestPayload, ...rest } = request
+  const body = {
+    apiVersion: 2,
+    clientDevice: 3,
+    requestInfo: JSON.stringify({
+      ...rest,
+      messageAuthData: authData,
+      messageExpirationTime: messageExpiration,
+      deviceId: MACHINE_KEY,
+      ipAddress: "127.0.0.1",
+      requestPayload: JSON.stringify(requestPayload)
+    })
+  }
+  const res1 = await fetch(
+    `https://wal2.tools.gos.bio-iad.ea.com/wal/mca/Process/${session.sessionKey}`,
+    {
+      dispatcher: dispatcher,
+      method: "POST",
+      headers: headers(token),
+      body: JSON.stringify(body),
+    }
+  )
+  const txtResponse = await res1.text()
+  try {
+    const val = JSON.parse(txtResponse)
+    if (val.error) {
+      throw new BlazeError(val as BlazeErrorResponse)
+    }
+    return val as T
+  } catch (e) {
+    if (e instanceof BlazeError) {
+      throw e
+    }
+    throw new EAAccountError(`Failed to send request to Blaze, Error: ${txtResponse}`, "No Guidance")
+  }
+}
+
+interface EAErrorResponse {
+  error: {
+    component: number;
+    errorcode: number;
+    errorname: string;
+    errortdf: {
+      commandSeverity: string;
+      errorString: string;
+    };
+  };
+}
+
+async function getExportData<T>(
+  token: TokenInformation,
+  session: SessionInformation,
+  exportType: LeagueData,
+  body: Record<string, any>,
+  retries = 5,
+  baseDelayMs = 1000
+): Promise<T> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res1 = await fetch(
+      `https://wal2.tools.gos.bio-iad.ea.com/wal/mca/${exportType}/${session.sessionKey}`,
+      {
+        dispatcher: dispatcher,
+        method: "POST",
+        headers: headers(token),
+        body: JSON.stringify(body)
+      }
+    );
+
+    let parsed: unknown;
+    try {
+      const text = await res1.text();
+      const replacedText = text.replaceAll(/[\u0000-\u001F\u007F-\u009F]/g, "");
+      parsed = JSON.parse(replacedText);
+    } catch (e) {
+      throw new EAAccountError(`Could not fetch league data, error: ${e}`, "No Guidance");
+    }
+
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "error" in parsed &&
+      typeof (parsed as any).error === "object" &&
+      (parsed as any).error?.errorname === "ERR_TIMEOUT"
+    ) {
+      if (attempt < retries - 1) {
+        const delay = baseDelayMs * 2 ** attempt;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw new EAAccountError(`EA request timed out after ${retries} attempts`, "No Guidance");
+    }
+
+    return parsed as T;
+  }
+
+  throw new EAAccountError(`EA request failed after ${retries} attempts`, "No Guidance");
+}
+
+async function refreshBlazeSession(token: TokenInformation, session: SessionInformation): Promise<SessionInformation> {
+  try {
+    // we send this request just to see if it succeeds
+    await sendBlazeRequest<GetMyLeaguesResponse>(token, session, {
+      commandName: "Mobile_GetMyLeagues",
+      componentId: 2060,
+      commandId: 801,
+      requestPayload: {},
+      componentName: "franchisemode",
+    })
+    return session
+  } catch (e) {
+    if (e instanceof BlazeError) {
+      const newSession = await retrieveBlazeSession(token)
+      return { ...newSession, requestId: session.requestId }
+    }
+    throw e
+  }
+}
+
+export async function ephemeralClientFromToken(token: TokenInformation, session?: SessionInformation): Promise<EAClient> {
+  const validSession = session ? session : await retrieveBlazeSession(token)
+  return {
+    async getLeagues() {
+      const res = await sendBlazeRequest<GetMyLeaguesResponse>(token, validSession, {
+        commandName: "Mobile_GetMyLeagues",
+        componentId: 2060,
+        commandId: 801,
+        requestPayload: {},
+        componentName: "franchisemode",
+      })
+      return res.responseInfo.value.leagues
+    },
+    async getLeagueInfo(leagueId: number) {
+      const res = await sendBlazeRequest<BlazeLeagueResponse>(token, validSession, {
+        commandName: "Mobile_Career_GetLeagueHub",
+        componentId: 2060,
+        commandId: 811,
+        requestPayload: {
+          leagueId: leagueId
+        },
+        componentName: "franchisemode",
+      })
+      return res.responseInfo.value
+    },
+    async getTeams(leagueId: number) {
+      return await getExportData<TeamExport>(token, validSession, LeagueData.TEAMS, { leagueId: leagueId })
+    },
+    async getStandings(leagueId: number): Promise<StandingExport> {
+      return await getExportData<StandingExport>(token, validSession, LeagueData.STANDINGS, { leagueId: leagueId })
+    },
+    async getSchedules(leagueId: number, stage: Stage, weekIndex: number): Promise<SchedulesExport> {
+      return await getExportData<SchedulesExport>(token, validSession, LeagueData.WEEKLY_SCHEDULE, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+    async getRushingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<RushingExport> {
+      return await getExportData<RushingExport>(token, validSession, LeagueData.RUSHING_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+    async getTeamStats(leagueId: number, stage: Stage, weekIndex: number): Promise<TeamStatsExport> {
+      return await getExportData<TeamStatsExport>(token, validSession, LeagueData.TEAM_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+
+    async getPuntingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<PuntingExport> {
+      return await getExportData<PuntingExport>(token, validSession, LeagueData.PUNTING_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+
+    async getReceivingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<ReceivingExport> {
+      return await getExportData<ReceivingExport>(token, validSession, LeagueData.RECEIVING_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+
+    async getDefensiveStats(leagueId: number, stage: Stage, weekIndex: number): Promise<DefensiveExport> {
+      return await getExportData<DefensiveExport>(token, validSession, LeagueData.DEFENSIVE_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+
+    async getKickingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<KickingExport> {
+      return await getExportData<KickingExport>(token, validSession, LeagueData.KICKING_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+
+    async getPassingStats(leagueId: number, stage: Stage, weekIndex: number): Promise<PassingExport> {
+      return await getExportData<PassingExport>(token, validSession, LeagueData.PASSING_STATS, { leagueId: leagueId, stageIndex: stage, weekIndex: weekIndex })
+    },
+
+    async getTeamRoster(leagueId: number, teamId: number, teamIndex: number): Promise<RosterExport> {
+      return await getExportData<RosterExport>(token, validSession, LeagueData.TEAM_ROSTER, {
+        leagueId: leagueId, listIndex: teamIndex,
+        returnFreeAgents: false,
+        teamId: teamId,
+      })
+    },
+    async getFreeAgents(leagueId: number): Promise<RosterExport> {
+      return await getExportData<RosterExport>(token, validSession, LeagueData.TEAM_ROSTER, {
+        leagueId: leagueId, listIndex: -1,
+        returnFreeAgents: true,
+        teamId: 0,
+      })
+    },
+    getSystemConsole() {
+      return token.console
+    }
+  }
+}
+
+type StoredMaddenConnection = {
+  blazeId: string,
+  session?: SessionInformation,
+  leagueId: number,
+  destinations: { [key: string]: ExportDestination }
+}
+type StoredTokenInformation = {
+  token: TokenInformation,
+  session?: SessionInformation
+}
+export type ExportDestination = { autoUpdate: boolean, leagueInfo: boolean, rosters: boolean, weeklyStats: boolean, url: string, lastExportAttempt?: Date, lastSuccessfulExport?: Date, editable: boolean, extraData?: boolean }
+const DEFAULT_EXPORT = `${DEPLOYMENT_URL}`
+
+export async function storeToken(token: TokenInformation, leagueId: number) {
+  const leagueConnection: StoredMaddenConnection = {
+    blazeId: `${token.blazeId}`,
+    leagueId: leagueId,
+    destinations: {
+      [DEFAULT_EXPORT]: { autoUpdate: true, leagueInfo: true, rosters: true, weeklyStats: true, url: DEFAULT_EXPORT, editable: false }
+    }
+  }
+  await db.collection("madden_data26").doc(`${leagueId}`).set(leagueConnection)
+  const tokenInformation: StoredTokenInformation = {
+    token: token
+  }
+  await db.collection("blaze_tokens").doc(`${token.blazeId}`).set(tokenInformation)
+}
+
+function convertDate(firebaseObject: any) {
+  if (!firebaseObject) return null;
+
+  for (const [key, value] of Object.entries(firebaseObject)) {
+
+    // covert items inside array
+    if (value && Array.isArray(value))
+      firebaseObject[key] = value.map(item => convertDate(item));
+
+    // convert inner objects
+    if (value && typeof value === 'object') {
+      firebaseObject[key] = convertDate(value);
+    }
+
+    // convert simple properties
+    if (value && value.hasOwnProperty('_seconds'))
+      firebaseObject[key] = (value as Timestamp).toDate();
+  }
+  return firebaseObject;
+}
+
+interface StoredEAClient extends EAClient {
+  getExports(): { [key: string]: ExportDestination },
+  updateExport(destination: ExportDestination): Promise<void>,
+  removeExport(url: string): Promise<void>
+}
+
+export async function unlinkLeague(leagueId: number): Promise<void> {
+  await db.collection("madden_data26").doc(`${leagueId}`).update(
+    {
+      blazeId: FieldValue.delete()
+    }
+  )
+}
+
+export async function deleteToken(blazeId: string): Promise<void> {
+  await db.collection("blaze_tokens").doc(`${blazeId}`).delete()
+  const connectedLeagues = await db.collection("madden_data26").where("blazeId", "==", `${blazeId}`).get()
+  await Promise.all(connectedLeagues.docs.map(async d => await unlinkLeague(Number(d.id))))
+}
+export async function getAllTokens(): Promise<StoredTokenInformation[]> {
+  const docs = await db.collection("blaze_tokens").get()
+  return docs.docs.map(d => convertDate(d.data()) as StoredTokenInformation)
+}
+export async function getTokenForLeague(blazeId: string): Promise<StoredTokenInformation> {
+  const tokenDoc = await db.collection("blaze_tokens").doc(`${blazeId}`).get()
+  if (!tokenDoc.exists) {
+    throw new Error(`Token missing for ${blazeId}`)
+  }
+  const token = convertDate(tokenDoc.data()) as StoredTokenInformation
+  return token
+}
+
+export async function storedTokenClient(leagueId: number): Promise<StoredEAClient> {
+  const doc = await db.collection("madden_data26").doc(`${leagueId}`).get()
+  if (!doc.exists) {
+    throw new Error(`League ${leagueId} not connected to snallabot`)
+  }
+  const leagueConnection = doc.data() as StoredMaddenConnection
+  if (leagueConnection.blazeId) {
+  } else {
+    throw new Error(`League ${leagueId} not connected to snallabot dashboard. Try setting up the dashboard again`)
+  }
+  let token: StoredTokenInformation
+  try {
+    token = await getTokenForLeague(leagueConnection.blazeId)
+  } catch (e) {
+    throw new Error(`League ${leagueId} is connected, but its missing EA connection with id ${leagueConnection.blazeId}`)
+  }
+  const newToken = await refreshToken(token.token)
+  const session = token.session ? token.session : await retrieveBlazeSession(newToken)
+  const newSession = await refreshBlazeSession(newToken, session)
+  token.token = newToken
+  token.session = newSession
+  await db.collection("blaze_tokens").doc(`${token.token.blazeId}`).set(token, { merge: true })
+  const eaClient = await ephemeralClientFromToken(newToken, newSession)
+  return {
+    getExports() {
+      return leagueConnection.destinations
+    },
+    async updateExport(destination: ExportDestination) {
+      await db.collection("madden_data26").doc(`${leagueId}`).set({
+        destinations: {
+          [destination.url]: destination
+        }
+      }, { merge: true })
+    },
+    async removeExport(url: string) {
+      delete leagueConnection.destinations[url]
+      await db.collection("madden_data26").doc(`${leagueId}`).set(leagueConnection)
+    },
+    ...eaClient
+  }
+}
+enum ExportType {
+  CURRENT = 0,
+  SURROUNDING = 1,
+  ALL = 2,
+  SPECIFIC = 3
+}
+type ExportRequest = { exportType: ExportType, weeks?: { weekIndex: number, stage: number }[] }
+
+export enum TaskStatus {
+  NOT_STARTED = 0,
+  STARTED = 1,
+  FINISHED = 2,
+  ERROR = 3
+}
+// save tasks for 1 hour
+const tasks = new NodeCache({ stdTTL: 7200, useClones: false })
+export type ExportStatus = { leagueInfo: TaskStatus, weeklyData: { weekIndex: number, stage: number, status: TaskStatus }[], rosters: TaskStatus }
+type ExportJobTask = { id: string, leagueId: number, context: ExportContext, request: ExportRequest, status: ExportStatus }
+export type ExportResult = { task: ExportJobTask, waitUntilDone: Promise<void> }
+interface MaddenExporter {
+  exportCurrentWeek(): ExportResult,
+  exportAllWeeks(): ExportResult,
+  exportSpecificWeeks(weeks: { weekIndex: number, stage: number }[]): ExportResult,
+  exportSurroundingWeek(): ExportResult
+}
+export enum ExportContext {
+  UNKNOWN = "UNKNOWN",
+  // manual means directly done by user
+  MANUAL = "MANUAL",
+  // auto means through event driven/polling processes
+  AUTO = "AUTO"
+}
+
+
+type WeeklyExportData = {
+  weekIndex: number, stage: Stage, passing: PassingExport, schedules: SchedulesExport, teamstats: TeamStatsExport, defense: DefensiveExport, punting: PuntingExport, receiving: ReceivingExport, kicking: KickingExport, rushing: RushingExport
+}
+type ExportData = {
+  leagueTeams?: TeamExport,
+  standings?: StandingExport,
+  weeks: WeeklyExportData[],
+}
+type TeamData = {
+  roster: {
+    [key: string]: RosterExport
+  }
+}
+
+export type ExtraData = {
+  leagueName: string,
+  calendarYear: number,
+  numMembers: number
+} & LeagueResponse
+
+const PRESEASON_WEEKS = Array.from({ length: 4 }, (v, index) => index)
+const SEASON_WEEKS = Array.from({ length: 23 }, (v, index) => index).filter(i => i !== 21) // filters out pro bowl
+
+async function exportData(data: ExportData, destinations: { [key: string]: ExportDestination }, leagueId: string, platform: string) {
+
+  const leagueInfo = Object.values(destinations).filter(d => d.leagueInfo).map(d => createDestination(d.url))
+  const weeklyStats = Object.values(destinations).filter(d => d.weeklyStats).map(d => createDestination(d.url))
+  if (leagueInfo.length > 0) {
+
+    await Promise.all(leagueInfo.flatMap(d => {
+      return [data.leagueTeams ? d.leagueTeams(platform, leagueId, data.leagueTeams) : Promise.resolve(), data.standings ? d.standings(platform, leagueId, data.standings) : Promise.resolve()]
+    }))
+  }
+  if (weeklyStats.length > 0) {
+    await Promise.all(weeklyStats.flatMap(d => {
+      return data.weeks.flatMap(w => [
+        d.passing(platform, leagueId, w.weekIndex + 1, w.stage, w.passing),
+        d.schedules(platform, leagueId, w.weekIndex + 1, w.stage, w.schedules),
+        d.teamStats(platform, leagueId, w.weekIndex + 1, w.stage, w.teamstats),
+        d.defense(platform, leagueId, w.weekIndex + 1, w.stage, w.defense),
+        d.punting(platform, leagueId, w.weekIndex + 1, w.stage, w.punting),
+        d.receiving(platform, leagueId, w.weekIndex + 1, w.stage, w.receiving),
+        d.kicking(platform, leagueId, w.weekIndex + 1, w.stage, w.kicking),
+        d.rushing(platform, leagueId, w.weekIndex + 1, w.stage, w.rushing)
+      ])
+    }))
+  }
+}
+
+async function exportTeamData(data: TeamData, destinations: { [key: string]: ExportDestination }, leagueId: string, platform: string) {
+  const roster = Object.values(destinations).filter(d => d.rosters).map(d => createDestination(d.url))
+  if (roster.length > 0) {
+    await Promise.all(roster.flatMap(d => {
+      return Object.entries(data.roster).map(e => {
+        const [teamId, roster] = e
+        if (teamId === "freeagents") {
+          return d.freeagents(platform, leagueId, roster)
+        }
+        return d.teamRoster(platform, leagueId, teamId, roster)
+      })
+    }))
+  }
+}
+
+async function exportExtraData(data: ExtraData, destinations: { [key: string]: ExportDestination }, leagueId: string, platform: string) {
+  const extraDataDestinations = Object.values(destinations).filter(d => d.extraData).map(d => createDestination(d.url))
+  if (extraDataDestinations.length > 0) {
+    await Promise.all(extraDataDestinations.map(async d => {
+      await d.extra(platform, leagueId, data)
+    }))
+  }
+}
+
+async function handleExportTask(task: ExportJobTask): Promise<void> {
+  const { leagueId, context, request } = task
+  const client = await storedTokenClient(leagueId)
+  const exports = client.getExports()
+  const contextualExports = Object.fromEntries(Object.entries(exports).filter(e => {
+    const [_, destination] = e
+    if (context === ExportContext.MANUAL) {
+      return true
+    } else if (context === ExportContext.AUTO) {
+      return destination.autoUpdate
+    } else {
+      return true
+    }
+  }))
+  const [leagueInfo, allLeagues] = await Promise.all([client.getLeagueInfo(leagueId), client.getLeagues()])
+  const weeksToExport: { weekIndex: number, stage: number }[] = []
+  if (request.exportType === ExportType.CURRENT) {
+    const weekIndex = leagueInfo.careerHubInfo.seasonInfo.seasonWeek
+    const stage = leagueInfo.careerHubInfo.seasonInfo.seasonWeekType === 0 ? 0 : 1
+    exportCounter.inc({ export_type: "CURRENT_WEEK" })
+    weeksToExport.push({ weekIndex, stage })
+  } else if (request.exportType === ExportType.SURROUNDING) {
+    const currentWeek =
+      leagueInfo.careerHubInfo.seasonInfo.seasonWeekType === 8
+        ? 22
+        : leagueInfo.careerHubInfo.seasonInfo.seasonWeek
+    const stage =
+      leagueInfo.careerHubInfo.seasonInfo.seasonWeekType == 0 ? 0 : 1
+    const maxWeekIndex = stage === 0 ? 3 : 22
+    const previousWeek = currentWeek - 1
+    const nextWeek = currentWeek + 1
+    const surrounding = [
+      previousWeek === 21 ? 20 : previousWeek,
+      currentWeek,
+      nextWeek === 21 ? 22 : nextWeek,
+    ].filter((c) => c >= 0 && c <= maxWeekIndex)
+    exportCounter.inc({ export_type: "SURROUNDING_WEEK" })
+    surrounding.forEach(w => weeksToExport.push({ weekIndex: w, stage: stage }))
+  } else if (request.exportType === ExportType.ALL) {
+    const allWeeks =
+      PRESEASON_WEEKS.map(weekIndex => ({
+        weekIndex: weekIndex, stage: 0
+      })).concat(
+        SEASON_WEEKS.map(weekIndex => ({
+          weekIndex: weekIndex, stage: 1
+        })))
+    exportCounter.inc({ export_type: "ALL_WEEKS" })
+    allWeeks.forEach(w => weeksToExport.push(w))
+  } else if (request.exportType === ExportType.SPECIFIC && request.weeks) {
+    exportCounter.inc({ export_type: "SPECIFIC_WEEKS" })
+    request.weeks.forEach(w => weeksToExport.push(w))
+  } else {
+    throw new Error(`Invalid Export Task Request! ${request}`)
+  }
+  const destinations = Object.values(contextualExports)
+  const leagueData = { weeks: [] } as any
+  const leagueInfoRequests = [] as Promise<any>[]
+  function toStage(stage: number): Stage {
+    return stage === 0 ? Stage.PRESEASON : Stage.SEASON
+  }
+  task.status.leagueInfo = TaskStatus.STARTED
+  if (destinations.some(e => e.leagueInfo)) {
+    leagueInfoRequests.push(client.getTeams(leagueId).then(t => leagueData.leagueTeams = t))
+    leagueInfoRequests.push(client.getStandings(leagueId).then(t => leagueData.standings = t))
+  }
+  await Promise.all(leagueInfoRequests)
+  await exportData(leagueData as ExportData, contextualExports, `${leagueId}`, client.getSystemConsole())
+  task.status.leagueInfo = TaskStatus.FINISHED
+  task.status.weeklyData = weeksToExport.map(w => ({ ...w, status: TaskStatus.NOT_STARTED }))
+  if (destinations.some(e => e.weeklyStats)) {
+    // Process weeks in batches to reduce memory usage on big exports
+    const batchSize = 2;
+    for (let i = 0; i < weeksToExport.length; i += batchSize) {
+
+      const weeklyData = { weeks: [] } as any
+      const weekBatch = weeksToExport.slice(i, i + batchSize);
+      task.status.weeklyData.forEach(w => {
+        if (weekBatch.some(b => w.weekIndex === b.weekIndex && w.stage === b.stage)) {
+          w.status = TaskStatus.STARTED
+        }
+      })
+      const batchDataRequests = [] as Promise<any>[]
+
+      weekBatch.forEach(week => {
+        const stage = toStage(week.stage)
+        const weekData = { weekIndex: week.weekIndex, stage: stage } as WeeklyExportData
+        batchDataRequests.push(client.getPassingStats(leagueId, stage, week.weekIndex).then(s => weekData.passing = s))
+        batchDataRequests.push(client.getSchedules(leagueId, stage, week.weekIndex).then(s => weekData.schedules = s))
+        batchDataRequests.push(client.getTeamStats(leagueId, stage, week.weekIndex).then(s => weekData.teamstats = s))
+        batchDataRequests.push(client.getDefensiveStats(leagueId, stage, week.weekIndex).then(s => weekData.defense = s))
+        batchDataRequests.push(client.getPuntingStats(leagueId, stage, week.weekIndex).then(s => weekData.punting = s))
+        batchDataRequests.push(client.getReceivingStats(leagueId, stage, week.weekIndex).then(s => weekData.receiving = s))
+        batchDataRequests.push(client.getKickingStats(leagueId, stage, week.weekIndex).then(s => weekData.kicking = s))
+        batchDataRequests.push(client.getRushingStats(leagueId, stage, week.weekIndex).then(s => weekData.rushing = s))
+        weeklyData.weeks.push(weekData)
+      })
+
+      // Process this batch and wait for completion before moving to next batch
+      await Promise.all(batchDataRequests)
+      await exportData(weeklyData as ExportData, contextualExports, `${leagueId}`, client.getSystemConsole())
+      task.status.weeklyData.forEach(w => {
+        if (weekBatch.some(b => w.weekIndex === b.weekIndex && w.stage === b.stage)) {
+          w.status = TaskStatus.FINISHED
+        }
+      })
+    }
+  }
+  if (destinations.some(e => e.rosters)) {
+    task.status.rosters = TaskStatus.STARTED
+    let teamRequests = [] as Promise<any>[]
+    let teamData: TeamData = { roster: {} }
+    const teamList = leagueInfo.teamIdInfoList
+    teamRequests.push(client.getFreeAgents(leagueId).then(freeAgents => teamData.roster["freeagents"] = freeAgents))
+    const batchSize = 4;
+    for (let idx = 0; idx < teamList.length; idx++) {
+      const team = teamList[idx];
+      teamRequests.push(
+        client.getTeamRoster(leagueId, team.teamId, idx).then(roster =>
+          teamData.roster[`${team.teamId}`] = roster
+        )
+      )
+      if ((idx + 1) % batchSize == 0) {
+        await Promise.all(teamRequests)
+        await exportTeamData(teamData, contextualExports, `${leagueId}`, client.getSystemConsole())
+        teamRequests = []
+        teamData = { roster: {} }
+      }
+    }
+    if (teamRequests.length > 0) {
+      await Promise.all(teamRequests)
+      await exportTeamData(teamData, contextualExports, `${leagueId}`, client.getSystemConsole())
+      teamRequests = []
+      teamData = { roster: {} }
+    }
+    task.status.rosters = TaskStatus.FINISHED
+  }
+  if (destinations.some(e => e.extraData)) {
+    const {
+      leagueName,
+      numMembers,
+      calendarYear
+    } = allLeagues.filter(l => l.leagueId === leagueId)[0]
+    const extraData = { ...leagueInfo, leagueName, numMembers, calendarYear }
+    await exportExtraData(extraData, contextualExports, `${leagueId}`, client.getSystemConsole())
+  }
+}
+
+const exportQueue: queueAsPromised<ExportJobTask> = fastq.promise(handleExportTask, QUEUE_CONCURRENCY)
+
+const activeLeagueTasks = new Map<number, { task: ExportJobTask, promise: Promise<void> }>()
+
+async function addTaskToQueue(task: ExportJobTask) {
+  tasks.set(task.id, task)
+  const promise = exportQueue.push(task).catch(e => {
+    task.status.leagueInfo = task.status.leagueInfo != TaskStatus.FINISHED ? TaskStatus.ERROR : task.status.leagueInfo
+    task.status.rosters = task.status.leagueInfo != TaskStatus.FINISHED ? TaskStatus.ERROR : task.status.rosters
+    task.status.weeklyData.forEach(w => w.status != TaskStatus.FINISHED ? w.status = TaskStatus.ERROR : w.status)
+    return Promise.reject(e)
+  }).finally(() => {
+    activeLeagueTasks.delete(task.leagueId)
+  })
+  activeLeagueTasks.set(task.leagueId, { task, promise })
+  return promise
+}
+
+export function getTask(taskId: string): ExportJobTask {
+  const task = tasks.get(taskId) as ExportJobTask
+  if (!task) {
+    throw new SnallabotError(new Error(`Task not found ${taskId}`), `The Export task was lost! This could have happened because the server was restarted. It is safe to export again, or redo the command`)
+  }
+  return task
+}
+
+export function getPositionInQueue(taskId: string): number {
+  return exportQueue.getQueue().findIndex(t => t.id === taskId)
+}
+
+export function getQueueSize() {
+  return exportQueue.length()
+}
+
+function getOrEnqueueTask(leagueId: number, buildTask: (taskId: string, status: ExportStatus) => ExportJobTask) {
+  const existing = activeLeagueTasks.get(leagueId)
+  if (existing) {
+    return { task: existing.task, waitUntilDone: existing.promise }
+  }
+  const taskId = randomUUID()
+  const status = { leagueInfo: TaskStatus.NOT_STARTED, weeklyData: [], rosters: TaskStatus.NOT_STARTED }
+  const task = buildTask(taskId, status)
+  return { task, waitUntilDone: addTaskToQueue(task) }
+}
+
+export function exporterForLeague(leagueId: number, context: ExportContext): MaddenExporter {
+  return {
+    exportCurrentWeek: function() {
+      return getOrEnqueueTask(leagueId, (taskId, status) => (
+        { id: taskId, request: { exportType: ExportType.CURRENT }, leagueId, context, status }
+      ))
+    },
+    exportSurroundingWeek: function() {
+      return getOrEnqueueTask(leagueId, (taskId, status) => (
+        { id: taskId, request: { exportType: ExportType.SURROUNDING }, leagueId, context, status }
+      ))
+    },
+    exportAllWeeks: function() {
+      return getOrEnqueueTask(leagueId, (taskId, status) => (
+        { id: taskId, request: { exportType: ExportType.ALL }, leagueId, context, status }
+      ))
+    },
+    exportSpecificWeeks: function(weeks: { weekIndex: number, stage: number }[]) {
+      return getOrEnqueueTask(leagueId, (taskId, status) => (
+        { id: taskId, request: { exportType: ExportType.SPECIFIC, weeks }, leagueId, context, status }
+      ))
+    }
+  }
+}
