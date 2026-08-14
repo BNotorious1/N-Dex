@@ -24,6 +24,7 @@ const SIZE_MAP: Record<LogoSize, { container: string; text: string; padding: str
 // Abbreviation → ESPN CDN slug overrides where they differ
 const ESPN_SLUG: Record<string, string> = {
   WAS: "wsh",
+  ARZ: "ari",
 };
 
 function getEspnUrl(abbreviation: string): string {
