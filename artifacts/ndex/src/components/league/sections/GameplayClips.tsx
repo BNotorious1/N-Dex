@@ -18,6 +18,27 @@ interface Props {
   isMember: boolean;
 }
 
+async function extractErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.clone().json();
+    if (body && typeof body === "object") {
+      const detail = (body as { detail?: unknown }).detail;
+      const error = (body as { error?: unknown }).error;
+      const parts = [error, detail].filter((v) => typeof v === "string" && v.length > 0);
+      if (parts.length > 0) return parts.join(": ");
+    }
+  } catch {
+    // response wasn't JSON — fall through
+  }
+  try {
+    const text = await res.clone().text();
+    if (text) return `${fallback} (${res.status}): ${text.slice(0, 300)}`;
+  } catch {
+    // ignore
+  }
+  return `${fallback} (status ${res.status})`;
+}
+
 export default function GameplayClips({ leagueId, isMember }: Props) {
   const queryClient = useQueryClient();
   const [showUpload, setShowUpload] = useState(false);
@@ -27,7 +48,7 @@ export default function GameplayClips({ leagueId, isMember }: Props) {
     queryKey: ["gameplay-clips", leagueId],
     queryFn: async () => {
       const res = await fetch(`/api/leagues/${leagueId}/clips`);
-      if (!res.ok) throw new Error("Failed to fetch clips");
+      if (!res.ok) throw new Error(await extractErrorMessage(res, "Failed to fetch clips"));
       return res.json();
     },
     enabled: !!leagueId,
@@ -127,7 +148,7 @@ function UploadClipModal({ leagueId, onClose, onUploaded }: { leagueId: number; 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
       });
-      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+      if (!urlRes.ok) throw new Error(await extractErrorMessage(urlRes, "Failed to get upload URL"));
       const { uploadURL, objectPath } = await urlRes.json();
 
       const putRes = await fetch(uploadURL, {
@@ -135,14 +156,14 @@ function UploadClipModal({ leagueId, onClose, onUploaded }: { leagueId: number; 
         headers: { "Content-Type": file.type },
         body: file,
       });
-      if (!putRes.ok) throw new Error("Failed to upload file");
+      if (!putRes.ok) throw new Error(await extractErrorMessage(putRes, "Failed to upload file"));
 
       const createRes = await fetch(`/api/leagues/${leagueId}/clips`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description, object_path: objectPath }),
       });
-      if (!createRes.ok) throw new Error("Failed to save clip");
+      if (!createRes.ok) throw new Error(await extractErrorMessage(createRes, "Failed to save clip"));
 
       onUploaded();
     } catch (e) {
@@ -177,7 +198,7 @@ function UploadClipModal({ leagueId, onClose, onUploaded }: { leagueId: number; 
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="w-full text-xs text-white/60"
           />
-          {error && <p className="text-[10px] text-red-400">{error}</p>}
+          {error && <p className="text-[10px] text-red-400 whitespace-pre-wrap break-words">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">
             <button onClick={onClose} className="text-xs font-bold text-white/40 hover:text-white px-3 py-1.5">
               Cancel
