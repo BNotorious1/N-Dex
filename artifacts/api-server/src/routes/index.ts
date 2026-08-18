@@ -10,6 +10,7 @@ import proxyRouter from "./proxy";
 import authRouter from "./auth";
 import storageRouter from "./storage";
 import invitesRouter from "./invites";
+import clipsRouter from "./clips";
 
 const router: IRouter = Router();
 
@@ -18,6 +19,7 @@ router.use("/auth", authRouter);
 router.use(storageRouter);
 router.use("/leagues", leaguesRouter);
 router.use("/leagues/:id/ea", eaRouter);
+router.use("/leagues/:id/clips", clipsRouter);
 router.use("/teams", teamsRouter);
 router.use("/players", playersRouter);
 router.use("/games", gamesRouter);
