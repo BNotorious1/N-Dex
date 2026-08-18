@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
 import TeamLogo from "@/components/TeamLogo";
 import { getWeekLabel } from "@/lib/weekLabel";
+import GameplayClips from "@/components/league/sections/GameplayClips";
 import type { GameOfWeek, StatLeaders, StandingEntry, LeagueSummary, PlayerStatLine } from "@workspace/api-client-react";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   standings?: StandingEntry[];
   gotw?: GameOfWeek | null;
   onNavigate?: (section: string) => void;
+  isMember?: boolean;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -67,7 +69,7 @@ function computeSeeds(entries: StandingEntry[]): SeedEntry[] {
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export default function HomeSection({ summary, leagueId, statLeaders, standings, gotw, onNavigate }: Props) {
+export default function HomeSection({ summary, leagueId, statLeaders, standings, gotw, onNavigate, isMember }: Props) {
   // Regular-season-only standings for playoff race (excludes weeks 19+)
   const { data: regularStandings } = useQuery<StandingEntry[]>({
     queryKey: ["standings-regular", leagueId],
@@ -124,6 +126,7 @@ export default function HomeSection({ summary, leagueId, statLeaders, standings,
           <GotwPlaceholder />
         )}
         <LatestResults games={summary?.recent_games ?? []} onNavigate={onNavigate} />
+        <GameplayClips leagueId={leagueId ?? 0} isMember={!!isMember} />
       </div>
 
       {/* ── RIGHT ── */}
